@@ -1,0 +1,42 @@
+# Semantic Release Configuration
+# Spec: SPEC-TS-0014 (FR-017 – FR-023)
+#
+# Uses bare version tags (e.g., 1.0.0) to match Expansive Labs convention.
+# Plugin order matters: analyze → notes → changelog → exec (build) → github (upload) → git (commit back)
+
+# FR-017: Release from main only
+branches:
+  - main
+
+# FR-018: Bare version tags (matching org convention)
+tagFormat: ${version}
+
+# FR-019: Plugin chain
+plugins:
+  # 1. Analyze commits using Conventional Commits
+  - "@semantic-release/commit-analyzer"
+
+  # 2. Generate release notes
+  - "@semantic-release/release-notes-generator"
+
+  # 3. Update CHANGELOG.md
+  - - "@semantic-release/changelog"
+    - changelogFile: CHANGELOG.md
+      changelogTitle: "# Changelog"
+
+  # 4. FR-020: Build the add-on (patches versions + creates .zip)
+  - - "@semantic-release/exec"
+    - prepareCmd: "bash scripts/build_addon.sh ${nextRelease.version}"
+
+  # 5. FR-022: Upload .zip to GitHub Release
+  - - "@semantic-release/github"
+    - assets:
+        - path: "tessera-v*.zip"
+
+  # 6. FR-021: Commit back patched files with [skip ci]
+  - - "@semantic-release/git"
+    - assets:
+        - "CHANGELOG.md"
+        - "tessera/__init__.py"
+        - "blender_manifest.toml"
+      message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"

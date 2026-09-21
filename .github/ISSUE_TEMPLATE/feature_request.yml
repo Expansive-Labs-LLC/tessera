@@ -1,0 +1,40 @@
+name: "✨ Feature Request"
+description: "Suggest a new feature for Tessera"
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Feature Summary
+      description: A clear and concise description of the feature you'd like.
+      placeholder: Describe the feature...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Use Case / Problem
+      description: What problem does this feature solve? Why is it needed?
+      placeholder: I'm trying to... but currently...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed_solution
+    attributes:
+      label: Proposed Solution
+      description: How do you envision this feature working?
+      placeholder: It could work by...
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any alternative approaches you've considered.
+      placeholder: I also considered...
+    validations:
+      required: false

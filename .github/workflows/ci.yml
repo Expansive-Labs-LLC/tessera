@@ -1,0 +1,121 @@
+# CI Workflow — Pull Request Checks
+# Spec: SPEC-TS-0014 (FR-001 – FR-008)
+#
+# Pipeline: commitlint (parallel) + lint → test → build (sequential)
+# All jobs: timeout-minutes: 10
+
+name: CI
+
+# FR-001: Trigger on PRs targeting main
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # FR-006: Commitlint — runs in parallel (no needs dependency)
+  # ---------------------------------------------------------------------------
+  commitlint:
+    name: Commitlint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install commitlint
+        run: npm install --save-dev @commitlint/cli @commitlint/config-conventional
+
+      - name: Validate commits
+        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+
+  # ---------------------------------------------------------------------------
+  # FR-002, FR-002b: Lint — isort, black, flake8, mypy
+  # ---------------------------------------------------------------------------
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          test -f requirements.txt && pip install -r requirements.txt
+          pip install flake8 black isort mypy pytest
+
+      - name: isort
+        run: isort --check --diff tessera/ tests/
+
+      - name: black
+        run: black --check tessera/ tests/
+
+      - name: flake8
+        run: flake8 tessera/ tests/
+
+      - name: mypy
+        run: mypy tessera/ --ignore-missing-imports
+
+  # ---------------------------------------------------------------------------
+  # FR-003, FR-005: Test — pytest with Python matrix, depends on lint
+  # ---------------------------------------------------------------------------
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: lint
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          test -f requirements.txt && pip install -r requirements.txt
+          pip install pytest
+
+      - name: Run tests
+        run: pytest tests/ -v --tb=short
+
+  # ---------------------------------------------------------------------------
+  # FR-004, FR-005: Build — trial packaging, depends on test
+  # ---------------------------------------------------------------------------
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Trial build
+        run: bash scripts/build_addon.sh 0.0.0-ci
+
+      - name: Upload trial artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tessera-ci-build
+          path: tessera-v0.0.0-ci.zip
+          retention-days: 1

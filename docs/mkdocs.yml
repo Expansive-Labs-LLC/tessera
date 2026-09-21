@@ -1,0 +1,86 @@
+site_name: Tessera — Image-to-3D for Blender
+site_description: >-
+  Tessera is a Blender add-on that transforms reference photos into
+  print-ready 3D models using AI-powered vision and reconstruction
+  pipelines.
+site_url: https://expansive-labs-llc.github.io/tessera/
+repo_url: https://github.com/Expansive-Labs-LLC/tessera
+repo_name: Expansive-Labs-LLC/tessera
+edit_uri: edit/main/docs/docs/
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+
+nav:
+  - Home: index.md
+  - Getting Started:
+    - Installation: installation.md
+    - Quick Start: quickstart.md
+  - User Guide:
+    - Image Input: user-guide/image-input.md
+    - 3D Reconstruction: user-guide/reconstruction.md
+    - Sketch-to-3D: user-guide/sketch-to-3d.md
+    - Mesh Cleanup: user-guide/mesh-cleanup.md
+    - Scaling & Orientation: user-guide/scaling-orientation.md
+    - Refinement: user-guide/refinement.md
+    - Export & Print: user-guide/export.md
+    - Preferences: user-guide/preferences.md
+  - Reference:
+    - View Labels: reference/view-labels.md
+    - Keyboard Shortcuts: reference/keyboard-shortcuts.md
+    - Printer Profiles: reference/printer-profiles.md
+    - Error Codes: reference/error-codes.md
+    - Glossary: reference/glossary.md
+  - FAQ: faq.md
+  - API Reference:
+    - Pipeline: api/pipeline.md
+    - Adapters: api/adapters.md
+  - Gallery: gallery/index.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.keys
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - glightbox
+  - git-revision-date-localized:
+      type: date
+      enable_creation_date: true
+      fallback_to_build_date: true
+      enabled: !ENV [ENABLE_GIT_DATES, true]

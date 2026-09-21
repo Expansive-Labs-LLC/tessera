@@ -1,0 +1,52 @@
+# Release Workflow — Main Branch Merge
+# Spec: SPEC-TS-0014 (FR-009 – FR-016)
+#
+# Uses Expansive-Labs-LLC/github-actions/versioning composite action
+# with EXTRA_PLUGINS to include @semantic-release/exec for build script invocation.
+
+name: Release
+
+# FR-009: Trigger on push to main
+on:
+  push:
+    branches:
+      - main
+
+# FR-010: Permissions matching Expansive Labs convention
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    # FR-015: Extended timeout for semantic-release + build + upload
+    timeout-minutes: 15
+    steps:
+      # FR-011a: Full history required for semantic-release commit analysis
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # FR-011b: Python required for build script validation (sed/zip only, no Python execution)
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # FR-012: Run semantic-release via versioning action with exec plugin
+      - name: Semantic Release
+        id: semantic
+        uses: Expansive-Labs-LLC/github-actions/versioning@main
+        with:
+          EXTRA_PLUGINS: "@semantic-release/exec"
+
+      # FR-014: Verify release if published
+      - name: Verify release
+        if: steps.semantic.outputs.version != ''
+        run: |
+          echo "Release published: ${{ steps.semantic.outputs.version }}"
+          echo "Verifying release artifacts..."

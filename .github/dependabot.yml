@@ -1,0 +1,13 @@
+# Dependabot Configuration
+# Spec: SPEC-TS-0014 (FR-041, FR-042)
+#
+# Monitors GitHub Actions dependencies for updates.
+# Reference: Expansive-Labs-LLC/github-actions/.github/dependabot.yml
+
+version: 2
+updates:
+  # FR-042: GitHub Actions ecosystem
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

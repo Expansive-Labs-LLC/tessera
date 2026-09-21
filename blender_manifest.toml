@@ -1,0 +1,36 @@
+# Blender Extensions Platform manifest
+# Spec: SPEC-TS-0014 (FR-035 – FR-040)
+# Reference: https://docs.blender.org/manual/en/latest/advanced/extensions/index.html
+
+schema_version = "1.0.0"
+
+id = "tessera"
+version = "0.1.0"
+name = "Tessera"
+tagline = "AI-powered 3D-printable model generation from reference images"
+
+maintainer = "Expansive Labs LLC <hello@expansivelabs.com>"
+type = "add-on"
+
+# FR-037: Match bl_info["blender"] tuple (4, 2, 0)
+blender_version_min = "4.2.0"
+
+# FR-038: SPDX license identifier format
+license = ["SPDX:GPL-2.0-or-later"]
+
+# FR-039: Required permissions
+[permissions]
+files = "Import reference images and export 3D models"
+network = "Download AI model weights on first use"
+
+# FR-040: Build exclusion patterns for Extensions Platform builds
+[build]
+paths_exclude_pattern = [
+    "__pycache__/",
+    "*.pyc",
+    ".git/",
+    "tests/",
+    "testing/",
+    ".pytest_cache/",
+    ".mypy_cache/",
+]

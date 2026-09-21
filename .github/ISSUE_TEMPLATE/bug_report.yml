@@ -1,0 +1,124 @@
+name: "🐛 Bug Report"
+description: "Report a bug in Tessera"
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Tell us what happened...
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps_to_reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Open Blender and navigate to...
+        2. Click on...
+        3. See error...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected_behavior
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual_behavior
+    attributes:
+      label: Actual Behavior
+      description: What actually happened.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: blender_version
+    attributes:
+      label: Blender Version
+      options:
+        - "4.2 LTS"
+        - "4.3"
+        - "4.4"
+        - "Other (specify in description)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating System
+      options:
+        - "Windows 10"
+        - "Windows 11"
+        - "macOS (Intel)"
+        - "macOS (Apple Silicon)"
+        - "Ubuntu 22.04"
+        - "Ubuntu 24.04"
+        - "Other Linux"
+    validations:
+      required: true
+
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU
+      placeholder: "e.g., NVIDIA RTX 3060 12 GB"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: vram
+    attributes:
+      label: VRAM
+      options:
+        - "4 GB"
+        - "6 GB"
+        - "8 GB"
+        - "10 GB"
+        - "12 GB"
+        - "16 GB"
+        - "24 GB+"
+    validations:
+      required: true
+
+  - type: input
+    id: tessera_version
+    attributes:
+      label: Tessera Version
+      placeholder: "e.g., 0.1.0"
+    validations:
+      required: false
+
+  - type: input
+    id: error_code
+    attributes:
+      label: Error Code
+      placeholder: "e.g., BF-E001"
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, paste screenshots to help explain your problem.
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Log Output
+      description: Paste any relevant log output here.
+      render: pre
+    validations:
+      required: false

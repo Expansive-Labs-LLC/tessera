@@ -1,0 +1,59 @@
+# =============================================================================
+# Python
+# =============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# =============================================================================
+# Development & Environment
+# =============================================================================
+.venv/
+venv/
+env/
+.env
+.pytest_cache/
+.mypy_cache/
+.tox/
+htmlcov/
+.coverage
+*.cover
+*.zip
+
+# =============================================================================
+# Blender
+# =============================================================================
+*.blend1
+
+# =============================================================================
+# ML Model Weights
+# Excludes large model files from version control.
+# Note: .npz files are NOT excluded — golden-mesh test fixtures in tests/
+# are tracked (per SPEC-TS-0011 FR-024, ≤ 1 MB each).
+# =============================================================================
+*.pt
+*.pth
+*.onnx
+*.safetensors
+*.bin
+model_cache/
+weights/
+
+# =============================================================================
+# Internal AI Tooling
+# The .agent/ directory contains internal AI tooling and is excluded from the
+# public repository. Contributors should NOT reference .agent/ contents.
+# =============================================================================
+.agent/
+
+# =============================================================================
+# NOTE: specs/ and tasks/ are intentionally NOT excluded.
+# Contributors need these directories to follow the Task → Spec → Implement
+# workflow (CSO decision, TASK-TS-0012).
+# =============================================================================

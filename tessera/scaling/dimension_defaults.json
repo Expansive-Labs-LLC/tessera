@@ -1,0 +1,37 @@
+{
+  "mug": {
+    "primary_axis": "height",
+    "min_mm": 80,
+    "max_mm": 100
+  },
+  "vase": {
+    "primary_axis": "height",
+    "min_mm": 150,
+    "max_mm": 250
+  },
+  "figurine": {
+    "primary_axis": "height",
+    "min_mm": 50,
+    "max_mm": 150
+  },
+  "phone_case": {
+    "primary_axis": "height",
+    "min_mm": 140,
+    "max_mm": 160
+  },
+  "bottle": {
+    "primary_axis": "height",
+    "min_mm": 200,
+    "max_mm": 300
+  },
+  "bowl": {
+    "primary_axis": "diameter",
+    "min_mm": 150,
+    "max_mm": 200
+  },
+  "box": {
+    "primary_axis": "width",
+    "min_mm": 100,
+    "max_mm": 200
+  }
+}

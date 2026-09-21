@@ -1,0 +1,89 @@
+{
+  "version": "1.0",
+  "models": [
+    {
+      "model_id": "depth-anything-v2-large",
+      "repo_id": "depth-anything/Depth-Anything-V2-Large",
+      "revision": "main",
+      "description": "Monocular depth estimation for single-image depth maps",
+      "files": [
+        "depth_anything_v2_vitl.pth"
+      ],
+      "sha256": {
+        "depth_anything_v2_vitl.pth": "TODO"
+      },
+      "size_bytes": 1340000000,
+      "min_vram_gb": 4.0,
+      "variants": []
+    },
+    {
+      "model_id": "sam2-hiera-large",
+      "repo_id": "facebook/sam2-hiera-large",
+      "revision": "main",
+      "description": "Segment Anything Model 2 for object segmentation",
+      "files": [
+        "model.safetensors",
+        "config.json",
+        "preprocessor_config.json"
+      ],
+      "sha256": {
+        "model.safetensors": "TODO",
+        "config.json": "TODO",
+        "preprocessor_config.json": "TODO"
+      },
+      "size_bytes": 898000000,
+      "min_vram_gb": 4.0,
+      "variants": []
+    },
+    {
+      "model_id": "dinov2-large",
+      "repo_id": "facebook/dinov2-large",
+      "revision": "main",
+      "description": "DINOv2 vision features for image understanding",
+      "files": [
+        "model.safetensors",
+        "config.json",
+        "preprocessor_config.json"
+      ],
+      "sha256": {
+        "model.safetensors": "TODO",
+        "config.json": "TODO",
+        "preprocessor_config.json": "TODO"
+      },
+      "size_bytes": 1220000000,
+      "min_vram_gb": 4.0,
+      "variants": []
+    },
+    {
+      "model_id": "zero123plus-v1.2",
+      "repo_id": "sudo-ai/zero123plus-v1.2",
+      "revision": "main",
+      "description": "Zero-1-to-3++ for novel view synthesis from single image",
+      "files": [
+        "model_index.json"
+      ],
+      "sha256": {
+        "model_index.json": "TODO"
+      },
+      "size_bytes": 1800000000,
+      "min_vram_gb": 6.0,
+      "note": "Diffusers pipeline — loaded via diffusers.from_pretrained(), not individual weight files",
+      "variants": []
+    },
+    {
+      "model_id": "instantmesh",
+      "repo_id": "TencentARC/InstantMesh",
+      "revision": "main",
+      "description": "InstantMesh for efficient 3D mesh generation",
+      "files": [
+        "instant_mesh_large.ckpt"
+      ],
+      "sha256": {
+        "instant_mesh_large.ckpt": "TODO"
+      },
+      "size_bytes": 1600000000,
+      "min_vram_gb": 6.0,
+      "variants": []
+    }
+  ]
+}

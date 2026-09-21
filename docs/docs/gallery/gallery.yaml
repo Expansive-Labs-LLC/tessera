@@ -1,0 +1,94 @@
+# Tessera Gallery Registry
+# Example objects with metadata for the documentation gallery.
+# FR-041: Structured format for easy community contributions.
+
+categories:
+  - name: Household Objects
+    icon: "🏠"
+    objects:
+      - name: Coffee Mug
+        views: 4
+        adapter: TripoSR
+        faces: 24512
+        print_status: FDM Ready
+        wall_thickness_mm: 1.5
+        manifold: true
+      - name: Ceramic Vase
+        views: 3
+        adapter: InstantMesh
+        faces: 31280
+        print_status: FDM Ready
+        wall_thickness_mm: 2.0
+        manifold: true
+
+  - name: Figurines & Toys
+    icon: "🎮"
+    objects:
+      - name: Chess Knight
+        views: 2
+        adapter: TripoSR
+        faces: 18900
+        print_status: FDM Ready
+        wall_thickness_mm: 1.2
+        manifold: true
+      - name: Action Figure
+        views: 6
+        adapter: CRM
+        faces: 52100
+        print_status: SLA Ready
+        wall_thickness_mm: 0.8
+        manifold: true
+
+  - name: Mechanical Parts
+    icon: "🔧"
+    objects:
+      - name: Cable Clip
+        views: 1
+        adapter: TripoSR
+        faces: 8200
+        print_status: FDM Ready
+        wall_thickness_mm: 2.0
+        manifold: true
+      - name: Hinge Bracket
+        views: 4
+        adapter: InstantMesh
+        faces: 14600
+        print_status: FDM Ready
+        wall_thickness_mm: 3.0
+        manifold: true
+
+  - name: Organic Forms
+    icon: "🌿"
+    objects:
+      - name: Succulent Plant
+        views: 3
+        adapter: InstantMesh
+        faces: 42300
+        print_status: SLA Ready
+        wall_thickness_mm: 0.6
+        manifold: true
+      - name: Seashell
+        views: 4
+        adapter: CRM
+        faces: 38100
+        print_status: FDM Ready
+        wall_thickness_mm: 1.4
+        manifold: true
+
+  - name: Architectural Elements
+    icon: "🏛️"
+    objects:
+      - name: Column Capital
+        views: 5
+        adapter: CRM
+        faces: 61000
+        print_status: SLA Ready
+        wall_thickness_mm: 0.7
+        manifold: true
+      - name: Door Knob
+        views: 2
+        adapter: TripoSR
+        faces: 15400
+        print_status: FDM Ready
+        wall_thickness_mm: 2.5
+        manifold: true
