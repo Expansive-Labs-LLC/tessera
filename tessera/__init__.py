@@ -43,7 +43,7 @@ logger = logging.getLogger("tessera")
 bl_info = {
     "name": "Tessera",
     "author": "Tessera Team",
-    "version": (0, 1, 0),
+    "version": (1, 0, 0),
     "blender": (4, 2, 0),
     "location": "View3D > Sidebar > Tessera",
     "description": "AI-powered 3D-printable model generation from reference images",
