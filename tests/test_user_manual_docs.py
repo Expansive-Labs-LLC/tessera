@@ -837,7 +837,7 @@ class TestHelpPanel:
 
         # Then
         assert (
-            _DOCS_URL == "https://expansive-labs-llc.github.io/tessera/"
+            _DOCS_URL == "https://expansivelabs.io/tessera/"
         ), f"_DOCS_URL = '{_DOCS_URL}' — wrong domain"
 
     def test_TS012_quickstart_url_constant(self, mock_bpy):
@@ -853,9 +853,7 @@ class TestHelpPanel:
         from tessera.ui.help_panel import _QUICKSTART_URL
 
         # Then
-        assert _QUICKSTART_URL == (
-            "https://expansivelabs.io/tessera/quickstart/"
-        )
+        assert _QUICKSTART_URL == ("https://expansivelabs.io/tessera/quickstart/")
 
     def test_SEC003_docs_url_is_hardcoded_https(self, mock_bpy):
         """SEC-003: _DOCS_URL is hardcoded HTTPS, not from user input.
