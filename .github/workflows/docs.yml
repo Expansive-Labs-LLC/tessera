@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # git-revision-date-localized reads commit history to stamp each
           # page's "last updated" date; a shallow clone makes it fall back to
