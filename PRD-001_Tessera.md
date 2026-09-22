@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| **Version** | 0.5.0-DRAFT |
+| **Version** | 0.6.0-DRAFT |
 | **Status** | 🟡 Draft — Incorporating Stakeholder Feedback |
 | **Author** | Derek (Owner) |
 | **Created** | 2026-03-25 |
-| **Last Updated** | 2026-09-21 |
+| **Last Updated** | 2026-09-22 |
 
 ---
 
@@ -122,6 +122,9 @@ This is the core intelligence layer. It combines outputs from §5.1 to produce a
 > [!IMPORTANT]
 > The reconstruction engine should be **model-agnostic** — designed as a pluggable adapter layer so new models can be swapped in as the field evolves rapidly. The adapter interface should normalize all outputs to a common mesh representation (vertices, faces, optional vertex colors).
 
+> [!IMPORTANT]
+> **Where inference runs.** PyTorch and TRELLIS's compiled CUDA extensions cannot ship inside a Blender add-on archive. The adapters therefore run in a **separately installed local engine process** with its own virtual environment, reached by the add-on over loopback HTTP; the add-on keeps the UI, weight management and the licence gate, and hands the engine absolute, already-verified weight paths. Inference remains entirely local — the engine makes no network call (D3). This is decision D10, taken in ADR-0001 and specified by SPEC-TS-0023.
+
 ### 5.3 · Blender Orchestrator (`bpy`)
 
 All geometry manipulation happens inside Blender via its Python API. The orchestrator:
@@ -223,10 +226,11 @@ When view labels are omitted, the agent runs a lightweight view-direction classi
 
 | Layer | Technology | Rationale |
 |---|---|---|
-| Deployment | **Blender add-on** (GPL-licensed) | Native UI integration; user stays in Blender |
+| Deployment | **Blender add-on** (GPL-2.0-or-later) **plus a separately installed local inference engine** | The add-on gives native UI integration and stays small enough for the Extensions Platform; the engine carries PyTorch, the CUDA runtime and TRELLIS's compiled extensions, which cannot ship in an add-on archive. Both halves are GPL-2.0-or-later. See D10, ADR-0001, SPEC-TS-0023 |
 | Agent framework | LangGraph / custom agent loop | Tool-use orchestration with state management |
 | LLM backbone | Local LLM (e.g., Llama 3, Qwen 2.5) or local API to Claude / Gemini | Code generation + vision understanding; must run locally or via user's own API key |
-| Compute backend | **NVIDIA CUDA only (v1)** | Every inference adapter targets CUDA. AMD (ROCm) and Apple Silicon (Metal) GPUs are detected and displayed but cannot run inference — see NG8 and TASK-TS-0022 |
+| Compute backend | **NVIDIA CUDA only (v1)** | Every inference adapter targets CUDA. AMD (ROCm) and Apple Silicon (Metal) GPUs are detected and displayed but cannot run inference — see NG8 and TASK-TS-0022. Engine installers ship for Windows x64 and Linux x64 only in v1; macOS follows non-CUDA support |
+| Inference runtime | **Local engine process**, own pinned CPython and virtual environment, loopback HTTP, request-authenticated | Keeps a multi-gigabyte CUDA stack out of the add-on archive, contains inference crashes and OOM outside Blender, makes adapters testable in CI without Blender, and turns non-CUDA support into an engine build rather than an add-on redesign (D10) |
 | Vision models | Depth Anything V2 (Small, Apache-2.0), SAM 2, DINOv2 | Depth, segmentation, feature extraction — **local GPU inference only**. Weight licences are recorded in `MODEL-LICENSES.md`; non-commercial weights are gated |
 | Model distribution | **No weights bundled.** A small curated set downloads on first use; the list is **user-extensible** from Hugging Face | Keeps the add-on small and the licence surface narrow, and lets users trade VRAM for accuracy or follow the field without waiting for a release. Added models are licence-classified, commit-pinned and checksum-verified before download (SPEC-TS-0002 FR-026 – FR-033) |
 | 3D reconstruction | **TRELLIS (MIT)** in v1; adapter layer is model-agnostic | Pluggable; best-of-breed per input type — **all self-hosted, no external APIs**. Zero-1-to-3++ and InstantMesh were evaluated and removed from the shipped manifest on 2026-09-21 — no adapter used them, and their terms are unresolved (see `MODEL-LICENSES.md`) |
@@ -342,6 +346,7 @@ When view labels are omitted, the agent runs a lightweight view-direction classi
 | D6 | Licensing | **GPL accepted** | Add-on code will be GPL v2+, consistent with Blender's license. |
 | D7 | Non-CUDA GPUs | **NVIDIA CUDA only in v1** (2026-09-21) | Detection covers CUDA/ROCm/Metal, but no adapter implements a non-CUDA device path. Shipping the claim without the implementation was the single largest refund risk in the GTM analysis. MPS support is TASK-TS-0022; the thin-add-on / local-engine ADR would unlock ROCm and Metal together with the free Extensions Platform channel. |
 | D8 | Third-party weight licences | **Fail closed — refuse by default** (2026-09-21) | Model weights are not covered by Tessera's GPL-2.0-or-later licence. Every manifest entry declares `license`, `license_url` and `commercial_use`; anything not unambiguously `allowed` — including undeclared terms — is refused unless the user opts in via **Allow Restricted-Licence Models**. Implemented in SPEC-TS-0002 v1.2; terms recorded in `MODEL-LICENSES.md` and re-verified before any commercial release. |
+| D10 | Inference runtime delivery | **Thin add-on plus a separately installed local engine process** (2026-09-22) | PyTorch with CUDA is measured in gigabytes and TRELLIS's compiled extensions often have no prebuilt wheel, so neither can ship in an add-on archive; bundling them was rejected on size, distribution surface and installability. The add-on keeps UI, weight management and the licence gate and hands the engine verified absolute paths; the engine runs the adapters and reaches nothing but its own loopback port. Decided in ADR-0001, specified by SPEC-TS-0023. Consequences: a second installable artifact with its own platform matrix (Windows x64, Linux x64 in v1), a negotiated protocol version between the two halves, and SPEC-TS-0003, 0004, 0007, 0010, 0011 and 0015 amended to match. |
 | D9 | Model selection | **Curated default set, user-extensible list** (2026-09-21) | Tessera ships no weights. The bundled manifest is the recommended set; users may add any compatible Hugging Face model, which Tessera licence-classifies, commit-pins and checksum-verifies before download. Adapters can only load architectures they implement, so additions are constrained to known families. |
 
 ---
@@ -383,4 +388,5 @@ Tessera combines AI reconstruction with Blender's full editing power and print-s
 | 0.2.0-DRAFT | 2026-03-26 | Derek | Incorporated stakeholder feedback; recorded decisions D1–D6 and non-goals NG1–NG7. |
 | 0.3.0-DRAFT | 2026-03-26 | Derek | Phased roadmap, success metrics and risk register finalised for Phase 1 kickoff. |
 | 0.4.0-DRAFT | 2026-09-21 | Derek | Added NG8 and D7 — v1 is NVIDIA CUDA only; GPU detection still covers ROCm and Metal but no adapter implements a non-CUDA device path (TASK-TS-0022 gates the v1.0 listing). Added the Mac/AMD addressable-market risk to §11. Added D8 — third-party model weights fail closed on licence, implemented by SPEC-TS-0002 v1.2, with a matching §11 risk row and a licence note on the §8 vision-model row. Narrowed the §5.2 and §8 reconstruction entries to TRELLIS, the only reconstruction weight in the shipped manifest. |
+| 0.6.0-DRAFT | 2026-09-22 | Derek | Added D10 — the inference runtime is delivered as a thin add-on plus a separately installed local engine process, decided in ADR-0001 and specified by SPEC-TS-0023. Updated §5.2 to say where inference runs, and §8 to describe both deployment artifacts, the engine's own runtime row, and the Windows x64 / Linux x64 installer matrix that follows from v1 being CUDA-only. |
 | 0.5.0-DRAFT | 2026-09-21 | Derek | Added goal G7 and decision D9 — the curated model list is a default, not a limit: users may add any compatible Hugging Face model, licence-classified, commit-pinned and checksum-verified before download (SPEC-TS-0002 FR-026 – FR-033). Added the matching §11 risk for a user adding a model whose licence forbids their use of it, and a Model distribution row to §8. Renumbered the user-extensible-models decision from D8 to D9 — 0.4.0 had already assigned D8 to the fail-closed weight-licence decision, and two rows briefly shared the identifier. |

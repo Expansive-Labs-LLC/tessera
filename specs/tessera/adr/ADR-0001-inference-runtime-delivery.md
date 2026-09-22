@@ -2,7 +2,16 @@
 
 ## Status
 
-Proposed — awaiting CSO decision
+**Accepted** — 2026-09-22, Derek (CSO)
+
+Implemented by TASK-TS-0023 / SPEC-TS-0023.
+
+> **Two load-bearing claims were not verified before acceptance** and are
+> carried forward as explicit work rather than lost: the Extensions Platform
+> archive size limit, and whether prebuilt CUDA-extension wheels exist for the
+> target GPU generation. Both would change the verdict on Option 1 if wrong.
+> They are tracked as the first deliverable of TASK-TS-0023, ahead of any
+> engine code, so that a wrong premise is caught before it is built on.
 
 ## Date
 
@@ -58,7 +67,7 @@ The generate pipeline falls back to `StubAdapter`, which returns a placeholder c
 
 ## Decision Outcome
 
-**Recommended: Option 2 — thin add-on plus a local engine process.**
+**Decision: Option 2 — thin add-on plus a local engine process.**
 
 The add-on stays a small, GPL-clean Blender extension containing UI, operators, weight management and the licence gate. A separate local engine — its own virtual environment, its own PyTorch and CUDA stack, installed once — performs inference and is reached over localhost IPC. The add-on detects whether the engine is present and reports its absence as an actionable state rather than a failure inside `torch`.
 
@@ -99,7 +108,7 @@ This is the only option satisfying D1–D4 simultaneously. It is also already ge
 - Good: adapters become testable in CI without Blender.
 - Bad: a second installable artifact, with its own install UX to get right.
 - Bad: introduces a protocol to version and maintain.
-- **Recommended.**
+- **Chosen.**
 
 ### Option 3 — User-managed environment in Blender's bundled Python
 
@@ -129,10 +138,43 @@ This is the only option satisfying D1–D4 simultaneously. It is also already ge
 
 ## Consequences for Existing Work
 
-- **TASK-TS-0016** (SAM 2, DINOv2 adapters) and **TASK-TS-0017** (TRELLIS) are both blocked on this decision. Neither should start before it is made.
-- **TASK-TS-0022** (Apple Silicon) is materially cheaper under Option 2 and should be re-estimated after this is accepted.
-- **SPEC-TS-0004** (reconstruction engine) assumes in-process inference and will need amending if Option 2 is accepted.
-- **SPEC-TS-0015** (marketplace publication) must describe the engine install, since it changes what a buyer is agreeing to install.
+Implemented by **TASK-TS-0023 / SPEC-TS-0023**.
+
+> **The first version of this section was incomplete.** It named two affected
+> specs. A scan of all fifteen found six, three of which contain a constraint
+> that this decision *directly contradicts* rather than merely dates. The
+> corrected list is below.
+
+### Direct contradictions — these specs currently forbid what this ADR decides
+
+Each of these carries a constraint requiring inference to run inside the
+Blender process. Accepting Option 2 makes them wrong, not merely stale, and an
+implementer following them would build the rejected option.
+
+| Spec | Status | Constraint |
+|---|---|---|
+| **SPEC-TS-0004** Reconstruction engine | Approved | CON-008 — "SHALL NOT use `subprocess` or shell commands to invoke model inference. All inference SHALL run in-process via Python/PyTorch." |
+| **SPEC-TS-0007** Multi-view reconstruction | Submitted | CON-009 — "SHALL NOT use `subprocess` or shell commands to invoke SfM or reconstruction. All processing SHALL run in-process via Python/PyTorch." |
+| **SPEC-TS-0010** Sketch-to-3D | Draft | CON-008 — "SHALL NOT use `subprocess` or shell commands for inference. All inference SHALL run in-process via Python/PyTorch." |
+
+These three SHALL be amended before any engine work begins. The constraint's
+intent — no shelling out to opaque binaries mid-pipeline — is still right; it
+needs rewording to permit the sanctioned engine boundary while continuing to
+forbid ad-hoc subprocess invocation.
+
+### Consequential amendments — correct today, wrong once the engine exists
+
+| Spec | Status | What moves |
+|---|---|---|
+| **SPEC-TS-0003** Vision pipeline | Approved | NFR-003 measures `torch.cuda.max_memory_allocated()` and EC-00x catches `torch.cuda.OutOfMemoryError` — both now occur in a different process and reach the add-on as structured errors |
+| **SPEC-TS-0011** Production hardening | Draft | FR-007, FR-011 and FR-013 define VRAM handling, the perf report and an LRU model cache in terms of `torch.cuda.*`; all become engine-side concerns |
+| **SPEC-TS-0015** Marketplace publication | Draft | Must describe the engine install — it changes what a buyer agrees to install |
+
+### Tasks
+
+- **TASK-TS-0016** (SAM 2, DINOv2 adapters) and **TASK-TS-0017** (TRELLIS) are blocked by TASK-TS-0023, not merely by this decision. Their adapters move engine-side, so their scope changes as well as their timing.
+- **TASK-TS-0021** (refinement LLM backend) should be assessed: `local_llm.py` calls `ensure_model()` for a GGUF model, which is a second local runtime. Whether it shares the engine or stays separate is an open question this ADR does not settle.
+- **TASK-TS-0022** (Apple Silicon) is materially cheaper under Option 2 and should be re-estimated.
 
 ## References
 

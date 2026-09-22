@@ -10,10 +10,10 @@
 |-------|-------|
 | **Spec ID** | SPEC-TS-0004 |
 | **Task ID** | TASK-TS-0004 |
-| **Status** | Approved |
-| **Version** | 1.1 |
+| **Status** | Reopened |
+| **Version** | 1.2 |
 | **Created** | 2026-04-09 |
-| **Last Updated** | 2026-04-14 |
+| **Last Updated** | 2026-09-22 |
 | **Author** | Orchestrator (AI) |
 | **Pod** | Tessera |
 | **CSO Approver** | Derek |
@@ -297,7 +297,7 @@ class ReconstructionResult:
 | CON-005 | SHALL NOT hardcode file paths or model weight locations. All paths SHALL be resolved relative to the add-on preferences cache directory. |
 | CON-006 | SHALL NOT modify or depend on Blender scene state (`bpy.context`, `bpy.data`). The reconstruction engine operates on raw numpy arrays and returns a `StandardMesh`. Blender integration is the responsibility of downstream tasks (TASK-TS-0005). |
 | CON-007 | All source code SHALL be licensed under GPL v2+. Each source file SHALL include a GPL license header comment. |
-| CON-008 | SHALL NOT use `subprocess` or shell commands to invoke model inference. All inference SHALL run in-process via Python/PyTorch. |
+| CON-008 | SHALL NOT invoke inference by shelling out to an arbitrary binary or constructing a command line. Inference SHALL run either in-process, or in the sanctioned local engine process over its defined local API (ADR-0001, SPEC-TS-0023). No other out-of-process mechanism is permitted. |
 
 ---
 
@@ -674,6 +674,7 @@ N/A — local add-on, no telemetry collected per decision D3 (local/self-hosted 
 |---------|------|--------|-------------------|
 | 1.0 | 2026-04-09 | Orchestrator (AI) | Initial draft |
 | 1.1 | 2026-04-14 | AI (spec-review remediation) | Aligned `VisionPipelineOutput` with upstream `VisionResult` (C-001); replaced "plausible" in FR-007 with measurable criteria (M-001); added adapter selection algorithm (M-002); added FR-021 input count validation and EC-006 (M-003); added FR-022 timeout mechanism (M-004); fixed `source_adapter` location (m-002); added checksum manifest cross-ref to SEC-004 (m-004); aligned test priorities (m-005); updated self-score |
+| 1.2 | 2026-09-22 | Derek | Amended CON-008 for ADR-0001. The constraint required all inference to run in-process, which the accepted thin-add-on / local-engine decision contradicts — an implementer following it would build the rejected option. The intent (no shelling out to arbitrary binaries) is preserved; the sanctioned engine boundary defined by SPEC-TS-0023 is now permitted, and nothing else is. |
 
 ---
 
