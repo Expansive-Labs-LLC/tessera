@@ -1,5 +1,13 @@
 # Changelog
 
+# [1.3.0](https://github.com/Expansive-Labs-LLC/tessera/compare/1.2.1...1.3.0) (2026-09-22)
+
+
+### Features
+
+* **engine:** add the add-on side of the inference engine boundary ([bd68e0b](https://github.com/Expansive-Labs-LLC/tessera/commit/bd68e0b2718f46d71c56f5c67f1c59a5bb360c04))
+* **engine:** implement SPEC-TS-0023 on both sides of the boundary ([ddc845f](https://github.com/Expansive-Labs-LLC/tessera/commit/ddc845f98d90b35cb2445ee9fcc83eb40877004b))
+
 ## [1.2.1](https://github.com/Expansive-Labs-LLC/tessera/compare/1.2.0...1.2.1) (2026-09-22)
 
 
