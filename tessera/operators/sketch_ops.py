@@ -35,6 +35,7 @@ import os
 import bpy
 from bpy.props import BoolProperty, FloatProperty, IntProperty, StringProperty
 from bpy.types import Operator
+from ..addon import get_addon_preferences
 
 logger = logging.getLogger("tessera")
 
@@ -174,9 +175,9 @@ class TESSERA_OT_SketchGenerate(Operator):
             from ..sketch.types import SketchConfig
 
             # Access cache_dir from addon preferences
-            addon_prefs = context.preferences.addons.get("tessera")
-            if addon_prefs and hasattr(addon_prefs, "preferences"):
-                cache_dir = addon_prefs.preferences.cache_dir
+            addon_prefs = get_addon_preferences(context)
+            if addon_prefs is not None:
+                cache_dir = addon_prefs.cache_dir
             else:
                 cache_dir = os.path.join(
                     bpy.utils.user_resource("SCRIPTS"),
@@ -350,9 +351,9 @@ class TESSERA_OT_SketchDetect(Operator):
             from ..sketch import SketchDetector
 
             # Access cache_dir from addon preferences
-            addon_prefs = context.preferences.addons.get("tessera")
-            if addon_prefs and hasattr(addon_prefs, "preferences"):
-                cache_dir = addon_prefs.preferences.cache_dir
+            addon_prefs = get_addon_preferences(context)
+            if addon_prefs is not None:
+                cache_dir = addon_prefs.cache_dir
             else:
                 cache_dir = os.path.join(
                     bpy.utils.user_resource("SCRIPTS"),

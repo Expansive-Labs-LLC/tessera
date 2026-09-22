@@ -44,6 +44,7 @@ Public API:
 import logging
 import threading
 from typing import Any
+from ..addon import get_addon_preferences
 
 logger = logging.getLogger("tessera.models")
 
@@ -177,9 +178,9 @@ def sync_from_preferences() -> bool:
         :func:`restricted_models_allowed` instead.
     """
     try:
-        import bpy
-
-        prefs = bpy.context.preferences.addons["tessera"].preferences
+        prefs = get_addon_preferences()
+        if prefs is None:
+            raise RuntimeError("add-on preferences unavailable")
         value = bool(getattr(prefs, "allow_restricted_license_models", False))
     except Exception:  # pragma: no cover — bpy absent or add-on not registered
         logger.debug("Could not read licence preference; leaving flag unchanged.")

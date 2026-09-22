@@ -29,6 +29,8 @@ import bpy
 from bpy.props import BoolProperty, EnumProperty, StringProperty
 from bpy.types import AddonPreferences
 
+from .addon import ADDON_ID
+
 from .gpu_detection import get_gpu_info
 
 logger = logging.getLogger("tessera")
@@ -47,12 +49,22 @@ def _get_default_cache_dir():
         str: Default cache directory path.
     """
     try:
-        # Extension install path (Blender 4.2+ extensions)
-        cache_path = bpy.utils.extension_path_user(__package__, "cache")
+        # Extension install path (Blender 4.2+ extensions). ``path`` is
+        # keyword-only — passing it positionally raises TypeError, which
+        # previously fell through to the legacy add-ons path below and put
+        # multi-gigabyte weights outside the extension's own directory.
+        cache_path = bpy.utils.extension_path_user(
+            ADDON_ID, path="cache", create=False
+        )
         if cache_path:
             return cache_path
-    except (TypeError, AttributeError):
-        pass
+    except (TypeError, AttributeError) as exc:
+        logger.warning(
+            "extension_path_user(%r) unavailable (%s); using the legacy "
+            "add-ons cache path.",
+            ADDON_ID,
+            exc,
+        )
 
     # Fallback for manual .zip installs
     return os.path.join(
@@ -129,7 +141,7 @@ class TesseraPreferences(AddonPreferences):
     Implements: FR-007, FR-008, FR-009, EC-003.
     """
 
-    bl_idname = "tessera"
+    bl_idname = ADDON_ID
 
     gpu_device: EnumProperty(
         name="GPU Device",
@@ -303,8 +315,13 @@ class TesseraPreferences(AddonPreferences):
             from .ui.download_panel import draw_models_preferences
 
             draw_models_preferences(layout, context)
-        except Exception:
-            pass  # Models module may not be initialized yet
+        except Exception as exc:
+            # Never swallow this. A silent except here is why a broken
+            # preferences key presented as an empty panel with no clue.
+            logger.exception("Failed to draw the Models section")
+            box = layout.box()
+            box.label(text="Models", icon="PACKAGE")
+            box.label(text=f"Model management unavailable: {exc}", icon="ERROR")
 
 
 def init_gpu_info():

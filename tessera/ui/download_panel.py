@@ -25,6 +25,7 @@ Implements: FR-005, FR-008, FR-009, FR-010, FR-011, FR-016, FR-018.
 import logging
 
 from bpy.types import Panel
+from ..addon import get_addon_preferences
 
 logger = logging.getLogger("tessera.models")
 
@@ -201,10 +202,10 @@ def draw_models_preferences(layout, context):
         return
 
     # FR-018 (MAY): Download on first use toggle
-    addon_prefs = context.preferences.addons.get("tessera")
-    if addon_prefs and hasattr(addon_prefs.preferences, "download_on_first_use"):
+    addon_prefs = get_addon_preferences(context)
+    if addon_prefs is not None and hasattr(addon_prefs, "download_on_first_use"):
         box.prop(
-            addon_prefs.preferences,
+            addon_prefs,
             "download_on_first_use",
             text="Download on first use",
         )
