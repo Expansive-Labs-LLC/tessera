@@ -32,19 +32,19 @@ Public API:
     PreviewImage — rendered preview image dataclass
 """
 
-from tessera.multiview.pose_estimation.base import PoseEstimator
-from tessera.multiview.pose_estimation.hloc_estimator import HlocPoseEstimator
-from tessera.multiview.pose_estimation.types import (
+from ..multiview.pose_estimation.base import PoseEstimator
+from ..multiview.pose_estimation.hloc_estimator import HlocPoseEstimator
+from ..multiview.pose_estimation.types import (
     CameraPose,
     InsufficientOverlapError,
     InsufficientSeparationError,
     PoseEstimationError,
     PoseEstimationResult,
 )
-from tessera.multiview.preview.camera_setup import PreviewImage
-from tessera.multiview.preview.renderer import PreviewRenderer
-from tessera.multiview.reconstruction.multiview_adapter import MultiViewAdapter
-from tessera.multiview.strategy import StrategySelector
+from ..multiview.preview.camera_setup import PreviewImage
+from ..multiview.preview.renderer import PreviewRenderer
+from ..multiview.reconstruction.multiview_adapter import MultiViewAdapter
+from ..multiview.strategy import StrategySelector
 
 __all__ = [
     "CameraPose",

@@ -29,12 +29,12 @@ Public API:
     SymmetryEnforcer — bilateral symmetry post-processing (FR-024)
 """
 
-from tessera.sketch.detector import SketchDetector
-from tessera.sketch.pipeline import SketchPipeline
-from tessera.sketch.preprocessor import SketchPreprocessor
-from tessera.sketch.symmetry import SymmetryEnforcer
-from tessera.sketch.synthesizer import SketchSynthesizer
-from tessera.sketch.types import (
+from ..sketch.detector import SketchDetector
+from ..sketch.pipeline import SketchPipeline
+from ..sketch.preprocessor import SketchPreprocessor
+from ..sketch.symmetry import SymmetryEnforcer
+from ..sketch.synthesizer import SketchSynthesizer
+from ..sketch.types import (
     PreprocessedSketch,
     SketchConfig,
     SketchDetectionResult,

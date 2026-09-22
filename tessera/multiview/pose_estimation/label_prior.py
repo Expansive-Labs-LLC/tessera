@@ -37,10 +37,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from tessera.multiview.pose_estimation.types import CameraPose
+from ...multiview.pose_estimation.types import CameraPose
 
 if TYPE_CHECKING:
-    from tessera.vision.types import VIEW_LABEL_POSES
+    from ...vision.types import VIEW_LABEL_POSES
 else:
     # Load VIEW_LABEL_POSES directly from the types.py file to avoid
     # triggering tessera.vision.__init__ which eagerly imports the

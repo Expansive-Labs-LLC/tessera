@@ -36,7 +36,7 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from tessera.multiview.preview.camera_setup import (
+from ...multiview.preview.camera_setup import (
     PREVIEW_RESOLUTION,
     PREVIEW_VIEWS,
     PreviewImage,

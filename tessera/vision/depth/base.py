@@ -48,7 +48,7 @@ class DepthAdapter(ABC):
         """Human-readable model name for logging and error messages.
 
         Returns:
-            str: The model name (e.g., ``"Depth Anything V2 Large"``).
+            str: The model name (e.g., ``"Depth Anything V2 Small"``).
         """
         ...
 

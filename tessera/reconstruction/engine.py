@@ -36,16 +36,16 @@ from typing import Optional
 
 import numpy as np
 
-from tessera.reconstruction.adapter import VisionPipelineOutput
-from tessera.reconstruction.adapters.stub_adapter import StubAdapter
-from tessera.reconstruction.adapters.trellis_adapter import TrellisAdapter
-from tessera.reconstruction.mesh_output import (
+from ..reconstruction.adapter import VisionPipelineOutput
+from ..reconstruction.adapters.stub_adapter import StubAdapter
+from ..reconstruction.adapters.trellis_adapter import TrellisAdapter
+from ..reconstruction.mesh_output import (
     AdapterCapabilities,
     ReconstructionResult,
 )
-from tessera.reconstruction.registry import AdapterRegistry
-from tessera.reconstruction.utils.mesh_conversion import validate_mesh
-from tessera.reconstruction.utils.vram_guard import VRAMGuard
+from ..reconstruction.registry import AdapterRegistry
+from ..reconstruction.utils.mesh_conversion import validate_mesh
+from ..reconstruction.utils.vram_guard import VRAMGuard
 
 logger = logging.getLogger("tessera.reconstruction")
 

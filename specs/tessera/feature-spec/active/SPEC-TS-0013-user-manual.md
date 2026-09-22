@@ -11,9 +11,9 @@
 | **Spec ID** | SPEC-TS-0013 |
 | **Task ID** | TASK-TS-0013 |
 | **Status** | Draft |
-| **Version** | 1.2 |
+| **Version** | 1.3 |
 | **Created** | 2026-04-16 |
-| **Last Updated** | 2026-04-17 |
+| **Last Updated** | 2026-09-21 |
 | **Author** | Orchestrator (AI) |
 | **Pod** | Tessera |
 | **CSO Approver** | Derek |
@@ -37,7 +37,7 @@ Tessera is an AI-powered Blender add-on targeting users who may NOT be 3D modeli
 
 A preliminary `docs/` directory already exists with MkDocs Material theme configuration, skeleton pages (index, installation, quickstart, troubleshooting, 4 user-guide pages, 2 API reference pages), and a gallery placeholder. However, the current content is incomplete — user-guide pages lack coverage of the sketch-to-3D pathway, mesh cleanup details, scaling/orientation workflow, and add-on preferences. The troubleshooting page covers error codes but lacks a structured FAQ. No reference section (view label vocabulary, keyboard shortcuts, printer profiles, glossary) exists. No screenshots or visual aids are present. The site has never been built or deployed to GitHub Pages.
 
-This spec defines the complete content, structure, build tooling, and deployment configuration needed to publish a production-quality documentation site at `https://expansive-labs-llc.github.io/tessera/`.
+This spec defines the complete content, structure, build tooling, and deployment configuration needed to publish a production-quality documentation site at `https://expansivelabs.io/tessera/`.
 
 ### 1.2 User Story
 **As a** Tessera user who just installed the add-on,  
@@ -85,7 +85,7 @@ Expand the existing `docs/` directory into a comprehensive MkDocs Material docum
 - **Language:** Markdown (GitHub-Flavored)
 - **Markdown extensions:** `admonition`, `pymdownx.details`, `pymdownx.superfences`, `pymdownx.highlight`, `pymdownx.tabbed`, `attr_list`, `md_in_html`, `toc`, `pymdownx.keys` (for keyboard shortcuts — **new**, not in existing config)
 - **Plugins:** `search`, `mkdocs-glightbox` (image lightbox), `mkdocs-git-revision-date-localized-plugin` (page freshness)
-- **Hosting:** GitHub Pages at `https://expansive-labs-llc.github.io/tessera/`
+- **Hosting:** GitHub Pages at `https://expansivelabs.io/tessera/`
 - **Build:** `mkdocs build` (static HTML), `mkdocs serve` (local dev)
 - **License:** Documentation content licensed under CC-BY-4.0 (per SPEC-TS-0012 FR-020)
 
@@ -145,7 +145,7 @@ tessera/
 |----|-------------|
 | FR-001 | The `docs/mkdocs.yml` SHALL define a `nav` structure with the following top-level sections in order: (1) Home, (2) Getting Started (Installation, Quick Start), (3) User Guide (Image Input, 3D Reconstruction, Sketch-to-3D, Mesh Cleanup, Scaling & Orientation, Refinement, Export & Print, Preferences), (4) Reference (View Labels, Keyboard Shortcuts, Printer Profiles, Error Codes, Glossary), (5) FAQ, (6) API Reference (Pipeline, Adapters), (7) Gallery. This restructures the existing nav by adding Reference and FAQ sections, expanding the User Guide from 4 to 8 sub-pages, and reordering Troubleshooting (previously a top-level item) into the Getting Started/Reference flow. |
 | FR-002 | The `docs/mkdocs.yml` SHALL configure MkDocs Material theme with: (a) light/dark mode toggle using `deep purple` primary and `amber` accent, (b) `navigation.tabs`, `navigation.sections`, `navigation.expand`, `navigation.top`, `search.suggest`, `search.highlight`, `content.code.copy` features, (c) GitHub repo link to `https://github.com/Expansive-Labs-LLC/tessera`. |
-| FR-003 | The `docs/mkdocs.yml` SHALL set `site_url` to `https://expansive-labs-llc.github.io/tessera/` (correcting the existing misconfigured value `https://expansivelabs.github.io/tessera/`) and `site_name` to `Tessera — Image-to-3D for Blender`. |
+| FR-003 | The `docs/mkdocs.yml` SHALL set `site_url` to `https://expansivelabs.io/tessera/` (correcting the existing misconfigured value `https://expansivelabs.github.io/tessera/`) and `site_name` to `Tessera — Image-to-3D for Blender`. |
 | FR-004 | The `docs/mkdocs.yml` SHALL include the following plugins: (a) `search`, (b) `glightbox` for image lightbox viewing, (c) `git-revision-date-localized` with `type: date` and `enable_creation_date: true`. |
 | FR-005 | The `docs/mkdocs.yml` SHALL include the following markdown extensions: `admonition`, `pymdownx.details`, `pymdownx.superfences`, `pymdownx.highlight` (with `anchor_linenums: true`), `pymdownx.tabbed` (with `alternate_style: true`), `pymdownx.keys`, `attr_list`, `md_in_html`, `toc` (with `permalink: true`). |
 | FR-006 | A `docs/requirements.txt` file SHALL be created listing all Python dependencies needed to build the documentation site: `mkdocs>=1.6`, `mkdocs-material>=9.5`, `mkdocs-glightbox>=0.4`, `mkdocs-git-revision-date-localized-plugin>=1.2`. |
@@ -156,7 +156,7 @@ tessera/
 |----|-------------|
 | FR-007 | The `docs/docs/index.md` SHALL begin with a hero section containing: (a) project name "Tessera", (b) tagline "Transform reference photos into print-ready 3D models, entirely within Blender", (c) a 2–3 sentence value proposition sourced from PRD §1, (d) a screenshot placeholder with `alt` text describing the Tessera sidebar panel in the 3D Viewport: `![Tessera main panel showing Image Input, Generation, Validation, and Export sections in the Blender 3D Viewport sidebar](assets/screenshots/main-panel.png)`. |
 | FR-008 | The `docs/docs/index.md` SHALL include a "Key Features" section with ≥ 9 bullet points covering: (1) AI-powered vision pipeline, (2) multi-view reconstruction, (3) sketch-to-3D, (4) mesh cleanup & topology optimization, (5) print-readiness validation, (6) natural-language refinement, (7) real-world scaling & print orientation, (8) multi-format export (STL/OBJ/3MF), (9) local GPU inference. |
-| FR-009 | The `docs/docs/index.md` SHALL include a "System Requirements" table with columns: Component, Minimum, Recommended. Rows SHALL include: (a) Blender: 4.2 LTS / 4.3+, (b) GPU: NVIDIA CUDA or Apple Silicon MPS, 4 GB VRAM / 8+ GB VRAM, (c) RAM: 8 GB / 16+ GB, (d) Disk: 2 GB for model weights / 5+ GB, (e) OS: Windows 10+, macOS 13+ (Apple Silicon), Linux. |
+| FR-009 | *(v1.3)* The `docs/docs/index.md` SHALL include a "System Requirements" table with columns: Component, Minimum, Recommended. Rows SHALL include: (a) Blender: 4.2 LTS / 4.3+, (b) GPU: NVIDIA CUDA, 6 GB VRAM / NVIDIA CUDA, 12 GB VRAM, (c) RAM: 16 GB / 32 GB, (d) Disk: 5.5 GB for model weights / 10 GB, (e) OS: Windows 10+ or Linux. The page SHALL also carry a warning that AMD (ROCm) and Apple Silicon (Metal) GPUs are detected but not supported in v1 (PRD-001 NG8, TASK-TS-0022). *(Previous values claimed Apple Silicon support and a 2 GB download; neither matched the implementation.)* |
 
 ### 3.3 Installation Guide (FR-010 – FR-014)
 
@@ -165,7 +165,7 @@ tessera/
 | FR-010 | The `docs/docs/installation.md` SHALL include platform-specific installation tabs for Windows, macOS (Apple Silicon), and Linux, each containing ≤ 5 numbered steps from download to verification. |
 | FR-011 | The `docs/docs/installation.md` SHALL include a "Build from Source" section with ≤ 6 numbered steps: (1) clone repository, (2) navigate to project directory, (3) create add-on ZIP (`zip -r tessera.zip tessera/`), (4) install via Blender Preferences → Add-ons → Install from Disk, (5) enable the add-on, (6) verify panel appears in sidebar. |
 | FR-012 | The `docs/docs/installation.md` SHALL include a "GPU VRAM Requirements" table showing minimum VRAM per feature tier: (a) basic reconstruction: 4 GB, (b) multi-view reconstruction: 8 GB, (c) sketch-to-3D: 8 GB, (d) NL refinement (local LLM): 8 GB, (e) all features simultaneously: 12 GB recommended. |
-| FR-013 | The `docs/docs/installation.md` SHALL include a "Model Weight Download" section describing: (a) first-run automatic download process, (b) manual download via Model Manager panel, (c) total download size (~2 GB), (d) cache directory location per platform (Linux/macOS: `~/.cache/tessera/`, Windows: `%APPDATA%\tessera\`), (e) how to change the cache directory in preferences. |
+| FR-013 | *(v1.3)* The `docs/docs/installation.md` SHALL include a "Model Weight Download" section describing: (a) first-run automatic download process, (b) manual download via Model Manager panel, (c) total download size for the default set (~5.5 GB), (d) cache directory location per platform (Linux/macOS: `~/.cache/tessera/`, Windows: `%APPDATA%\tessera\`), (e) how to change the cache directory in preferences. The size SHALL be kept consistent with `tessera/models/manifest.json`. |
 | FR-014 | The `docs/docs/installation.md` SHALL include an "Apple Silicon (MPS)" admonition box noting: (a) Tessera uses Metal Performance Shaders on Apple Silicon, (b) VRAM is shared system memory, (c) macOS 13+ required, (d) performance characteristics differ from CUDA. |
 
 ### 3.4 Quick Start Guide (FR-015 – FR-017)
@@ -180,7 +180,7 @@ tessera/
 
 | ID | Requirement |
 |----|-------------|
-| FR-018 | The user guide SHALL contain 8 pages, one per major feature area: (1) Image Input, (2) 3D Reconstruction, (3) Sketch-to-3D, (4) Mesh Cleanup, (5) Scaling & Orientation, (6) Refinement, (7) Export & Print, (8) Preferences. |
+| FR-018 | *(v1.3)* The user guide SHALL contain 9 pages, one per major feature area: (1) Image Input, (2) 3D Reconstruction, (3) Sketch-to-3D, (4) Mesh Cleanup, (5) Scaling & Orientation, (6) Refinement, (7) Export & Print, (8) Custom Models, (9) Preferences. |
 | FR-019 | The `docs/docs/user-guide/image-input.md` SHALL document: (a) supported image formats with a table (JPG, PNG, WebP, HEIC), (b) image requirements (resolution ≥ 256×256, ≤ 4096×4096, non-blurry), (c) photography tips for single-image and multi-view capture, (d) view label assignment with a link to the reference vocabulary table, (e) screenshot placeholder showing the Image Input panel with images loaded. |
 | FR-020 | The `docs/docs/user-guide/reconstruction.md` SHALL document: (a) single-image reconstruction workflow with adapter selection (TripoSR, InstantMesh, CRM), (b) multi-view reconstruction workflow (≥ 3 images), (c) adapter comparison table with columns: Adapter, Best For, VRAM Required, Speed, (d) screenshot placeholder showing the Generation panel. |
 | FR-021 | A new `docs/docs/user-guide/sketch-to-3d.md` SHALL be created documenting: (a) what sketch input is (hand-drawn line art from paper photos or digital drawings), (b) sketch preprocessing (edge detection, cleanup), (c) symmetry enforcement options, (d) limitations (simple shapes only, no textures), (e) screenshot placeholder showing sketch input and resulting 3D output. |
@@ -230,14 +230,15 @@ tessera/
 
 | ID | Requirement |
 |----|-------------|
-| FR-043 | The `tessera/ui/help_panel.py` SHALL be modified to include a "Documentation" button/operator that opens the documentation site URL (`https://expansive-labs-llc.github.io/tessera/`) in the user's default web browser via `bpy.ops.wm.url_open(url=...)`. **Note:** The existing `_DOCS_URL` and `_QUICKSTART_URL` constants (currently set to the old `expansivelabs.github.io` domain) SHALL be updated to use the corrected `expansive-labs-llc.github.io` domain. |
-| FR-044 | The `tessera/__init__.py` `bl_info` dictionary SHALL be updated to set `"doc_url"` to `"https://expansive-labs-llc.github.io/tessera/"` so that Blender's built-in "Documentation" button in the add-on preferences links to the docs site. |
+| FR-043 | The `tessera/ui/help_panel.py` SHALL be modified to include a "Documentation" button/operator that opens the documentation site URL (`https://expansivelabs.io/tessera/`) in the user's default web browser via `bpy.ops.wm.url_open(url=...)`. **Note:** The existing `_DOCS_URL` and `_QUICKSTART_URL` constants SHALL point at the domain GitHub actually serves for this org, `https://expansivelabs.io/tessera/` *(corrected v1.3 — the org's verified custom domain governs every project Pages site, and the `github.io` address only redirects)*. |
+| FR-044 | The `tessera/__init__.py` `bl_info` dictionary SHALL be updated to set `"doc_url"` to `"https://expansivelabs.io/tessera/"` so that Blender's built-in "Documentation" button in the add-on preferences links to the docs site. |
 | FR-045 | Existing tooltip text (the `description` field) on all operators and properties in `tessera/operators/*.py` and `tessera/properties.py` SHOULD be reviewed and updated to provide concise, actionable descriptions that serve as in-context help. This is a SHOULD requirement — defer to a separate task if scope exceeds 2 hours of effort. |
 
 ### 3.11 Gallery Page (FR-046)
 
 | ID | Requirement |
 |----|-------------|
+| FR-047 | *(v1.3)* A `docs/docs/user-guide/custom-models.md` page SHALL document the user-extensible model list (SPEC-TS-0002 FR-026 – FR-033), covering: (a) how to add a model from Hugging Face and the meaning of each dialog field, (b) which architecture families an adapter can load and which are download-only for now, (c) what Tessera checks before adding — declared licence and its classification, a SHA256 per file, the pinned commit, and accepted file types, (d) that weights are third-party and licence compliance is the user's responsibility, (e) where the user list is stored and that it survives add-on updates, (f) a worked example, (g) a troubleshooting table of the refusal messages. The page SHALL state plainly that a licence classification is a check of what the publisher declared, not legal advice. |
 | FR-046 | The `docs/docs/gallery/index.md` SHALL be updated to include a gallery structure with ≥ 3 placeholder entries. Each entry SHALL include: (a) object name, (b) input description (number of images, view labels used), (c) input image placeholder, (d) output 3D render placeholder, (e) output format(s), (f) approximate generation time. Actual images SHALL be generated using the Tessera add-on and added in a follow-up commit or task. |
 
 ### 3.12 Input Specifications
@@ -325,7 +326,7 @@ N/A — This spec produces documentation content. Inputs are existing source fil
 ### AC-006: In-Add-on Help Links to Documentation Site
 **Given** the `tessera/ui/help_panel.py` has been updated and `tessera/__init__.py` `bl_info["doc_url"]` is set,  
 **When** a user clicks the "Documentation" button in the Help panel or clicks "Documentation" in the add-on preferences,  
-**Then** the user's default web browser opens `https://expansive-labs-llc.github.io/tessera/`.
+**Then** the user's default web browser opens `https://expansivelabs.io/tessera/`.
 
 ### AC-007: MkDocs Nav Structure Matches Spec
 **Given** the `docs/mkdocs.yml` has been updated with the expanded `nav` structure,  
@@ -347,7 +348,7 @@ N/A — This spec produces documentation content. Inputs are existing source fil
 | Aspect | Detail |
 |--------|--------|
 | **Scenario** | The existing `docs/` directory already contains pages (`index.md`, `installation.md`, etc.) with content that may be linked from external sources (README, CONTRIBUTING). Renaming or deleting these files would break incoming links. |
-| **Input Example** | Someone has bookmarked `https://expansive-labs-llc.github.io/tessera/installation/` or the README links to `docs/docs/troubleshooting.md`. |
+| **Input Example** | Someone has bookmarked `https://expansivelabs.io/tessera/installation/` or the README links to `docs/docs/troubleshooting.md`. |
 | **Expected Behavior** | All existing filenames SHALL be preserved. New pages SHALL be additions only. Existing content SHALL be expanded in-place, not replaced with stubs. The `nav` structure SHALL maintain existing URL paths. |
 | **Test ID** | TS-001 |
 
@@ -479,7 +480,7 @@ The following are explicitly **excluded** from this feature:
 | TS-008 | `glossary.md` contains ≥ 25 defined terms | Script | AC-004, NFR-007 | Must Pass |
 | TS-009 | `faq.md` contains ≥ 15 `## ` headings (questions) | Script | AC-005, NFR-005 | Must Pass |
 | TS-010 | `faq.md` contains all 10 specific questions from FR-038 | Manual | AC-005, FR-038 | Must Pass |
-| TS-011 | `tessera/__init__.py` `bl_info["doc_url"]` is set to `https://expansive-labs-llc.github.io/tessera/` | Script | AC-006, FR-044 | Must Pass |
+| TS-011 | `tessera/__init__.py` `bl_info["doc_url"]` is set to `https://expansivelabs.io/tessera/` | Script | AC-006, FR-044 | Must Pass |
 | TS-012 | `help_panel.py` contains a `url_open` operator call with the docs URL | Script | AC-006, FR-043 | Must Pass |
 | TS-013 | `mkdocs.yml` nav has 7 top-level sections | Manual | AC-007, FR-001 | Must Pass |
 | TS-014 | `docs/requirements.txt` exists and lists ≥ 4 dependencies | Script | FR-006 | Must Pass |
@@ -491,6 +492,8 @@ The following are explicitly **excluded** from this feature:
 | TS-020 | No page contains paths matching `/home/derek/` or personal identifiers | Script | SEC-002 | Must Pass |
 | TS-021 | `printer-profiles.md` contains ≥ 7 printer profiles | Manual | FR-032, AC-004 | Must Pass |
 | TS-022 | `error-codes.md` contains entries for BF-E001 through BF-E016 plus BF-E999 fallback (17 total, matching `tessera/errors/catalog.py`) | Script | FR-033 | Must Pass |
+| TS-023 | `custom-models.md` exists, documents the add flow, the licence classifications, the integrity and pinning guarantees, and states that compliance is the user's responsibility | Script | FR-047 | Must Pass |
+| TS-024 | Platform claims across `index.md`, `installation.md`, `faq.md` and `glossary.md` say NVIDIA CUDA only, and no page claims Apple Silicon or AMD inference support | Script | FR-009 | Must Pass |
 
 > **Note on "Script" tests:** Script-type tests (TS-001, TS-002, TS-003, TS-004, TS-006, TS-008, TS-009, TS-011, TS-012, TS-014, TS-015, TS-016, TS-017, TS-020, TS-022) are one-off verification scripts run by the implementor during review. They do not need to be committed to the repository as part of the permanent test suite.
 
@@ -575,6 +578,7 @@ The following are explicitly **excluded** from this feature:
 |---------|------|--------|-------------------|
 | 1.0 | 2026-04-16 | Orchestrator (AI) | Initial draft |
 | 1.1 | 2026-04-16 | AI (Spec Review) | Fixed §2.1 file references (preferences.py→properties.py, errors/codes.py→errors/catalog.py), corrected site_url mismatch note in FR-003, added SPEC-TS-0011 out-of-scope entry, fixed UI panel count (12→13), added nav restructure note to FR-001, corrected error code range in FR-033/TS-022, added pymdownx.keys as new extension note |
+| 1.3 | 2026-09-21 | Orchestrator (AI) | **Amendment — awaiting CSO approval.** Corrected the platform claims the docs inherited from the PRD: FR-009's system-requirements row and FR-013's download size were wrong in both directions (Apple Silicon inference was never implemented; the default model set is 5.5 GB, not 2 GB). Added FR-047 and a ninth user-guide page documenting the user-extensible model list (SPEC-TS-0002 v1.3), and TS-023/TS-024 to hold both in place. |
 | 1.2 | 2026-04-17 | AI (Spec Review v2) | Fixed UI panel count (13→12), added stale URL update note to FR-043 for existing `_DOCS_URL`/`_QUICKSTART_URL` constants, changed AC-001 to use `mkdocs build --strict`, added `assets/screenshots/README.md` and `gallery.yaml` to §2.3 file tree, aligned self-score with formal review score (93/100) |
 
 ---

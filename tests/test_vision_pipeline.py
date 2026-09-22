@@ -757,13 +757,13 @@ class TestEdgeCases:
         """TS-008 → AC-004: Call pipeline with no GPU — verify GPUNotAvailableError
         raised.
 
-        Given: A system with no CUDA or ROCm compatible GPU detected
-               by gpu_detection.get_gpu_info()
+        Given: A system with no GPU that Tessera can run inference on
+               detected by gpu_detection.get_gpu_info()
         When: VisionPipeline.process(...) is called
-        Then: The method raises GPUNotAvailableError with the message
-              "Vision pipeline requires a CUDA or ROCm GPU. No
-              compatible device detected." and no model loading or
-              inference is attempted.
+        Then: The method raises GPUNotAvailableError naming the NVIDIA
+              CUDA requirement, and no model loading or inference is
+              attempted. (v1 is CUDA-only — AMD and Apple Silicon are
+              detected but unsupported; see TASK-TS-0022.)
 
         Type: Unit | Priority: Must Pass
         """
@@ -787,12 +787,60 @@ class TestEdgeCases:
                 ]
             )
 
-        assert "CUDA or ROCm GPU" in str(exc_info.value)
-        assert "No compatible device detected" in str(exc_info.value)
+        assert "NVIDIA GPU with CUDA" in str(exc_info.value)
+        assert "No compatible GPU was detected" in str(exc_info.value)
 
         # Verify no model loading was attempted
         seg = pipeline._segmentation
         seg.load.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "backend,expected",
+        [("ROCM", "AMD (ROCm)"), ("METAL", "Apple Silicon (Metal)")],
+    )
+    def test_detected_but_unsupported_gpu_is_rejected(
+        self, mock_bpy, tmp_path, backend, expected
+    ):
+        """FR-022: a detected AMD or Apple Silicon GPU is refused explicitly.
+
+        Given: gpu_detection reports a GPU whose backend no adapter can use
+        When: VisionPipeline.process(...) is called
+        Then: GPUNotAvailableError names the device and the CUDA-only
+              limitation, and no model loading is attempted. Previously a
+              ROCm device passed this check and then failed inside torch
+              at ``device="cuda"``.
+
+        Type: Unit | Priority: Must Pass
+        """
+        from unittest.mock import patch
+
+        from tessera.vision.pipeline import VisionPipeline
+        from tessera.vision.types import GPUNotAvailableError, ImageInput
+
+        pipeline = VisionPipeline(
+            segmentation_adapter=_make_mock_segmentation_adapter(),
+            depth_adapter=_make_mock_depth_adapter(),
+            view_classifier_adapter=_make_mock_view_classifier(),
+            feature_adapter=_make_mock_feature_adapter(),
+        )
+        img_path = _create_test_image(tmp_path, "test.jpg", 512, 512)
+
+        with patch(
+            "tessera.gpu_detection.get_gpu_info",
+            return_value={
+                "name": "Detected Device",
+                "vram_gb": 16.0,
+                "backend": backend,
+                "shared_memory": backend == "METAL",
+            },
+        ):
+            with pytest.raises(GPUNotAvailableError) as exc_info:
+                pipeline.process([ImageInput(filepath=str(img_path))])
+
+        message = str(exc_info.value)
+        assert expected in message
+        assert "NVIDIA CUDA only" in message
+        pipeline._segmentation.load.assert_not_called()
 
     def test_TS008b_insufficient_vram_error(self, mock_bpy, tmp_path, mock_gpu_cuda):
         """TS-008b → EC-005: Call pipeline with GPU OOM — verify InsufficientVRAMError

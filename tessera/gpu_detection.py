@@ -20,6 +20,8 @@ with subprocess fallback for VRAM queries. See SPEC-TS-0001 §2.3.
 
 Public API:
     get_gpu_info() -> dict
+    is_inference_supported(gpu_info) -> bool
+    unsupported_backend_message(gpu_info) -> Optional[str]
 """
 
 import logging
@@ -35,6 +37,62 @@ from .utils.gpu_utils import (
 )
 
 logger = logging.getLogger("tessera")
+
+# Backends Tessera can actually run inference on.
+#
+# Detection covers CUDA, ROCm and Metal (SPEC-TS-0001 FR-008), but every
+# inference adapter targets CUDA in v1 — ROCm and Metal GPUs are detected
+# and reported, not supported. Adding a device abstraction so they work is
+# TASK-TS-0022; until then the add-on says so up front rather than failing
+# at model load.
+SUPPORTED_INFERENCE_BACKENDS = ("CUDA",)
+
+
+def is_inference_supported(gpu_info):
+    """Return whether the detected GPU can run Tessera's inference adapters.
+
+    Args:
+        gpu_info: A dict from :func:`get_gpu_info`, or ``None``.
+
+    Returns:
+        bool: ``True`` only for a backend in ``SUPPORTED_INFERENCE_BACKENDS``.
+    """
+    if not gpu_info:
+        return False
+    return gpu_info.get("backend") in SUPPORTED_INFERENCE_BACKENDS
+
+
+def unsupported_backend_message(gpu_info):
+    """Return a user-facing explanation, or ``None`` if the GPU is usable.
+
+    Distinguishes "no GPU at all" from "a GPU we can see but cannot use",
+    because the second case is the one that surprises people — the device
+    shows up correctly in preferences and then inference fails.
+
+    Args:
+        gpu_info: A dict from :func:`get_gpu_info`, or ``None``.
+
+    Returns:
+        Optional[str]: ``None`` when inference is supported.
+    """
+    if is_inference_supported(gpu_info):
+        return None
+
+    if not gpu_info or gpu_info.get("name") is None or gpu_info.get("backend") is None:
+        return (
+            "Tessera requires an NVIDIA GPU with CUDA. No compatible GPU "
+            "was detected."
+        )
+
+    backend = gpu_info.get("backend") or "unknown"
+    label = {"ROCM": "AMD (ROCm)", "METAL": "Apple Silicon (Metal)"}.get(
+        backend, backend
+    )
+    return (
+        f"{gpu_info.get('name')} was detected as a {label} device. Tessera "
+        f"runs inference on NVIDIA CUDA only in v1, so generation will not "
+        f"work on this GPU. Support is planned."
+    )
 
 
 def _get_cycles_devices(compute_type):

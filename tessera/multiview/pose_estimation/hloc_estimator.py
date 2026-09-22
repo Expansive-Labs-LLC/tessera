@@ -41,19 +41,19 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from tessera.multiview.pose_estimation.base import PoseEstimator
-from tessera.multiview.pose_estimation.label_prior import (
+from ...multiview.pose_estimation.base import PoseEstimator
+from ...multiview.pose_estimation.label_prior import (
     compute_angular_separation,
     get_prior_pose,
 )
-from tessera.multiview.pose_estimation.types import (
+from ...multiview.pose_estimation.types import (
     CameraPose,
     PoseEstimationResult,
 )
-from tessera.reconstruction.utils.vram_guard import VRAMGuard
+from ...reconstruction.utils.vram_guard import VRAMGuard
 
 if TYPE_CHECKING:
-    from tessera.vision.types import VIEW_LABEL_POSES, VisionResult
+    from ...vision.types import VIEW_LABEL_POSES, VisionResult
 else:
     # Load VisionResult and VIEW_LABEL_POSES directly from the types.py
     # file to avoid triggering tessera.vision.__init__ which eagerly

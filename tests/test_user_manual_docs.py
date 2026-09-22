@@ -443,15 +443,16 @@ class TestUserGuide:
         "scaling-orientation.md",
         "refinement.md",
         "export.md",
+        "custom-models.md",
         "preferences.md",
     ]
 
-    def test_TS006_user_guide_has_exactly_8_pages(self):
-        """TS-006 → AC-003, FR-018: User-guide contains exactly 8 .md files.
+    def test_TS006_user_guide_has_exactly_9_pages(self):
+        """TS-006 → AC-003, FR-018: User-guide contains exactly 9 .md files.
 
         Given: The user-guide directory
         When:  .md files are counted
-        Then:  There are exactly 8 files.
+        Then:  There are exactly 9 files. (v1.3 added Custom Models.)
 
         Type: Script | Priority: Must Pass
         """
@@ -460,8 +461,8 @@ class TestUserGuide:
 
         # Then
         assert (
-            len(md_files) == 8
-        ), f"Expected 8 user-guide pages, found {len(md_files)}: {md_files}"
+            len(md_files) == 9
+        ), f"Expected 9 user-guide pages, found {len(md_files)}: {md_files}"
 
     @pytest.mark.parametrize("page", EXPECTED_PAGES)
     def test_TS006_expected_page_exists(self, page):

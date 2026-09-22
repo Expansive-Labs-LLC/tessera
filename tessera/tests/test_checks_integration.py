@@ -50,18 +50,18 @@ pytestmark = pytest.mark.skipif(
     reason="Requires real Blender runtime (not mocked bpy)",
 )
 
-from tessera.validator.checks.degenerate_faces import DegenerateFacesCheck
-from tessera.validator.checks.manifold import ManifoldCheck
-from tessera.validator.checks.overhang import OverhangCheck
-from tessera.validator.checks.scale_sanity import ScaleSanityCheck
-from tessera.validator.checks.self_intersection import (
+from ..validator.checks.degenerate_faces import DegenerateFacesCheck
+from ..validator.checks.manifold import ManifoldCheck
+from ..validator.checks.overhang import OverhangCheck
+from ..validator.checks.scale_sanity import ScaleSanityCheck
+from ..validator.checks.self_intersection import (
     SelfIntersectionCheck,
 )
-from tessera.validator.checks.volume import VolumeCheck
-from tessera.validator.checks.wall_thickness import WallThicknessCheck
-from tessera.validator.data_types import CheckStatus
-from tessera.validator.print_validator import PrintValidator
-from tessera.validator.report import ValidationReport
+from ..validator.checks.volume import VolumeCheck
+from ..validator.checks.wall_thickness import WallThicknessCheck
+from ..validator.data_types import CheckStatus
+from ..validator.print_validator import PrintValidator
+from ..validator.report import ValidationReport
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Blender fixture helpers
@@ -426,7 +426,7 @@ class TestExportPipelineIntegration:
 
     def test_stl_export_creates_file(self, tmp_path):
         """AC-001: STL file created in export directory."""
-        from tessera.export.export_pipeline import ExportPipeline
+        from ..export.export_pipeline import ExportPipeline
 
         obj = _create_cube(size=0.05)
         pipeline = ExportPipeline()
@@ -444,7 +444,7 @@ class TestExportPipelineIntegration:
 
     def test_validation_report_json_created(self, tmp_path):
         """FR-029: _validation.json created alongside export."""
-        from tessera.export.export_pipeline import ExportPipeline
+        from ..export.export_pipeline import ExportPipeline
 
         obj = _create_cube(size=0.05)
         pipeline = ExportPipeline()
@@ -461,7 +461,7 @@ class TestExportPipelineIntegration:
 
     def test_validation_failure_blocks_export(self):
         """CON-004: No export on FAIL without force_export."""
-        from tessera.export.export_pipeline import ExportPipeline
+        from ..export.export_pipeline import ExportPipeline
 
         obj = _create_open_mesh()  # Will fail manifold check.
         pipeline = ExportPipeline()
@@ -477,7 +477,7 @@ class TestExportPipelineIntegration:
 
     def test_force_export_overrides_failure(self, tmp_path):
         """AC-007: force_export=True exports despite failures."""
-        from tessera.export.export_pipeline import ExportPipeline
+        from ..export.export_pipeline import ExportPipeline
 
         obj = _create_open_mesh()
         pipeline = ExportPipeline()
@@ -495,7 +495,7 @@ class TestExportPipelineIntegration:
 
     def test_duplicate_cleaned_up(self):
         """AC-010 / FR-024: _print duplicate deleted after export."""
-        from tessera.export.export_pipeline import ExportPipeline
+        from ..export.export_pipeline import ExportPipeline
 
         obj = _create_cube(size=0.05)
         original_name = obj.name
@@ -516,7 +516,7 @@ class TestExportPipelineIntegration:
 
     def test_multi_format_export(self, tmp_path):
         """AC-008: Multiple formats produce correct number of files."""
-        from tessera.export.export_pipeline import ExportPipeline
+        from ..export.export_pipeline import ExportPipeline
 
         obj = _create_cube(size=0.05)
         pipeline = ExportPipeline()

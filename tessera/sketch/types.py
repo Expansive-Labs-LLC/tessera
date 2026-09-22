@@ -44,7 +44,7 @@ from typing import TYPE_CHECKING, Optional
 import numpy as np
 
 if TYPE_CHECKING:
-    from tessera.reconstruction.mesh_output import StandardMesh
+    from ..reconstruction.mesh_output import StandardMesh
 
 # ---------------------------------------------------------------------------
 # Constants

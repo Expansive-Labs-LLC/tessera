@@ -98,7 +98,7 @@ class VisionPipeline:
     ) -> None:
         """Initialise the vision pipeline with optional custom adapters.
 
-        Default adapters: SAM 2 Large, Depth Anything V2 Large,
+        Default adapters: SAM 2 Large, Depth Anything V2 Small,
         Silhouette Classifier, DINOv2 ViT-B/14.
 
         Args:
@@ -419,23 +419,26 @@ class VisionPipeline:
         return results
 
     def _check_gpu(self) -> None:
-        """Validate that a CUDA or ROCm GPU is available.
+        """Validate that a GPU Tessera can run inference on is available.
 
         FR-022: Must be called before any model loading.
 
+        In v1 that means NVIDIA CUDA. AMD (ROCm) and Apple Silicon (Metal)
+        GPUs are detected by SPEC-TS-0001 FR-008 but no adapter implements
+        a device path for them, so they are rejected here with an explicit
+        message rather than left to fail inside ``torch`` at model load
+        (TASK-TS-0022).
+
         Raises:
-            GPUNotAvailableError: If no compatible GPU is detected.
+            GPUNotAvailableError: If no usable GPU is detected.
         """
-        from tessera.gpu_detection import get_gpu_info
+        from ..gpu_detection import get_gpu_info, unsupported_backend_message
 
         gpu = get_gpu_info()
-        backend = gpu.get("backend")
+        message = unsupported_backend_message(gpu)
 
-        if backend not in ("CUDA", "ROCM"):
-            raise GPUNotAvailableError(
-                "Vision pipeline requires a CUDA or ROCm GPU. "
-                "No compatible device detected."
-            )
+        if message is not None:
+            raise GPUNotAvailableError(f"Vision pipeline cannot start. {message}")
 
     def _get_gpu_info(self) -> dict:
         """Get GPU info for logging purposes.
@@ -444,7 +447,7 @@ class VisionPipeline:
             dict: GPU info dict from ``gpu_detection.get_gpu_info()``.
         """
         try:
-            from tessera.gpu_detection import get_gpu_info
+            from ..gpu_detection import get_gpu_info
 
             return get_gpu_info()
         except Exception:

@@ -31,17 +31,17 @@ Public API:
     VisionPipelineOutput — type alias for VisionResult
 """
 
-from tessera.reconstruction.adapter import (
+from ..reconstruction.adapter import (
     ReconstructionAdapter,
     VisionPipelineOutput,
 )
-from tessera.reconstruction.engine import ReconstructionEngine
-from tessera.reconstruction.mesh_output import (
+from ..reconstruction.engine import ReconstructionEngine
+from ..reconstruction.mesh_output import (
     AdapterCapabilities,
     ReconstructionResult,
     StandardMesh,
 )
-from tessera.reconstruction.registry import AdapterRegistry
+from ..reconstruction.registry import AdapterRegistry
 
 __all__ = [
     "AdapterCapabilities",

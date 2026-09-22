@@ -36,7 +36,7 @@ import logging
 import cv2
 import numpy as np
 
-from tessera.sketch.types import (
+from ...sketch.types import (
     COLOR_STD_THRESHOLD,
     EDGE_DENSITY_THRESHOLD,
 )

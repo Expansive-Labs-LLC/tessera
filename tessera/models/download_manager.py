@@ -277,10 +277,17 @@ class DownloadManager:
 
         Raises:
             ModelDownloadError: If download or verification fails.
+            ModelLicenseError: If the model's weight licence is gated and
+                the user has not opted in (see :mod:`tessera.models.licensing`).
         """
-        from . import IntegrityError, ModelDownloadError
+        from . import IntegrityError, ModelDownloadError, licensing
 
         entry = self._registry.get_model(model_id)
+
+        # Weight licences are third-party and are not covered by Tessera's
+        # GPL licence. Refuse anything that is not unambiguously
+        # commercial-friendly unless the user has explicitly opted in.
+        licensing.check_download_allowed(entry)
 
         # FR-012: Select variant based on VRAM
         variant, vram_warning = select_variant(entry, self._available_vram_gb)
@@ -383,20 +390,15 @@ class DownloadManager:
                     speed,
                 )
 
-        # SHA256 verification (FR-007, SEC-001)
+        # SHA256 verification (FR-007, SEC-001). Every declared file must
+        # verify; an absent or placeholder digest is a failure, not a pass
+        # (TASK-TS-0018).
         if model_path:
             is_valid, error_msg = self._cache_manager.verify_integrity(model_id)
-            if not is_valid and error_msg and "TODO" not in error_msg:
-                raise IntegrityError(error_msg)
-            elif is_valid:
-                # All hashes are "TODO" placeholders — verification was skipped
-                all_todo = all(h == "TODO" for h in entry.sha256.values())
-                if all_todo:
-                    logger.info(
-                        "SHA256 verification skipped: model=%s — all hashes "
-                        "are TODO placeholders. Replace before release.",
-                        model_id,
-                    )
+            if not is_valid:
+                raise IntegrityError(
+                    error_msg or f"SHA256 verification failed for {model_id}."
+                )
 
         elapsed_total = time.monotonic() - start_time
         logger.info(
@@ -451,6 +453,8 @@ class DownloadManager:
         Raises:
             ModelDownloadError: If download fails.
             ModelNotFoundError: If model_id is not in the registry.
+            ModelLicenseError: If the model's weight licence is gated and
+                the user has not opted in.
 
         Implements: FR-014, EC-003.
         """
@@ -529,10 +533,25 @@ class DownloadManager:
 
         self._cancel_event.clear()
 
+        from . import licensing
+
         def _thread_target():
             for entry in self._registry.list_models():
                 if self._cancel_event.is_set():
                     break
+                # Never bulk-download licence-gated weights. They must be
+                # requested individually after an explicit opt-in.
+                if (
+                    licensing.is_gated(entry)
+                    and not licensing.restricted_models_allowed()
+                ):
+                    logger.info(
+                        "Skipping licence-gated model in download-all: "
+                        "model=%s, license=%s",
+                        entry.model_id,
+                        entry.license,
+                    )
+                    continue
                 cached = self._cache_manager.get_model_path(entry.model_id)
                 if cached is None:
                     try:

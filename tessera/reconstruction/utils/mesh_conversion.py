@@ -32,7 +32,7 @@ import logging
 
 import numpy as np
 
-from tessera.reconstruction.mesh_output import StandardMesh
+from ...reconstruction.mesh_output import StandardMesh
 
 logger = logging.getLogger("tessera.reconstruction")
 

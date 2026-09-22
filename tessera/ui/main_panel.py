@@ -23,6 +23,7 @@ Implements: FR-003, FR-010, FR-016.
 
 from bpy.types import Panel
 
+from ..gpu_detection import is_inference_supported
 from ..preferences import get_cached_gpu_info
 
 
@@ -44,15 +45,29 @@ class TESSERA_PT_Main(Panel):
         """Draw the main panel layout."""
         layout = self.layout
 
-        # FR-010: GPU warning banner
+        # FR-010: GPU warning banner. Covers both "no GPU" and the case that
+        # actually surprises people — a GPU that is detected and displayed
+        # correctly but that no inference adapter can use (AMD, Apple
+        # Silicon). NVIDIA CUDA only in v1; see TASK-TS-0022.
         gpu_info = get_cached_gpu_info()
         if gpu_info is None or gpu_info.get("name") is None:
             box = layout.box()
             col = box.column(align=True)
             col.alert = True
-            col.label(text="Tessera requires a CUDA, ROCm, or", icon="ERROR")
-            col.label(text="Metal compatible GPU. No compatible")
-            col.label(text="GPU was detected.")
+            col.label(text="Tessera requires an NVIDIA GPU with", icon="ERROR")
+            col.label(text="CUDA. No compatible GPU was detected.")
+            layout.separator()
+        elif not is_inference_supported(gpu_info):
+            backend = gpu_info.get("backend") or "unknown"
+            label = {"ROCM": "AMD (ROCm)", "METAL": "Apple Silicon"}.get(
+                backend, backend
+            )
+            box = layout.box()
+            col = box.column(align=True)
+            col.alert = True
+            col.label(text=f"{label} GPU detected.", icon="ERROR")
+            col.label(text="Tessera runs on NVIDIA CUDA only in v1 —")
+            col.label(text="generation will not work on this GPU.")
             layout.separator()
 
         # FR-017: Missing models notification banner

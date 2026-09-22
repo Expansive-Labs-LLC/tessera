@@ -546,7 +546,8 @@ class TestBuildScript:
         Given the build script is executed with argument 1.2.3,
         When the script completes,
         Then tessera-v1.2.3.zip exists with blender_manifest.toml,
-        tessera/__init__.py, LICENSE, and NO excluded directories.
+        __init__.py and LICENSE at the ARCHIVE ROOT, and NO excluded
+        directories.
 
         Type: Script | Priority: Must Pass
         """
@@ -569,9 +570,23 @@ class TestBuildScript:
         listing = list_result.stdout
 
         # Required files present
-        assert "blender_manifest.toml" in listing
-        assert "tessera/__init__.py" in listing
-        assert "LICENSE" in listing
+        root_entries = subprocess.run(
+            ["unzip", "-Z1", str(zip_path)],
+            capture_output=True,
+            text=True,
+        ).stdout.split()
+
+        # Blender treats the archive root as the add-on package itself.
+        for required in ("blender_manifest.toml", "__init__.py", "LICENSE"):
+            assert (
+                required in root_entries
+            ), f"{required} must sit at the archive root, not nested"
+
+        # A nested package directory makes Blender reject the install with
+        # 'Error, file missing from add-on: "__init__.py"'.
+        assert (
+            "tessera/" not in root_entries
+        ), "Archive must not nest the add-on inside a tessera/ directory"
 
         # Excluded directories absent
         for excluded in (
@@ -590,7 +605,7 @@ class TestBuildScript:
 
         # Verify patched version in zip
         extract_result = subprocess.run(
-            ["unzip", "-p", str(zip_path), "tessera/__init__.py"],
+            ["unzip", "-p", str(zip_path), "__init__.py"],
             capture_output=True,
             text=True,
         )
@@ -645,7 +660,7 @@ class TestBuildScript:
 
         # Verify patched version (suffix stripped for tuple)
         extract_result = subprocess.run(
-            ["unzip", "-p", str(zip_path), "tessera/__init__.py"],
+            ["unzip", "-p", str(zip_path), "__init__.py"],
             capture_output=True,
             text=True,
         )

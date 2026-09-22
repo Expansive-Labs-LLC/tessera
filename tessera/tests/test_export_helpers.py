@@ -33,7 +33,7 @@ from unittest.mock import patch
 
 import pytest
 
-from tessera.export.export_pipeline import (  # noqa: E402
+from ..export.export_pipeline import (  # noqa: E402
     _resolve_file_path,
     _sanitize_filename,
     _validate_path_within_dir,
@@ -191,7 +191,7 @@ class TestResolveExportDirectory:
     @pytest.fixture
     def pipeline(self):
         """Create an ExportPipeline instance with bpy mocked."""
-        from tessera.export.export_pipeline import ExportPipeline
+        from ..export.export_pipeline import ExportPipeline
 
         return ExportPipeline()
 

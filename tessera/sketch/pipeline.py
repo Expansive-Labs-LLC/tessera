@@ -37,11 +37,11 @@ from pathlib import Path
 
 import numpy as np
 
-from tessera.sketch.detector import SketchDetector
-from tessera.sketch.preprocessor import SketchPreprocessor
-from tessera.sketch.symmetry import SymmetryEnforcer
-from tessera.sketch.synthesizer import SketchSynthesizer
-from tessera.sketch.types import (
+from ..sketch.detector import SketchDetector
+from ..sketch.preprocessor import SketchPreprocessor
+from ..sketch.symmetry import SymmetryEnforcer
+from ..sketch.synthesizer import SketchSynthesizer
+from ..sketch.types import (
     DEFAULT_SYNTHESIS_PROMPT,
     MAX_FILE_SIZE_BYTES,
     MAX_SKETCH_INPUTS,
@@ -52,7 +52,7 @@ from tessera.sketch.types import (
     SketchPipelineResult,
     SymmetryConfig,
 )
-from tessera.vision.types import ImageInput, VisionResult
+from ..vision.types import ImageInput, VisionResult
 
 logger = logging.getLogger("tessera.sketch")
 
@@ -222,7 +222,7 @@ class SketchPipeline:
             # EC-002: Warn about coloured/textured paper.
             det = detection_results[i]
             if det.edge_density_ratio > 0 and det.sketch_type == "ink":
-                from tessera.sketch.utils.edge_density import (
+                from ..sketch.utils.edge_density import (
                     compute_color_std,
                 )
 
@@ -279,7 +279,7 @@ class SketchPipeline:
 
         # CON-006: Route through standard ReconstructionEngine.
         try:
-            from tessera.reconstruction.engine import ReconstructionEngine
+            from ..reconstruction.engine import ReconstructionEngine
 
             engine = ReconstructionEngine(cache_dir=self._cache_dir)
             recon_result = engine.reconstruct(vision_outputs)

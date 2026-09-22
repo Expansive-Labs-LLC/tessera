@@ -34,7 +34,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from tessera.vision.types import VisionResult as VisionPipelineOutput
+    from ..vision.types import VisionResult as VisionPipelineOutput
 else:
     # Load VisionResult directly from the types.py file to avoid
     # triggering tessera.vision.__init__ which eagerly imports the

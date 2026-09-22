@@ -63,6 +63,19 @@ def _get_default_cache_dir():
     )
 
 
+def _sync_license_optin(self, context):
+    """Mirror the licence opt-in into the model-download gate.
+
+    Called as an update callback on ``allow_restricted_license_models``.
+    Downloads run on worker threads that must not touch ``bpy``
+    (SPEC-TS-0002 CON-003), so the preference is mirrored into a
+    module-level flag here, on the main thread.
+    """
+    from .models import licensing
+
+    licensing.set_restricted_models_allowed(self.allow_restricted_license_models)
+
+
 def _validate_cache_dir(self, context):
     """Validate that the cache directory is writable.
 
@@ -141,6 +154,22 @@ class TesseraPreferences(AddonPreferences):
             "must be downloaded manually from this preferences panel"
         ),
         default=True,
+    )  # type: ignore[assignment]
+
+    # Model weight licences are third-party and are not covered by
+    # Tessera's GPL licence. Weights that restrict or prohibit commercial
+    # use — or declare no terms — are gated behind this opt-in.
+    # See MODEL-LICENSES.md and tessera.models.licensing.
+    allow_restricted_license_models: BoolProperty(
+        name="Allow Restricted-Licence Models",
+        description=(
+            "Permit downloading model weights whose licences restrict or "
+            "prohibit commercial use, such as Depth Anything V2 Large "
+            "(CC-BY-NC-4.0). Off by default. Only enable this if your use "
+            "complies with each model's terms — see MODEL-LICENSES.md"
+        ),
+        default=False,
+        update=_sync_license_optin,
     )  # type: ignore[assignment]
 
     # SPEC-TS-0009 (FR-039): LLM backend preferences.
@@ -247,6 +276,25 @@ class TesseraPreferences(AddonPreferences):
                     text="API key required for API backend",
                     icon="ERROR",
                 )
+
+        layout.separator()
+
+        # Model weight licensing section.
+        box = layout.box()
+        box.label(text="Model Weight Licences", icon="TEXT")
+        box.label(
+            text="Weights are third-party and are not covered by Tessera's "
+            "GPL licence."
+        )
+        box.prop(self, "allow_restricted_license_models")
+        if self.allow_restricted_license_models:
+            row = box.row()
+            row.alert = True
+            row.label(
+                text="Restricted weights enabled — some forbid commercial use",
+                icon="ERROR",
+            )
+        box.label(text="Details: MODEL-LICENSES.md in the Tessera repository")
 
         layout.separator()
 

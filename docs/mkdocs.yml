@@ -49,6 +49,7 @@ nav:
     - Scaling & Orientation: user-guide/scaling-orientation.md
     - Refinement: user-guide/refinement.md
     - Export & Print: user-guide/export.md
+    - Custom Models: user-guide/custom-models.md
     - Preferences: user-guide/preferences.md
   - Reference:
     - View Labels: reference/view-labels.md

@@ -67,53 +67,36 @@ echo "Patched blender_manifest.toml version → \"$MAJOR.$MINOR.$PATCH\""
 # ---------------------------------------------------------------------------
 ZIP_NAME="tessera-v${VERSION}.zip"
 ZIP_PATH="$REPO_ROOT/$ZIP_NAME"
+STAGE_DIR="$REPO_ROOT/.build-stage"
 
-# Remove any previous build artifact
+# Remove any previous build artifacts
 rm -f "$ZIP_PATH"
+rm -rf "$STAGE_DIR"
 
 echo ""
 echo "Building archive: $ZIP_NAME"
 
-cd "$REPO_ROOT"
+# FR-029: Blender treats the ZIP ROOT as the add-on package itself. The
+# manifest and __init__.py must sit at the top level of the archive -- a
+# nested "tessera/" directory makes Blender reject the install with
+# 'Error, file missing from add-on: "__init__.py"'. Stage a flattened tree.
+mkdir -p "$STAGE_DIR"
+cp -r "$REPO_ROOT/tessera/." "$STAGE_DIR/"
+cp "$MANIFEST_FILE" "$STAGE_DIR/blender_manifest.toml"
+cp "$REPO_ROOT/LICENSE" "$STAGE_DIR/LICENSE"
 
-zip -r "$ZIP_PATH" \
-    tessera/ \
-    blender_manifest.toml \
-    LICENSE \
-    -x "tests/*" \
-       "tessera/tests/*" \
-       "tessera/testing/*" \
-       "tessera/__pycache__/*" \
-       "tessera/**/__pycache__/*" \
-       "tessera/.git/*" \
-       ".git/*" \
-       ".venv/*" \
-       "specs/*" \
-       "tasks/*" \
-       ".agent/*" \
-       ".pytest_cache/*" \
-       ".mypy_cache/*" \
-       "scripts/*" \
-       "docs/*" \
-       ".github/*" \
-       "*.pyc" \
-       "*.pyo" \
-       "*.pt" \
-       "*.pth" \
-       "*.onnx" \
-       "*.safetensors" \
-       "*.bin" \
-       ".gitignore" \
-       ".releaserc.yml" \
-       "CONTRIBUTING.md" \
-       "CODE_OF_CONDUCT.md" \
-       "SECURITY.md" \
-       "FUNDING.yml" \
-       "PRD-001_Tessera.md" \
-       "TASK-INDEX.md" \
-       "README.md" \
-       "CHANGELOG.md" \
-       "commitlint.config.js"
+# FR-030: Strip development-only content from the staged tree. Paths are
+# relative to the package root now that the tree is flattened.
+rm -rf "$STAGE_DIR/testing" "$STAGE_DIR/tests"
+find "$STAGE_DIR" -name "__pycache__" -type d -prune -exec rm -rf {} +
+find "$STAGE_DIR" \( -name "*.pyc" -o -name "*.pyo" \) -delete
+find "$STAGE_DIR" \( -name "*.pt" -o -name "*.pth" -o -name "*.onnx" \
+    -o -name "*.safetensors" -o -name "*.bin" \) -delete
+
+# FR-031: Deterministic archive (sorted entries, no extra attributes)
+cd "$STAGE_DIR"
+zip -qrX "$ZIP_PATH" .
+cd "$REPO_ROOT"
 
 # ---------------------------------------------------------------------------
 # FR-032: Validate archive contents
@@ -122,26 +105,30 @@ echo ""
 echo "Validating archive..."
 
 MISSING_FILES=""
-ZIP_LISTING="$(unzip -l "$ZIP_PATH")"
+ZIP_LISTING="$(unzip -Z1 "$ZIP_PATH")"
 
-if ! echo "$ZIP_LISTING" | grep -q "blender_manifest.toml"; then
-    MISSING_FILES="${MISSING_FILES}blender_manifest.toml "
-fi
-
-if ! echo "$ZIP_LISTING" | grep -q "tessera/__init__.py"; then
-    MISSING_FILES="${MISSING_FILES}tessera/__init__.py "
-fi
-
-if ! echo "$ZIP_LISTING" | grep -q "LICENSE"; then
-    MISSING_FILES="${MISSING_FILES}LICENSE "
-fi
+# Required files must be at the ARCHIVE ROOT, not nested in a subdirectory.
+for required in blender_manifest.toml __init__.py LICENSE; do
+    if ! echo "$ZIP_LISTING" | grep -qx "$required"; then
+        MISSING_FILES="${MISSING_FILES}${required} "
+    fi
+done
 
 if [ -n "$MISSING_FILES" ]; then
     for f in $MISSING_FILES; do
-        echo "ERROR: Missing required file in zip: $f" >&2
+        echo "ERROR: Missing required file at archive root: $f" >&2
     done
     exit 1
 fi
+
+# Guard against the nested-package regression reappearing.
+if echo "$ZIP_LISTING" | grep -qx "tessera/"; then
+    echo "ERROR: Archive contains a nested 'tessera/' directory." >&2
+    echo "Blender requires the add-on package at the archive root." >&2
+    exit 1
+fi
+
+rm -rf "$STAGE_DIR"
 
 echo "Validation passed: all required files present."
 

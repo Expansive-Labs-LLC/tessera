@@ -991,3 +991,57 @@ class TestSubPanelConfig:
         assert (
             "DEFAULT_CLOSED" in TESSERA_PT_Generation.bl_options
         ), "TESSERA_PT_Generation should be DEFAULT_CLOSED"
+
+
+class TestSupportedInferenceBackend:
+    """v1 runs inference on CUDA only.
+
+    Detection still reports CUDA, ROCm and Metal (FR-008), but no adapter
+    implements a non-CUDA device path, so the add-on must say so up front
+    instead of failing inside torch at model load. See TASK-TS-0022.
+    """
+
+    def test_cuda_is_supported(self, mock_bpy):
+        from tessera.gpu_detection import is_inference_supported
+
+        gpu = {"name": "NVIDIA GeForce RTX 3060", "vram_gb": 12.0, "backend": "CUDA"}
+        assert is_inference_supported(gpu) is True
+
+    @pytest.mark.parametrize("backend", ["ROCM", "METAL"])
+    def test_detected_but_unusable_backends_are_rejected(self, mock_bpy, backend):
+        from tessera.gpu_detection import is_inference_supported
+
+        gpu = {"name": "Some GPU", "vram_gb": 16.0, "backend": backend}
+        assert is_inference_supported(gpu) is False
+
+    def test_no_gpu_is_rejected(self, mock_bpy):
+        from tessera.gpu_detection import is_inference_supported
+
+        assert is_inference_supported(None) is False
+        assert is_inference_supported({"name": None, "backend": None}) is False
+
+    def test_message_is_none_when_supported(self, mock_bpy):
+        from tessera.gpu_detection import unsupported_backend_message
+
+        gpu = {"name": "NVIDIA GeForce RTX 3060", "vram_gb": 12.0, "backend": "CUDA"}
+        assert unsupported_backend_message(gpu) is None
+
+    def test_message_distinguishes_missing_from_unusable(self, mock_bpy):
+        """The surprising case gets its own wording, naming the device."""
+        from tessera.gpu_detection import unsupported_backend_message
+
+        missing = unsupported_backend_message({"name": None, "backend": None})
+        assert "No compatible GPU was detected" in missing
+
+        metal = unsupported_backend_message(
+            {"name": "Apple M3 Pro", "vram_gb": 18.0, "backend": "METAL"}
+        )
+        assert "Apple M3 Pro" in metal
+        assert "Apple Silicon (Metal)" in metal
+        assert "NVIDIA CUDA only" in metal
+
+        rocm = unsupported_backend_message(
+            {"name": "AMD Radeon RX 7900 XTX", "vram_gb": 24.0, "backend": "ROCM"}
+        )
+        assert "AMD (ROCm)" in rocm
+        assert "NVIDIA CUDA only" in rocm

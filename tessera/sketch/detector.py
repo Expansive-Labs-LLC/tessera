@@ -36,7 +36,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-from tessera.sketch.types import (
+from ..sketch.types import (
     CNN_INPUT_SIZE,
     CNN_SKETCH_THRESHOLD,
     HEURISTIC_HIGH_CONFIDENCE,
@@ -45,7 +45,7 @@ from tessera.sketch.types import (
     IMAGENET_STD,
     SketchDetectionResult,
 )
-from tessera.sketch.utils.edge_density import (
+from ..sketch.utils.edge_density import (
     heuristic_classify,
 )
 

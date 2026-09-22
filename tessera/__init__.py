@@ -94,6 +94,12 @@ def register():
     # FR-008: Initialize GPU detection on registration
     init_gpu_info()
 
+    # Mirror the saved model-licence opt-in into the download gate. The
+    # preference persists across sessions; the module-level flag does not.
+    from .models import licensing
+
+    licensing.sync_from_preferences()
+
     # §11.1: Log registration with GPU info
     from .preferences import get_cached_gpu_info
 
@@ -159,9 +165,6 @@ def _init_model_management(gpu_info):
         )
         from .models.registry import ModelRegistry
 
-        # Load the model registry from embedded manifest
-        registry = ModelRegistry()
-
         # Get cache directory from preferences
         try:
             addon_prefs = bpy.context.preferences.addons["tessera"].preferences
@@ -175,6 +178,16 @@ def _init_model_management(gpu_info):
             from .preferences import _get_default_cache_dir
 
             cache_dir = _get_default_cache_dir()
+
+        # Load the model registry: the bundled manifest plus any models the
+        # user added from Hugging Face. The user list lives beside the cache
+        # rather than inside the add-on, so it survives add-on updates
+        # (SPEC-TS-0002 FR-025).
+        from pathlib import Path
+
+        registry = ModelRegistry(
+            user_manifest_path=Path(cache_dir) / "user_models.json"
+        )
 
         # Initialize cache manager
         cache_manager = CacheManager(cache_dir=cache_dir, registry=registry)
