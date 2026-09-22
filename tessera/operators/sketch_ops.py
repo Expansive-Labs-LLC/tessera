@@ -35,6 +35,7 @@ import os
 import bpy
 from bpy.props import BoolProperty, FloatProperty, IntProperty, StringProperty
 from bpy.types import Operator
+
 from ..addon import get_addon_preferences
 
 logger = logging.getLogger("tessera")

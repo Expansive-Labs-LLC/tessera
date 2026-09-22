@@ -34,6 +34,7 @@ import os
 
 import bpy
 from bpy.types import Operator
+
 from ..addon import get_addon_preferences
 
 logger = logging.getLogger("tessera")

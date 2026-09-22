@@ -310,11 +310,12 @@ class TestReleaseConfig:
         ), f"prepareCmd should invoke build_addon.sh, got: {prepare_cmd}"
 
     def test_TS009_git_plugin_assets(self):
-        """TS-009 → FR-021: @semantic-release/git commits back patched files.
+        """TS-009 → FR-021: the changelog is committed back; versions are not.
 
         Given .releaserc.yml plugins list,
         When @semantic-release/git is found,
-        Then its assets include tessera/__init__.py and blender_manifest.toml.
+        Then its assets include CHANGELOG.md and exclude the version files,
+        which are build-time placeholders in source.
 
         Type: Manual | Priority: Must Pass
         """
@@ -330,11 +331,16 @@ class TestReleaseConfig:
         assert git_plugin is not None, "@semantic-release/git not found in plugins"
 
         assets = git_plugin.get("assets", [])
-        assert "tessera/__init__.py" in assets, "tessera/__init__.py not in git assets"
-        assert (
-            "blender_manifest.toml" in assets
-        ), "blender_manifest.toml not in git assets"
         assert "CHANGELOG.md" in assets, "CHANGELOG.md not in git assets"
+        # The version files are patched at build time and must NOT be
+        # committed back: a real version in source conflicts with every open
+        # branch on every release, and drifts whenever a local build runs.
+        assert (
+            "tessera/__init__.py" not in assets
+        ), "tessera/__init__.py must not be committed back"
+        assert (
+            "blender_manifest.toml" not in assets
+        ), "blender_manifest.toml must not be committed back"
 
         # Verify [skip ci] in commit message
         message = git_plugin.get("message", "")

@@ -33,10 +33,14 @@ plugins:
     - assets:
         - path: "tessera-v*.zip"
 
-  # 6. FR-021: Commit back patched files with [skip ci]
+  # 6. FR-021: Commit back the changelog only, with [skip ci].
+  #
+  # The version files are deliberately NOT committed back. They are
+  # placeholders in source (0.0.0) that build_addon.sh patches at build
+  # time; committing the patched values would put a real version in
+  # source, where it conflicts with every open branch on every release
+  # and drifts whenever a local build is run.
   - - "@semantic-release/git"
     - assets:
         - "CHANGELOG.md"
-        - "tessera/__init__.py"
-        - "blender_manifest.toml"
       message: "chore(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
