@@ -159,7 +159,7 @@ A user installs the add-on, is prompted once to install the engine, accepts, and
 
 ---
 
-## Orchestrator Acknowledgment
+## Engineer Acknowledgment
 
 | Item | Status |
 |------|--------|
