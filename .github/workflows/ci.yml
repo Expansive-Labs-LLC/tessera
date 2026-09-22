@@ -56,7 +56,10 @@ jobs:
       - name: Install dependencies
         run: |
           test -f requirements.txt && pip install -r requirements.txt
-          pip install flake8 black isort mypy pytest
+          # Pinned: an unpinned linter silently changes the rules under the
+          # repo whenever a new release lands, which is how this job first
+          # started failing.
+          pip install -r requirements-lint.txt
 
       - name: isort
         run: isort --check --diff tessera/ tests/

@@ -1,0 +1,11 @@
+# Runtime dependencies that the test suite imports directly.
+#
+# The heavy ML stack (torch, diffusers, sam2, trellis, hloc, cv2, ...) is
+# deliberately absent: those are installed into Blender's own environment at
+# add-on runtime and are stubbed in tests/fakes.py, so CI never needs them.
+
+# numpy >= 2.5 ships stubs written with PEP 695 `type` statements, which mypy
+# cannot parse while targeting Python 3.11 (the interpreter Blender 4.2 ships).
+numpy<2.5
+pillow
+pyyaml

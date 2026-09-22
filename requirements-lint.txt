@@ -1,0 +1,10 @@
+# Pinned lint toolchain.
+#
+# These versions are what `pyproject.toml` / `.flake8` were tuned against and
+# what the tree is formatted with. Leave them unpinned and a new black or isort
+# release reformats the world and turns the Lint job red on an unrelated PR.
+# Bump deliberately, reformat in the same commit.
+black==26.5.1
+flake8==7.3.0
+isort==9.0.1
+mypy==2.3.1

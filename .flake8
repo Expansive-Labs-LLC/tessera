@@ -1,0 +1,29 @@
+# flake8 has no pyproject.toml support, so its config lives here.
+# Values are the black-compatible set: black wraps at 88 and deliberately emits
+# E203 (whitespace before ':' in slices) and W503 (line break before binary
+# operator), so both are ignored rather than fought.
+[flake8]
+max-line-length = 88
+extend-ignore = E203, W503
+# Blender's property idiom (`name: StringProperty(name="...", ...)`) puts a
+# function call where pyflakes expects a type annotation, so every string and
+# enum inside one is reported as a bad forward reference (F722) or an undefined
+# name (F821).  The idiom is required by Blender, so both are ignored in the
+# modules that declare properties -- and only there, so real undefined names
+# elsewhere still fail the build.
+per-file-ignores =
+    tessera/properties.py: F722, F821
+    tessera/preferences.py: F722, F821
+    tessera/operators/image_ops.py: F722, F821
+    tessera/operators/model_ops.py: F722, F821
+    tessera/operators/sketch_ops.py: F722, F821
+    # Imports deliberately follow the bpy-availability guard and the
+    # pytestmark that skips this module when Blender is absent.
+    tessera/tests/test_checks_integration.py: E402
+
+exclude =
+    .git,
+    __pycache__,
+    .venv,
+    build,
+    dist
