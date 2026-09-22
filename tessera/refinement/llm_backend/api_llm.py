@@ -76,9 +76,7 @@ class APILLMBackend(LLMBackend):
         """
         # SEC-006: Enforce HTTPS-only.
         if not endpoint.startswith("https://"):
-            raise LLMBackendError(
-                "API endpoints must use HTTPS for security."
-            )
+            raise LLMBackendError("API endpoints must use HTTPS for security.")
 
         self._endpoint = endpoint.rstrip("/")
         self._api_key = api_key
@@ -159,15 +157,12 @@ class APILLMBackend(LLMBackend):
                 error_msg = error_msg.replace(
                     self._api_key, _mask_api_key(self._api_key)
                 )
-            raise LLMBackendError(
-                f"API request failed: {error_msg}"
-            ) from exc
+            raise LLMBackendError(f"API request failed: {error_msg}") from exc
 
         data = response.json()
 
         logger.debug(
-            "LLM API response received: response_time_seconds=%.2f, "
-            "token_count=%s",
+            "LLM API response received: response_time_seconds=%.2f, " "token_count=%s",
             response.elapsed.total_seconds() if hasattr(response, "elapsed") else 0.0,
             data.get("usage", {}).get("total_tokens", "N/A"),
         )
@@ -176,9 +171,7 @@ class APILLMBackend(LLMBackend):
             content = data["choices"][0]["message"]["content"]
             return content.strip() if content else ""
         except (KeyError, IndexError) as exc:
-            raise LLMBackendError(
-                f"Unexpected API response format: {exc}"
-            ) from exc
+            raise LLMBackendError(f"Unexpected API response format: {exc}") from exc
 
     def is_available(self) -> bool:
         """Check if the API backend is configured.
@@ -191,6 +184,7 @@ class APILLMBackend(LLMBackend):
             return False
         try:
             import httpx  # noqa: F401
+
             return True
         except ImportError:
             return False

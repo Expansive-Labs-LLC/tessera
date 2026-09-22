@@ -39,8 +39,8 @@ from tessera.sketch.types import (
     SketchConfig,
     SketchDetectionResult,
     SketchPipelineResult,
-    SynthesizedImage,
     SymmetryConfig,
+    SynthesizedImage,
 )
 
 __all__ = [

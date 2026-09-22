@@ -123,8 +123,6 @@ def execute_add_geometry(
     mod.operation = "UNION"
     mod.object = primitive
 
-    face_count_before = len(obj.data.polygons)
-
     try:
         bpy.ops.object.modifier_apply(modifier=mod.name)
         face_count_after = len(obj.data.polygons)
@@ -137,7 +135,8 @@ def execute_add_geometry(
         # FR-027: Remove primitive, show warning, no undo snapshot.
         logger.warning(
             "Boolean union failed: shape=%s, error=%s",
-            shape, str(exc),
+            shape,
+            str(exc),
         )
         bpy.data.objects.remove(primitive, do_unlink=True)
         return EditResult(
@@ -158,8 +157,7 @@ def execute_add_geometry(
     return EditResult(
         success=True,
         description=(
-            f"Added {shape.lower()} ({size_mm:.1f} mm) "
-            f"and boolean-unioned"
+            f"Added {shape.lower()} ({size_mm:.1f} mm) " f"and boolean-unioned"
         ),
         vertices_modified=len(obj.data.vertices),
         execution_time_seconds=elapsed,
@@ -187,7 +185,8 @@ def execute_remove_geometry(
         ``EditResult``.
     """
     import bpy
-    from .scale_op import _select_vertex_group, _count_selected
+
+    from .scale_op import _count_selected, _select_vertex_group
 
     start = time.perf_counter()
 

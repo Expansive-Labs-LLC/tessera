@@ -28,7 +28,6 @@ from __future__ import annotations
 import logging
 import os
 
-import bpy
 from bpy.types import Operator
 
 from ..export.export_pipeline import ExportPipeline
@@ -51,8 +50,7 @@ class TESSERA_OT_export_for_print(Operator):
     bl_idname = "tessera.export_for_print"
     bl_label = "Export for Printing"
     bl_description = (
-        "Validate, repair, and export the active mesh to "
-        "STL/3MF/OBJ for 3D printing"
+        "Validate, repair, and export the active mesh to " "STL/3MF/OBJ for 3D printing"
     )
     bl_options = {"REGISTER", "UNDO"}
 
@@ -130,9 +128,7 @@ class TESSERA_OT_export_for_print(Operator):
 
             if quick_report.has_failures:
                 # Show confirmation dialog.
-                return context.window_manager.invoke_confirm(
-                    self, event
-                )
+                return context.window_manager.invoke_confirm(self, event)
 
         return self.execute(context)
 
@@ -158,10 +154,7 @@ class TESSERA_OT_export_for_print(Operator):
             return {"CANCELLED"}
 
         # Verify minimum geometry.
-        if (
-            len(obj.data.vertices) < 4
-            or len(obj.data.polygons) < 4
-        ):
+        if len(obj.data.vertices) < 4 or len(obj.data.polygons) < 4:
             self.report(
                 {"ERROR"},
                 "Mesh must have at least 4 vertices and 4 faces.",
@@ -202,9 +195,7 @@ class TESSERA_OT_export_for_print(Operator):
         summary = result.report.to_text()
 
         if result.success:
-            files_str = ", ".join(
-                os.path.basename(f) for f in result.exported_files
-            )
+            files_str = ", ".join(os.path.basename(f) for f in result.exported_files)
             summary += f"\nExported: {files_str}"
             self.report({"INFO"}, summary)
             return {"FINISHED"}

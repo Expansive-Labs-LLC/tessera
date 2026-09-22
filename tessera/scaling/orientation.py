@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import bpy
 import numpy as np
-from mathutils import Euler, Matrix, Vector
+from mathutils import Euler
 
 logger = logging.getLogger("tessera.scaling")
 
@@ -104,7 +104,10 @@ class OrientationOptimizer:
         # FR-026: Manual mode — bypass optimizer.
         if manual_euler_deg is not None:
             return self._apply_manual_orientation(
-                context, obj, manual_euler_deg, overhang_threshold_deg,
+                context,
+                obj,
+                manual_euler_deg,
+                overhang_threshold_deg,
                 start_time,
             )
 
@@ -113,17 +116,20 @@ class OrientationOptimizer:
 
         # Compute initial overhang score (current orientation).
         initial_score = self._score_orientation(
-            obj, (0.0, 0.0, 0.0), overhang_threshold_deg,
-            normals=normals, areas=areas,
+            obj,
+            (0.0, 0.0, 0.0),
+            overhang_threshold_deg,
+            normals=normals,
+            areas=areas,
         )
-        logger.info(
-            "Initial overhang area: %.2f mm²", initial_score
-        )
+        logger.info("Initial overhang area: %.2f mm²", initial_score)
 
         # FR-022: Build candidate orientations.
         candidates = self._build_candidates(
-            obj, overhang_threshold_deg,
-            normals=normals, areas=areas,
+            obj,
+            overhang_threshold_deg,
+            normals=normals,
+            areas=areas,
         )
 
         logger.info(
@@ -139,7 +145,7 @@ class OrientationOptimizer:
             mean_score = np.mean(scores)
             variance = np.var(scores)
             if mean_score > 0.0:
-                relative_variance = variance / (mean_score ** 2)
+                relative_variance = variance / (mean_score**2)
                 if relative_variance < _SYMMETRY_VARIANCE_THRESHOLD:
                     elapsed = time.perf_counter() - start_time
                     logger.info(
@@ -161,8 +167,7 @@ class OrientationOptimizer:
         best = min(candidates, key=lambda c: c.overhang_area_mm2)
 
         logger.debug(
-            "Best base candidate: index=%d, euler=%s, "
-            "overhang=%.2f mm²",
+            "Best base candidate: index=%d, euler=%s, " "overhang=%.2f mm²",
             best.index,
             best.euler_deg,
             best.overhang_area_mm2,
@@ -171,21 +176,21 @@ class OrientationOptimizer:
         # FR-025: Optional fine-tuning around the best candidate.
         if enable_fine_tuning:
             fine_candidates = self._build_fine_tune_candidates(
-                obj, best.euler_deg, overhang_threshold_deg,
+                obj,
+                best.euler_deg,
+                overhang_threshold_deg,
                 start_index=len(candidates),
-                normals=normals, areas=areas,
+                normals=normals,
+                areas=areas,
             )
             candidates.extend(fine_candidates)
 
             if fine_candidates:
-                fine_best = min(
-                    fine_candidates, key=lambda c: c.overhang_area_mm2
-                )
+                fine_best = min(fine_candidates, key=lambda c: c.overhang_area_mm2)
                 if fine_best.overhang_area_mm2 < best.overhang_area_mm2:
                     best = fine_best
                     logger.debug(
-                        "Fine-tuning improved result: euler=%s, "
-                        "overhang=%.2f mm²",
+                        "Fine-tuning improved result: euler=%s, " "overhang=%.2f mm²",
                         best.euler_deg,
                         best.overhang_area_mm2,
                     )
@@ -197,9 +202,7 @@ class OrientationOptimizer:
         after_score = best.overhang_area_mm2
         reduction_pct = 0.0
         if initial_score > 0.0:
-            reduction_pct = (
-                (initial_score - after_score) / initial_score * 100.0
-            )
+            reduction_pct = (initial_score - after_score) / initial_score * 100.0
 
         elapsed = time.perf_counter() - start_time
 
@@ -266,9 +269,7 @@ class OrientationOptimizer:
             polys.foreach_get("area", areas)
         except (AttributeError, TypeError):
             for i, poly in enumerate(polys):
-                normals[i] = (
-                    poly.normal[0], poly.normal[1], poly.normal[2]
-                )
+                normals[i] = (poly.normal[0], poly.normal[1], poly.normal[2])
                 areas[i] = poly.area
 
         return normals, areas
@@ -304,18 +305,21 @@ class OrientationOptimizer:
         # 6 canonical rotations: align each axis to Z in both
         # directions.
         canonical_eulers_deg = [
-            (0.0, 0.0, 0.0),      # +Z up (identity)
-            (180.0, 0.0, 0.0),    # -Z up (flip around X)
-            (90.0, 0.0, 0.0),     # +Y up
-            (-90.0, 0.0, 0.0),    # -Y up
-            (0.0, 90.0, 0.0),     # +X up
-            (0.0, -90.0, 0.0),    # -X up
+            (0.0, 0.0, 0.0),  # +Z up (identity)
+            (180.0, 0.0, 0.0),  # -Z up (flip around X)
+            (90.0, 0.0, 0.0),  # +Y up
+            (-90.0, 0.0, 0.0),  # -Y up
+            (0.0, 90.0, 0.0),  # +X up
+            (0.0, -90.0, 0.0),  # -X up
         ]
 
         for euler_deg in canonical_eulers_deg:
             score = self._score_orientation(
-                obj, euler_deg, overhang_threshold_deg,
-                normals=normals, areas=areas,
+                obj,
+                euler_deg,
+                overhang_threshold_deg,
+                normals=normals,
+                areas=areas,
             )
             candidates.append(
                 OrientationCandidate(
@@ -347,8 +351,11 @@ class OrientationOptimizer:
 
         for euler_deg in diagonal_eulers_deg:
             score = self._score_orientation(
-                obj, euler_deg, overhang_threshold_deg,
-                normals=normals, areas=areas,
+                obj,
+                euler_deg,
+                overhang_threshold_deg,
+                normals=normals,
+                areas=areas,
             )
             candidates.append(
                 OrientationCandidate(
@@ -406,8 +413,11 @@ class OrientationOptimizer:
             for dy in _FINE_TUNE_ANGLES_DEG:
                 euler_deg = (rx_base + dx, ry_base + dy, rz_base)
                 score = self._score_orientation(
-                    obj, euler_deg, overhang_threshold_deg,
-                    normals=normals, areas=areas,
+                    obj,
+                    euler_deg,
+                    overhang_threshold_deg,
+                    normals=normals,
+                    areas=areas,
                 )
                 candidates.append(
                     OrientationCandidate(
@@ -417,8 +427,7 @@ class OrientationOptimizer:
                     )
                 )
                 logger.debug(
-                    "Fine-tune candidate %d: euler=%s, "
-                    "overhang=%.2f mm²",
+                    "Fine-tune candidate %d: euler=%s, " "overhang=%.2f mm²",
                     index,
                     euler_deg,
                     score,
@@ -504,9 +513,7 @@ class OrientationOptimizer:
         Returns:
             Total overhang area in mm².
         """
-        return self._score_orientation(
-            obj, (0.0, 0.0, 0.0), overhang_threshold_deg
-        )
+        return self._score_orientation(obj, (0.0, 0.0, 0.0), overhang_threshold_deg)
 
     def _apply_orientation(
         self,
@@ -531,9 +538,7 @@ class OrientationOptimizer:
 
         context.view_layer.objects.active = obj
         obj.select_set(True)
-        bpy.ops.object.transform_apply(
-            location=False, rotation=True, scale=False
-        )
+        bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
         logger.debug(
             "Applied orientation: euler=(%.1f, %.1f, %.1f)°",
@@ -562,9 +567,7 @@ class OrientationOptimizer:
 
         Implements: FR-026.
         """
-        before_score = self._compute_overhang_score(
-            obj, overhang_threshold_deg
-        )
+        before_score = self._compute_overhang_score(obj, overhang_threshold_deg)
 
         self._apply_orientation(context, obj, euler_deg)
 
@@ -574,9 +577,7 @@ class OrientationOptimizer:
 
         reduction_pct = 0.0
         if before_score > 0.0:
-            reduction_pct = (
-                (before_score - after_score) / before_score * 100.0
-            )
+            reduction_pct = (before_score - after_score) / before_score * 100.0
 
         elapsed = time.perf_counter() - start_time
 

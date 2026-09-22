@@ -123,7 +123,7 @@ def load_and_preprocess(
 
     # EC-003: Catch corrupt / unreadable files.
     try:
-        img = Image.open(str(resolved))
+        img: Image.Image = Image.open(str(resolved))
         img.load()  # Force full decode to catch truncation
     except Exception as e:
         raise ImageLoadError(
@@ -150,7 +150,7 @@ def load_and_preprocess(
         scale = MIN_IMAGE_DIMENSION / max_dim
         new_w = max(1, round(w * scale))
         new_h = max(1, round(h * scale))
-        img = img.resize((new_w, new_h), Image.LANCZOS)
+        img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
         logger.debug(
             "Upscaled small image: filename=%s, from=%s, to=%s",
             filename,
@@ -165,7 +165,7 @@ def load_and_preprocess(
         scale = MAX_IMAGE_DIMENSION / max_dim
         new_w = max(1, round(w * scale))
         new_h = max(1, round(h * scale))
-        img = img.resize((new_w, new_h), Image.LANCZOS)
+        img = img.resize((new_w, new_h), Image.Resampling.LANCZOS)
         logger.debug(
             "Resized image: filename=%s, resized_size=%s",
             filename,

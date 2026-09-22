@@ -61,7 +61,10 @@ ERROR_CATALOG: dict[str, ErrorCatalogEntry] = {
     # --- Input Errors ---
     "BF-E003": ErrorCatalogEntry(
         code="BF-E003",
-        message="Unsupported image format. Supported formats: .jpg, .jpeg, .png, .webp, .heic.",
+        message=(
+            "Unsupported image format. "
+            "Supported formats: .jpg, .jpeg, .png, .webp, .heic."
+        ),
         severity=ErrorSeverity.ERROR,
         category=ErrorCategory.INPUT,
         resolution_steps=[
@@ -84,9 +87,7 @@ ERROR_CATALOG: dict[str, ErrorCatalogEntry] = {
     ),
     "BF-E005": ErrorCatalogEntry(
         code="BF-E005",
-        message=(
-            "Image appears blurry. Results may be lower quality."
-        ),
+        message=("Image appears blurry. Results may be lower quality."),
         severity=ErrorSeverity.WARNING,
         category=ErrorCategory.INPUT,
         resolution_steps=[
@@ -184,8 +185,7 @@ ERROR_CATALOG: dict[str, ErrorCatalogEntry] = {
     "BF-E012": ErrorCatalogEntry(
         code="BF-E012",
         message=(
-            "Blender version is incompatible. "
-            "Tessera requires Blender 4.2 or newer."
+            "Blender version is incompatible. " "Tessera requires Blender 4.2 or newer."
         ),
         severity=ErrorSeverity.CRITICAL,
         category=ErrorCategory.BLENDER,

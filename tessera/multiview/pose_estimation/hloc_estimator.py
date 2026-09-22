@@ -32,9 +32,12 @@ Public API:
 
 from __future__ import annotations
 
+import importlib.util as _importlib_util
 import logging
 import os
+import os as _os
 import time
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -42,30 +45,30 @@ from tessera.multiview.pose_estimation.base import PoseEstimator
 from tessera.multiview.pose_estimation.label_prior import (
     compute_angular_separation,
     get_prior_pose,
-    label_to_rotation_matrix,
 )
 from tessera.multiview.pose_estimation.types import (
     CameraPose,
     PoseEstimationResult,
 )
 from tessera.reconstruction.utils.vram_guard import VRAMGuard
-import importlib.util as _importlib_util
-import os as _os
 
-# Load VisionResult and VIEW_LABEL_POSES directly from the types.py
-# file to avoid triggering tessera.vision.__init__ which eagerly
-# imports the full pipeline and its heavy dependencies (PIL, etc.).
-_types_path = _os.path.join(
-    _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
-    "vision",
-    "types.py",
-)
-_spec = _importlib_util.spec_from_file_location("tessera.vision.types", _types_path)
-_vision_types = _importlib_util.module_from_spec(_spec)
-_spec.loader.exec_module(_vision_types)
-VIEW_LABEL_POSES = _vision_types.VIEW_LABEL_POSES  # noqa: F401
-VisionResult = _vision_types.VisionResult  # noqa: F401
-del _vision_types, _spec, _types_path, _importlib_util, _os
+if TYPE_CHECKING:
+    from tessera.vision.types import VIEW_LABEL_POSES, VisionResult
+else:
+    # Load VisionResult and VIEW_LABEL_POSES directly from the types.py
+    # file to avoid triggering tessera.vision.__init__ which eagerly
+    # imports the full pipeline and its heavy dependencies (PIL, etc.).
+    _types_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(_os.path.dirname(__file__))),
+        "vision",
+        "types.py",
+    )
+    _spec = _importlib_util.spec_from_file_location("tessera.vision.types", _types_path)
+    _vision_types = _importlib_util.module_from_spec(_spec)
+    _spec.loader.exec_module(_vision_types)
+    VIEW_LABEL_POSES = _vision_types.VIEW_LABEL_POSES  # noqa: F401
+    VisionResult = _vision_types.VisionResult  # noqa: F401
+    del _vision_types, _spec, _types_path, _importlib_util, _os
 
 logger = logging.getLogger("tessera.multiview")
 
@@ -119,13 +122,9 @@ class HlocPoseEstimator(PoseEstimator):
 
     def _lightglue_weight_path(self) -> str:
         """Return path to LightGlue weight file."""
-        return os.path.join(
-            self._cache_dir, "lightglue", "lightglue_superpoint.pth"
-        )
+        return os.path.join(self._cache_dir, "lightglue", "lightglue_superpoint.pth")
 
-    def _prepare_image(
-        self, image: np.ndarray, mask: np.ndarray
-    ) -> np.ndarray:
+    def _prepare_image(self, image: np.ndarray, mask: np.ndarray) -> np.ndarray:
         """Apply mask and resize for feature extraction.
 
         Zeros out background pixels using the segmentation mask and
@@ -168,9 +167,7 @@ class HlocPoseEstimator(PoseEstimator):
 
         return masked
 
-    def _extract_keypoints(
-        self, images: list[np.ndarray]
-    ) -> list[dict]:
+    def _extract_keypoints(self, images: list[np.ndarray]) -> list[dict]:
         """Extract SuperPoint keypoints and descriptors from images.
 
         Loads the SuperPoint model, processes all images sequentially,
@@ -200,8 +197,8 @@ class HlocPoseEstimator(PoseEstimator):
             logger.info("Loading SuperPoint model for keypoint extraction")
 
             try:
-                from hloc.extractors.superpoint import (  # type: ignore[import-not-found]
-                    SuperPoint,
+                from hloc.extractors.superpoint import (
+                    SuperPoint,  # type: ignore[import-not-found]
                 )
 
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -294,27 +291,33 @@ class HlocPoseEstimator(PoseEstimator):
 
                 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
                 matcher = LightGlue({"features": "superpoint"}).to(device)
-                state = torch.load(
-                    weight_path, map_location=device, weights_only=True
-                )
+                state = torch.load(weight_path, map_location=device, weights_only=True)
                 matcher.load_state_dict(state)
                 matcher.eval()
 
                 for i in range(n):
                     for j in range(i + 1, n):
                         start = time.monotonic()
-                        kp_i = torch.from_numpy(
-                            keypoints_list[i]["keypoints"]
-                        ).float().to(device)
-                        desc_i = torch.from_numpy(
-                            keypoints_list[i]["descriptors"]
-                        ).float().to(device)
-                        kp_j = torch.from_numpy(
-                            keypoints_list[j]["keypoints"]
-                        ).float().to(device)
-                        desc_j = torch.from_numpy(
-                            keypoints_list[j]["descriptors"]
-                        ).float().to(device)
+                        kp_i = (
+                            torch.from_numpy(keypoints_list[i]["keypoints"])
+                            .float()
+                            .to(device)
+                        )
+                        desc_i = (
+                            torch.from_numpy(keypoints_list[i]["descriptors"])
+                            .float()
+                            .to(device)
+                        )
+                        kp_j = (
+                            torch.from_numpy(keypoints_list[j]["keypoints"])
+                            .float()
+                            .to(device)
+                        )
+                        desc_j = (
+                            torch.from_numpy(keypoints_list[j]["descriptors"])
+                            .float()
+                            .to(device)
+                        )
 
                         with torch.no_grad():
                             pred = matcher(
@@ -335,9 +338,7 @@ class HlocPoseEstimator(PoseEstimator):
                             dst_idx = match_indices[valid]
                             src_pts = keypoints_list[i]["keypoints"][src_idx]
                             dst_pts = keypoints_list[j]["keypoints"][dst_idx]
-                            matches_dict[(i, j)] = np.stack(
-                                [src_pts, dst_pts], axis=1
-                            )
+                            matches_dict[(i, j)] = np.stack([src_pts, dst_pts], axis=1)
 
                         inlier_counts[(i, j)] = inlier_count
                         duration = time.monotonic() - start
@@ -468,7 +469,9 @@ class HlocPoseEstimator(PoseEstimator):
         poses: list[CameraPose | None] = [None] * n_images
 
         try:
-            from scipy.spatial.transform import Rotation  # type: ignore[import-not-found]
+            # Availability probe only -- bundle adjustment below needs scipy
+            # present, but uses no name from it directly.
+            import scipy.spatial.transform  # noqa: F401
         except ImportError:
             raise RuntimeError(
                 "scipy is not available. Install scipy for bundle adjustment."
@@ -507,7 +510,9 @@ class HlocPoseEstimator(PoseEstimator):
                 )
 
             # For images without a pose, try to estimate from matches
-            if poses[i] is not None and poses[j] is None:
+            ref_i = poses[i]
+            ref_j = poses[j]
+            if ref_i is not None and ref_j is None:
                 # Estimate relative pose from point correspondences
                 src_pts = match_pts[:, 0, :]
                 dst_pts = match_pts[:, 1, :]
@@ -515,8 +520,8 @@ class HlocPoseEstimator(PoseEstimator):
                 try:
                     import cv2  # type: ignore[import-not-found]
 
-                    focal = poses[i].focal_length
-                    pp = poses[i].principal_point
+                    focal = ref_i.focal_length
+                    pp = ref_i.principal_point
                     E, mask_e = cv2.findEssentialMat(
                         src_pts,
                         dst_pts,
@@ -531,10 +536,8 @@ class HlocPoseEstimator(PoseEstimator):
                             E, src_pts, dst_pts, focal=focal, pp=pp
                         )
                         # Compose with reference pose
-                        rot_j = R @ poses[i].rotation
-                        trans_j = poses[i].translation + (
-                            poses[i].rotation.T @ t.flatten()
-                        )
+                        rot_j = R @ ref_i.rotation
+                        trans_j = ref_i.translation + (ref_i.rotation.T @ t.flatten())
                         w_j, h_j = image_sizes[j]
                         poses[j] = CameraPose(
                             rotation=rot_j,
@@ -553,27 +556,30 @@ class HlocPoseEstimator(PoseEstimator):
                         j,
                     )
 
-            elif poses[j] is not None and poses[i] is None:
+            elif ref_j is not None and ref_i is None:
                 # Reverse direction
                 src_pts = match_pts[:, 1, :]
                 dst_pts = match_pts[:, 0, :]
                 try:
                     import cv2  # type: ignore[import-not-found]
 
-                    focal = poses[j].focal_length
-                    pp = poses[j].principal_point
+                    focal = ref_j.focal_length
+                    pp = ref_j.principal_point
                     E, _ = cv2.findEssentialMat(
-                        src_pts, dst_pts, focal=focal, pp=pp,
-                        method=cv2.RANSAC, prob=0.999, threshold=1.0,
+                        src_pts,
+                        dst_pts,
+                        focal=focal,
+                        pp=pp,
+                        method=cv2.RANSAC,
+                        prob=0.999,
+                        threshold=1.0,
                     )
                     if E is not None:
                         _, R, t, _ = cv2.recoverPose(
                             E, src_pts, dst_pts, focal=focal, pp=pp
                         )
-                        rot_i = R @ poses[j].rotation
-                        trans_i = poses[j].translation + (
-                            poses[j].rotation.T @ t.flatten()
-                        )
+                        rot_i = R @ ref_j.rotation
+                        trans_i = ref_j.translation + (ref_j.rotation.T @ t.flatten())
                         w_i, h_i = image_sizes[i]
                         poses[i] = CameraPose(
                             rotation=rot_i,
@@ -589,8 +595,7 @@ class HlocPoseEstimator(PoseEstimator):
         duration = time.monotonic() - start
         num_registered = sum(1 for p in poses if p is not None)
         logger.info(
-            "Bundle adjustment completed: num_registered=%d, "
-            "duration_s=%.2f",
+            "Bundle adjustment completed: num_registered=%d, " "duration_s=%.2f",
             num_registered,
             duration,
         )
@@ -627,8 +632,7 @@ class HlocPoseEstimator(PoseEstimator):
         sufficient = max_angle >= _MIN_ANGULAR_SEPARATION_DEG
         if not sufficient:
             logger.warning(
-                "Insufficient angular separation: max_angle=%.1f°, "
-                "threshold=%.1f°",
+                "Insufficient angular separation: max_angle=%.1f°, " "threshold=%.1f°",
                 max_angle,
                 _MIN_ANGULAR_SEPARATION_DEG,
             )
@@ -663,9 +667,7 @@ class HlocPoseEstimator(PoseEstimator):
             pass
 
         num_confirmed = sum(
-            1
-            for vr in vision_results
-            if not vr.label_needs_confirmation
+            1 for vr in vision_results if not vr.label_needs_confirmation
         )
         logger.info(
             "Pose estimation started: num_images=%d, "
@@ -692,13 +694,9 @@ class HlocPoseEstimator(PoseEstimator):
             matches_dict, inlier_counts = self._match_features(keypoints_list)
 
             # Compute overall inlier ratio
-            total_matches = sum(
-                len(kp["keypoints"]) for kp in keypoints_list
-            )
+            total_matches = sum(len(kp["keypoints"]) for kp in keypoints_list)
             total_inliers = sum(inlier_counts.values())
-            inlier_ratio = (
-                total_inliers / max(total_matches, 1)
-            )
+            inlier_ratio = total_inliers / max(total_matches, 1)
 
             # EC-003: Check for low inlier ratio
             if inlier_ratio < _MIN_INLIER_RATIO:
@@ -714,9 +712,7 @@ class HlocPoseEstimator(PoseEstimator):
             priors = self._apply_view_label_priors(vision_results)
 
             # Step 5: Run bundle adjustment (FR-011)
-            poses = self._run_bundle_adjustment(
-                n, image_sizes, matches_dict, priors
-            )
+            poses = self._run_bundle_adjustment(n, image_sizes, matches_dict, priors)
 
             num_registered = sum(1 for p in poses if p is not None)
 
@@ -768,8 +764,7 @@ class HlocPoseEstimator(PoseEstimator):
                 )
 
             logger.info(
-                "Pose estimation succeeded: num_registered=%d, "
-                "inlier_ratio=%.2f",
+                "Pose estimation succeeded: num_registered=%d, " "inlier_ratio=%.2f",
                 num_registered,
                 inlier_ratio,
             )

@@ -87,9 +87,7 @@ def execute_undo(
             elapsed = time.perf_counter() - start
             return EditResult(
                 success=True,
-                description=(
-                    f"Undone (version {from_version} → {to_version})"
-                ),
+                description=(f"Undone (version {from_version} → {to_version})"),
                 vertices_modified=len(obj.data.vertices),
                 execution_time_seconds=elapsed,
             )
@@ -137,9 +135,7 @@ def execute_redo(
         elapsed = time.perf_counter() - start
         return EditResult(
             success=True,
-            description=(
-                f"Redone (version {from_version} → {to_version})"
-            ),
+            description=(f"Redone (version {from_version} → {to_version})"),
             vertices_modified=len(obj.data.vertices),
             execution_time_seconds=elapsed,
         )

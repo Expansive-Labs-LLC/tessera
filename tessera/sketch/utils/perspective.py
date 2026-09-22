@@ -72,14 +72,10 @@ def correct_perspective(
     edges = cv2.dilate(edges, kernel, iterations=2)
 
     # Find contours.
-    contours, _ = cv2.findContours(
-        edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
-    )
+    contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     if not contours:
-        logger.debug(
-            "Perspective correction skipped: no paper boundary detected"
-        )
+        logger.debug("Perspective correction skipped: no paper boundary detected")
         return image, False
 
     # Sort contours by area, largest first.
@@ -102,9 +98,7 @@ def correct_perspective(
 
     if quad is None:
         # FR-013: No quadrilateral found.
-        logger.debug(
-            "Perspective correction skipped: no paper boundary detected"
-        )
+        logger.debug("Perspective correction skipped: no paper boundary detected")
         return image, False
 
     logger.debug(
@@ -127,8 +121,7 @@ def correct_perspective(
 
     if max_width < 64 or max_height < 64:
         logger.debug(
-            "Perspective correction skipped: detected quad too small "
-            "(%dx%d)",
+            "Perspective correction skipped: detected quad too small " "(%dx%d)",
             max_width,
             max_height,
         )
@@ -169,9 +162,9 @@ def _order_points(pts: np.ndarray) -> np.ndarray:
     s = pts.sum(axis=1)
     d = np.diff(pts, axis=1).flatten()
 
-    ordered[0] = pts[np.argmin(s)]   # Top-left: smallest sum
-    ordered[2] = pts[np.argmax(s)]   # Bottom-right: largest sum
-    ordered[1] = pts[np.argmin(d)]   # Top-right: smallest difference
-    ordered[3] = pts[np.argmax(d)]   # Bottom-left: largest difference
+    ordered[0] = pts[np.argmin(s)]  # Top-left: smallest sum
+    ordered[2] = pts[np.argmax(s)]  # Bottom-right: largest sum
+    ordered[1] = pts[np.argmin(d)]  # Top-right: smallest difference
+    ordered[3] = pts[np.argmax(d)]  # Bottom-left: largest difference
 
     return ordered

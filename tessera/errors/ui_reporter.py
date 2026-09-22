@@ -29,7 +29,7 @@ import logging
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Any, Optional
 
 from .categories import ErrorSeverity
 
@@ -116,7 +116,7 @@ class UIReporter:
         message: str,
         severity: ErrorSeverity,
         resolution_steps: Optional[list[str]] = None,
-        operator: Optional[object] = None,
+        operator: Optional[Any] = None,
     ) -> None:
         """Show an error in Blender's UI and append to the log.
 

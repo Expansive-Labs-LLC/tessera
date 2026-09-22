@@ -87,9 +87,7 @@ class LocalLLMBackend(LLMBackend):
             model_path = dm.ensure_model("tessera-intent-parser")
             self._model_path = str(model_path)
         except Exception as exc:
-            raise LLMBackendError(
-                f"Failed to load intent parser model: {exc}"
-            ) from exc
+            raise LLMBackendError(f"Failed to load intent parser model: {exc}") from exc
 
         # Initialize the Llama model.
         try:
@@ -100,9 +98,7 @@ class LocalLLMBackend(LLMBackend):
                 verbose=False,
             )
         except Exception as exc:
-            raise LLMBackendError(
-                f"Failed to initialize Llama model: {exc}"
-            ) from exc
+            raise LLMBackendError(f"Failed to initialize Llama model: {exc}") from exc
 
         logger.info(
             "Local LLM model loaded: path=%s",
@@ -144,9 +140,7 @@ class LocalLLMBackend(LLMBackend):
             content = response["choices"][0]["message"]["content"]
             return content.strip() if content else ""
         except Exception as exc:
-            raise LLMBackendError(
-                f"Local LLM inference failed: {exc}"
-            ) from exc
+            raise LLMBackendError(f"Local LLM inference failed: {exc}") from exc
 
     def is_available(self) -> bool:
         """Check if the local backend can be used.
@@ -156,6 +150,7 @@ class LocalLLMBackend(LLMBackend):
         """
         try:
             import llama_cpp  # noqa: F401
+
             return True
         except ImportError:
             return False

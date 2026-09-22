@@ -41,11 +41,10 @@ from __future__ import annotations
 
 import logging
 import time
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -86,33 +85,33 @@ def _make_tetrahedron() -> tuple[np.ndarray, np.ndarray]:
 @pytest.fixture
 def mesh_imports():
     """Import mesh modules after bpy mock is installed."""
-    from tessera.mesh.importer import MeshImporter
     from tessera.mesh.cleanup import MeshCleanupPipeline
-    from tessera.mesh.exceptions import MeshCleanupError
     from tessera.mesh.data_types import (
-        RawMeshData,
         DIAGNOSTICS_KEYS,
+        RawMeshData,
         empty_diagnostics,
     )
     from tessera.mesh.diagnostics import (
         build_diagnostics,
-        collect_before_stats,
-        collect_after_stats,
         check_manifold,
         check_topology,
         check_watertight,
+        collect_after_stats,
+        collect_before_stats,
     )
+    from tessera.mesh.exceptions import MeshCleanupError
     from tessera.mesh.hierarchy import (
-        rename_object,
         create_session_parent,
+        rename_object,
     )
+    from tessera.mesh.importer import MeshImporter
+    from tessera.mesh.steps.decimate import DecimateStep
     from tessera.mesh.steps.dedup import DedupStep
     from tessera.mesh.steps.degenerate import DegenerateStep
-    from tessera.mesh.steps.normals import NormalsStep
     from tessera.mesh.steps.hole_fill import HoleFillStep
-    from tessera.mesh.steps.voxel_remesh import VoxelRemeshStep
+    from tessera.mesh.steps.normals import NormalsStep
     from tessera.mesh.steps.quad_remesh import QuadRemeshStep
-    from tessera.mesh.steps.decimate import DecimateStep
+    from tessera.mesh.steps.voxel_remesh import VoxelRemeshStep
 
     class _Imports:
         pass
@@ -176,6 +175,7 @@ class TestMeshImport:
         # Then — object created and linked
         assert obj is not None
         import bpy
+
         # mesh data block created via bpy.data.meshes.new
         bpy.data.meshes.new.assert_called_once()
         mesh_data = bpy.data.meshes.new.return_value
@@ -309,12 +309,11 @@ class TestPhase1Cleanup:
 
         # When
         import bpy
+
         pipeline.execute(ctx, obj)
 
         # Then — undo_push called with Tessera message
-        bpy.ops.ed.undo_push.assert_called_once_with(
-            message="Tessera Mesh Cleanup"
-        )
+        bpy.ops.ed.undo_push.assert_called_once_with(message="Tessera Mesh Cleanup")
 
 
 # ---------------------------------------------------------------------------
@@ -379,9 +378,7 @@ class TestVoxelRemeshFallback:
         # Restore
         bmesh_mock.new = original_new
 
-    def test_voxel_remesh_skipped_when_disabled(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_voxel_remesh_skipped_when_disabled(self, mock_bpy, mesh_imports):
         """Voxel remesh fallback does not trigger when disabled."""
         m = mesh_imports
 
@@ -471,7 +468,8 @@ class TestLargeMesh:
 
         # WARNING logged about face count exceeding threshold
         warning_records = [
-            r for r in caplog.records
+            r
+            for r in caplog.records
             if r.levelno == logging.WARNING and "faces" in r.message
         ]
         assert len(warning_records) >= 1, (
@@ -488,9 +486,7 @@ class TestLargeMesh:
 class TestMinimalMesh:
     """Tests for minimum mesh size validation."""
 
-    def test_TS006_minimal_mesh_raises_few_vertices(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_TS006_minimal_mesh_raises_few_vertices(self, mock_bpy, mesh_imports):
         """TS-006 → EC-003: Input with < 4 vertices raises ValueError.
 
         Given vertices with only 2 rows,
@@ -600,7 +596,8 @@ class TestLargeHole:
 
         # WARNING about exceeding 500-edge limit
         skip_warnings = [
-            r for r in caplog.records
+            r
+            for r in caplog.records
             if r.levelno == logging.WARNING and "500" in r.message
         ]
         assert len(skip_warnings) >= 1, (
@@ -694,6 +691,7 @@ class TestQuadRemesh:
         # Then — operator was called and report indicates application
         assert report["quad_remesh_applied"] is True
         import bpy
+
         bpy.ops.object.quadriflow_remesh.assert_called_once()
 
     def test_quad_remesh_disabled_by_default(self, mock_bpy, mesh_imports):
@@ -713,6 +711,7 @@ class TestQuadRemesh:
         # Then — not applied
         assert report["quad_remesh_applied"] is False
         import bpy
+
         bpy.ops.object.quadriflow_remesh.assert_not_called()
 
     def test_quad_remesh_default_settings(self, mock_bpy, mesh_imports):
@@ -773,6 +772,7 @@ class TestDecimate:
         assert call_kwargs[1]["type"] == "DECIMATE"
 
         import bpy
+
         bpy.ops.object.modifier_apply.assert_called_once()
 
     def test_decimate_disabled_by_default(self, mock_bpy, mesh_imports):
@@ -808,7 +808,7 @@ class TestDecimate:
         step = m.DecimateStep()
 
         # When
-        report = step.execute(ctx, obj, settings)
+        step.execute(ctx, obj, settings)
 
         # Then — modifier was created with ratio ≈ 0.5
         modifier_mock = obj.modifiers.new.return_value
@@ -845,12 +845,11 @@ class TestUndoSupport:
 
         # When
         import bpy
+
         pipeline.execute(ctx, obj)
 
         # Then — undo_push called before modifications
-        bpy.ops.ed.undo_push.assert_called_once_with(
-            message="Tessera Mesh Cleanup"
-        )
+        bpy.ops.ed.undo_push.assert_called_once_with(message="Tessera Mesh Cleanup")
 
 
 # ---------------------------------------------------------------------------
@@ -1151,18 +1150,14 @@ class TestCleanupSettings:
         assert "enable_decimate" in annotations
         assert "decimate_target_faces" in annotations
 
-    def test_cleanup_settings_in_properties_classes(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_cleanup_settings_in_properties_classes(self, mock_bpy, mesh_imports):
         """FR-017: TesseraCleanupSettings is in the registration list."""
-        from tessera.properties import classes, TesseraCleanupSettings
+        from tessera.properties import TesseraCleanupSettings, classes
 
         # Then — included in classes list for registration
         assert TesseraCleanupSettings in classes
 
-    def test_tessera_properties_has_cleanup_pointer(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_tessera_properties_has_cleanup_pointer(self, mock_bpy, mesh_imports):
         """FR-017: TesseraProperties has a cleanup PointerProperty."""
         from tessera.properties import TesseraProperties
 
@@ -1221,9 +1216,7 @@ class TestModalOperator:
 class TestStepExceptionHandling:
     """Tests for critical and non-critical step exception handling."""
 
-    def test_TS019_non_critical_step_exception(
-        self, mock_bpy, mesh_imports, caplog
-    ):
+    def test_TS019_non_critical_step_exception(self, mock_bpy, mesh_imports, caplog):
         """TS-019 → EC-006, FR-020: Non-critical step exception caught,
         pipeline continues.
 
@@ -1268,9 +1261,9 @@ class TestStepExceptionHandling:
 
             # ERROR was logged
             error_records = [
-                r for r in caplog.records
-                if r.levelno == logging.ERROR
-                and "HoleFillStep" in r.message
+                r
+                for r in caplog.records
+                if r.levelno == logging.ERROR and "HoleFillStep" in r.message
             ]
             assert len(error_records) >= 1
         finally:
@@ -1417,9 +1410,7 @@ class TestHierarchy:
         obj.data = MagicMock()
 
         # When
-        m.rename_object(
-            obj, "evil/../model", timestamp="20260414_225000"
-        )
+        m.rename_object(obj, "evil/../model", timestamp="20260414_225000")
 
         # Then — special chars replaced with _
         assert obj.name == "BF_evil____model_20260414_225000"
@@ -1432,9 +1423,7 @@ class TestHierarchy:
         ctx = MagicMock()
 
         # When
-        empty = m.create_session_parent(
-            ctx, timestamp="20260414_225000"
-        )
+        m.create_session_parent(ctx, timestamp="20260414_225000")
 
         # Then — bpy.data.objects.new called with name and None
         bpy.data.objects.new.assert_called_once_with(
@@ -1452,24 +1441,23 @@ class TestHierarchy:
 class TestObjectNaming:
     """Tests for object naming format (FR-002)."""
 
-    def test_FR002_default_name_contains_tessera_prefix(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_FR002_default_name_contains_tessera_prefix(self, mock_bpy, mesh_imports):
         """FR-002: Default name starts with 'Tessera_'."""
         m = mesh_imports
         verts, faces = _make_tetrahedron()
         importer = m.MeshImporter()
 
         # When
-        obj = importer.import_mesh(verts, faces)
+        importer.import_mesh(verts, faces)
 
         # Then — bpy.data.objects.new called with name starting Tessera_
         import bpy
+
         call_args = bpy.data.objects.new.call_args
         obj_name = call_args[1]["name"]
-        assert obj_name.startswith("Tessera_"), (
-            f"Expected name starting with 'Tessera_', got '{obj_name}'"
-        )
+        assert obj_name.startswith(
+            "Tessera_"
+        ), f"Expected name starting with 'Tessera_', got '{obj_name}'"
 
     def test_FR002_name_override_used(self, mock_bpy, mesh_imports):
         """FR-002: name_override replaces auto-generated name."""
@@ -1482,13 +1470,12 @@ class TestObjectNaming:
 
         # Then — name matches override
         import bpy
+
         call_args = bpy.data.objects.new.call_args
         obj_name = call_args[1]["name"]
         assert obj_name == "MyMesh"
 
-    def test_FR002_timestamp_format_YYYYMMDD_HHMMSS(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_FR002_timestamp_format_YYYYMMDD_HHMMSS(self, mock_bpy, mesh_imports):
         """FR-002: Auto-generated name uses YYYYMMDD_HHMMSS format."""
         m = mesh_imports
         verts, faces = _make_tetrahedron()
@@ -1498,13 +1485,15 @@ class TestObjectNaming:
         importer.import_mesh(verts, faces)
 
         # Then — name has 8-digit date + '_' + 6-digit time
-        import bpy
         import re
+
+        import bpy
+
         call_args = bpy.data.objects.new.call_args
         obj_name = call_args[1]["name"]
-        assert re.match(r"^Tessera_\d{8}_\d{6}$", obj_name), (
-            f"Name '{obj_name}' doesn't match Tessera_YYYYMMDD_HHMMSS"
-        )
+        assert re.match(
+            r"^Tessera_\d{8}_\d{6}$", obj_name
+        ), f"Name '{obj_name}' doesn't match Tessera_YYYYMMDD_HHMMSS"
 
     def test_FR002_object_placed_at_cursor(self, mock_bpy, mesh_imports):
         """FR-002: Object placed at the scene 3D cursor location."""
@@ -1552,6 +1541,7 @@ class TestDedupStep:
 
         # Verify bmesh.ops.remove_doubles was called
         import bmesh as bmesh_mock
+
         bmesh_mock.ops.remove_doubles.assert_called()
 
     def test_FR003_custom_merge_distance(self, mock_bpy, mesh_imports):
@@ -1568,6 +1558,7 @@ class TestDedupStep:
 
         # Then — bmesh.ops.remove_doubles called with custom distance
         import bmesh as bmesh_mock
+
         call_kwargs = bmesh_mock.ops.remove_doubles.call_args
         assert call_kwargs[1]["dist"] == 0.005
 
@@ -1590,6 +1581,7 @@ class TestDedupStep:
 
         # Then — bmesh.free() was called (via mock tracking)
         import bmesh as bmesh_mock
+
         bm = bmesh_mock.new.return_value
         bm.free.assert_called_once()
 
@@ -1619,6 +1611,7 @@ class TestNormalsStep:
 
         # Verify bmesh.ops.recalc_face_normals was called
         import bmesh as bmesh_mock
+
         bmesh_mock.ops.recalc_face_normals.assert_called()
 
     def test_normals_step_name(self, mock_bpy, mesh_imports):
@@ -1639,6 +1632,7 @@ class TestNormalsStep:
         step.execute(ctx, obj, {})
 
         import bmesh as bmesh_mock
+
         bm = bmesh_mock.new.return_value
         bm.free.assert_called_once()
 
@@ -1651,9 +1645,7 @@ class TestNormalsStep:
 class TestHoleFillStep:
     """Extended tests for HoleFillStep (beyond TS-007 large hole)."""
 
-    def test_FR005_no_boundary_edges_skips_fill(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_FR005_no_boundary_edges_skips_fill(self, mock_bpy, mesh_imports):
         """FR-005: No boundary edges → nothing to fill."""
         m = mesh_imports
         import bmesh as bmesh_mock
@@ -1805,9 +1797,7 @@ class TestVoxelRemeshStepDetails:
 class TestStepLogging:
     """Tests for step-level DEBUG logging (FR-008, §11.1)."""
 
-    def test_FR008_dedup_logs_at_debug(
-        self, mock_bpy, mesh_imports, caplog
-    ):
+    def test_FR008_dedup_logs_at_debug(self, mock_bpy, mesh_imports, caplog):
         """FR-008: DedupStep logs at DEBUG level."""
         m = mesh_imports
 
@@ -1821,9 +1811,9 @@ class TestStepLogging:
             step.execute(ctx, obj, {})
 
         debug_records = [
-            r for r in caplog.records
-            if r.levelno == logging.DEBUG
-            and "DedupStep" in r.message
+            r
+            for r in caplog.records
+            if r.levelno == logging.DEBUG and "DedupStep" in r.message
         ]
         assert len(debug_records) >= 2, (
             f"Expected at least 2 DEBUG records for DedupStep, "
@@ -1860,9 +1850,7 @@ class TestStepLogging:
 class TestDecimateDetails:
     """Extended tests for Decimate modifier configuration."""
 
-    def test_FR011_use_collapse_triangulate_false(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_FR011_use_collapse_triangulate_false(self, mock_bpy, mesh_imports):
         """FR-011: Decimate sets use_collapse_triangulate = False."""
         m = mesh_imports
 
@@ -1880,9 +1868,7 @@ class TestDecimateDetails:
         modifier_mock = obj.modifiers.new.return_value
         assert modifier_mock.use_collapse_triangulate is False
 
-    def test_FR012_use_dissolve_boundaries_false(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_FR012_use_dissolve_boundaries_false(self, mock_bpy, mesh_imports):
         """FR-012: Decimate sets use_dissolve_boundaries = False."""
         m = mesh_imports
 
@@ -1954,9 +1940,9 @@ class TestOriginPlacement:
 
     def test_FR013_set_origin_to_bounds(self, mock_bpy, mesh_imports):
         """FR-013: set_origin_to_bounds calls the correct operator."""
-        from tessera.mesh.hierarchy import set_origin_to_bounds
-
         import bpy
+
+        from tessera.mesh.hierarchy import set_origin_to_bounds
 
         obj = MagicMock()
         ctx = MagicMock()
@@ -1981,9 +1967,7 @@ class TestOriginPlacement:
 class TestObjectIsolation:
     """Tests for object isolation during cleanup (CON-005)."""
 
-    def test_CON005_only_target_object_active(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_CON005_only_target_object_active(self, mock_bpy, mesh_imports):
         """CON-005: Pipeline makes only the target object active."""
         m = mesh_imports
 
@@ -2014,9 +1998,7 @@ class TestSourceModelSanitization:
         importer = m.MeshImporter()
         assert importer._sanitize_source_model("trellis") == "trellis"
 
-    def test_SEC005_hyphens_and_underscores_allowed(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_SEC005_hyphens_and_underscores_allowed(self, mock_bpy, mesh_imports):
         """SEC-005: Hyphens and underscores are allowed."""
         m = mesh_imports
         importer = m.MeshImporter()
@@ -2060,9 +2042,7 @@ class TestSourceModelSanitization:
 class TestPipelineIntegration:
     """Integration tests for pipeline step ordering and data flow."""
 
-    def test_pipeline_settings_passed_to_steps(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_pipeline_settings_passed_to_steps(self, mock_bpy, mesh_imports):
         """Pipeline passes settings dict to all steps."""
         m = mesh_imports
 
@@ -2075,7 +2055,8 @@ class TestPipelineIntegration:
 
         # When — with custom settings
         diagnostics = pipeline.execute(
-            ctx, obj,
+            ctx,
+            obj,
             merge_distance=0.005,
             voxel_size=0.02,
             enable_quad_remesh=False,
@@ -2087,9 +2068,7 @@ class TestPipelineIntegration:
         assert diagnostics["quad_remesh_applied"] is False
         assert diagnostics["decimate_applied"] is False
 
-    def test_pipeline_step_order_phase1_before_phase2(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_pipeline_step_order_phase1_before_phase2(self, mock_bpy, mesh_imports):
         """Pipeline executes Phase 1 steps before Phase 2 steps."""
         m = mesh_imports
 
@@ -2130,9 +2109,7 @@ class TestPipelineIntegration:
             m.DedupStep.execute = original_dedup_execute
             m.QuadRemeshStep.execute = original_quad_execute
 
-    def test_pipeline_info_logging_on_completion(
-        self, mock_bpy, mesh_imports, caplog
-    ):
+    def test_pipeline_info_logging_on_completion(self, mock_bpy, mesh_imports, caplog):
         """§11.1: Pipeline logs INFO on completion with diagnostics."""
         m = mesh_imports
 
@@ -2147,18 +2124,16 @@ class TestPipelineIntegration:
             pipeline.execute(ctx, obj)
 
         info_records = [
-            r for r in caplog.records
-            if r.levelno == logging.INFO
-            and "completed" in r.message.lower()
+            r
+            for r in caplog.records
+            if r.levelno == logging.INFO and "completed" in r.message.lower()
         ]
         assert len(info_records) >= 1, (
             f"Expected INFO log about cleanup completion, got: "
             f"{[r.message for r in caplog.records]}"
         )
 
-    def test_pipeline_multiple_errors_accumulated(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_pipeline_multiple_errors_accumulated(self, mock_bpy, mesh_imports):
         """FR-020: Multiple non-critical step failures accumulate in
         step_errors list."""
         m = mesh_imports
@@ -2242,9 +2217,7 @@ class TestImportValidationEdgeCases:
         importer = m.MeshImporter()
 
         with pytest.raises(ValueError, match="numpy array"):
-            importer.import_mesh(
-                [[0, 0, 0], [1, 0, 0]], _make_valid_faces(10, 6)
-            )
+            importer.import_mesh([[0, 0, 0], [1, 0, 0]], _make_valid_faces(10, 6))
 
     def test_faces_not_numpy(self, mock_bpy, mesh_imports):
         """SEC-001: Non-numpy faces input raises ValueError."""
@@ -2252,9 +2225,7 @@ class TestImportValidationEdgeCases:
         importer = m.MeshImporter()
 
         with pytest.raises(ValueError, match="numpy array"):
-            importer.import_mesh(
-                _make_valid_vertices(10), [[0, 1, 2], [3, 4, 5]]
-            )
+            importer.import_mesh(_make_valid_vertices(10), [[0, 1, 2], [3, 4, 5]])
 
     def test_vertices_wrong_shape_1d(self, mock_bpy, mesh_imports):
         """SEC-001: 1D vertex array raises ValueError."""
@@ -2284,9 +2255,7 @@ class TestImportValidationEdgeCases:
         obj = importer.import_mesh(verts, faces)
         assert obj is not None
 
-    def test_import_latency_under_limit_small(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_import_latency_under_limit_small(self, mock_bpy, mesh_imports):
         """NFR-002: Validation overhead negligible for small meshes."""
         m = mesh_imports
         verts, faces = _make_tetrahedron()
@@ -2313,9 +2282,7 @@ class TestDegenerateStepDetails:
         step = m.DegenerateStep()
         assert step.name == "DegenerateStep"
 
-    def test_degenerate_calls_dissolve_degenerate(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_degenerate_calls_dissolve_degenerate(self, mock_bpy, mesh_imports):
         """EC-001: dissolve_degenerate is called with correct threshold."""
         m = mesh_imports
 
@@ -2327,6 +2294,7 @@ class TestDegenerateStepDetails:
         step.execute(ctx, obj, {})
 
         import bmesh as bmesh_mock
+
         bmesh_mock.ops.dissolve_degenerate.assert_called()
         call_kwargs = bmesh_mock.ops.dissolve_degenerate.call_args
         assert call_kwargs[1]["dist"] == 1e-8
@@ -2343,6 +2311,7 @@ class TestDegenerateStepDetails:
         step.execute(ctx, obj, {})
 
         import bmesh as bmesh_mock
+
         bm = bmesh_mock.new.return_value
         bm.free.assert_called_once()
 
@@ -2361,9 +2330,7 @@ class TestQuadRemeshStepDetails:
         step = m.QuadRemeshStep()
         assert step.name == "QuadRemeshStep"
 
-    def test_quad_remesh_passes_target_face_count(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_quad_remesh_passes_target_face_count(self, mock_bpy, mesh_imports):
         """FR-010: QuadriFlow operator receives target face count."""
         m = mesh_imports
 
@@ -2379,6 +2346,7 @@ class TestQuadRemeshStepDetails:
         step.execute(ctx, obj, settings)
 
         import bpy
+
         call_kwargs = bpy.ops.object.quadriflow_remesh.call_args
         assert call_kwargs[1]["target_faces"] == 15_000
 
@@ -2404,20 +2372,17 @@ class TestViewSelectedAfterCleanup:
         pipeline.execute(ctx, obj)
 
         import bpy
+
         bpy.ops.view3d.view_selected.assert_called_once()
 
-    def test_FR009_view_selected_failure_is_silent(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_FR009_view_selected_failure_is_silent(self, mock_bpy, mesh_imports):
         """FR-009: If view_selected raises RuntimeError (no viewport),
         the pipeline still returns diagnostics without crashing."""
         m = mesh_imports
         import bpy
 
         # Make view_selected raise RuntimeError (headless mode)
-        bpy.ops.view3d.view_selected.side_effect = RuntimeError(
-            "No 3D viewport"
-        )
+        bpy.ops.view3d.view_selected.side_effect = RuntimeError("No 3D viewport")
 
         obj = MagicMock()
         obj.data.vertices = list(range(10))
@@ -2458,18 +2423,14 @@ class TestViewSelectedAfterCleanup:
 class TestOperatorModalSupport:
     """Tests for CON-008: operator configuration for UI responsiveness."""
 
-    def test_CON008_operator_has_register_and_undo(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_CON008_operator_has_register_and_undo(self, mock_bpy, mesh_imports):
         """CON-008: Operator has REGISTER and UNDO in bl_options."""
         from tessera.operators.cleanup_ops import TESSERA_OT_RunCleanup
 
         assert "REGISTER" in TESSERA_OT_RunCleanup.bl_options
         assert "UNDO" in TESSERA_OT_RunCleanup.bl_options
 
-    def test_CON008_operator_has_modal_method(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_CON008_operator_has_modal_method(self, mock_bpy, mesh_imports):
         """CON-008: Operator implements a modal() method for yielding
         during long operations."""
         from tessera.operators.cleanup_ops import TESSERA_OT_RunCleanup
@@ -2479,9 +2440,7 @@ class TestOperatorModalSupport:
             "for CON-008 UI thread compliance"
         )
 
-    def test_CON008_invoke_starts_modal(
-        self, mock_bpy, mesh_imports
-    ):
+    def test_CON008_invoke_starts_modal(self, mock_bpy, mesh_imports):
         """CON-008: invoke() returns RUNNING_MODAL to enter modal loop."""
         from tessera.operators.cleanup_ops import TESSERA_OT_RunCleanup
 
@@ -2489,4 +2448,3 @@ class TestOperatorModalSupport:
             "TESSERA_OT_RunCleanup must implement invoke() "
             "for modal operator pattern"
         )
-

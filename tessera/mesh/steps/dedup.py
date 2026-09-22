@@ -80,9 +80,7 @@ class DedupStep:
 
             verts_before = len(bm.verts)
 
-            bmesh.ops.remove_doubles(
-                bm, verts=bm.verts, dist=merge_distance
-            )
+            bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=merge_distance)
 
             verts_after = len(bm.verts)
             doubles_removed = verts_before - verts_after

@@ -35,9 +35,7 @@ from .data_types import SOURCE_MODEL_RE
 logger = logging.getLogger("tessera.mesh")
 
 
-def set_origin_to_bounds(
-    context: "bpy.types.Context", obj: "bpy.types.Object"
-) -> None:
+def set_origin_to_bounds(context: "bpy.types.Context", obj: "bpy.types.Object") -> None:
     """Set the object origin to the center of its bounding box.
 
     Ensures the object is active before calling the origin
@@ -52,9 +50,7 @@ def set_origin_to_bounds(
     context.view_layer.objects.active = obj
     obj.select_set(True)
 
-    bpy.ops.object.origin_set(
-        type="ORIGIN_GEOMETRY", center="BOUNDS"
-    )
+    bpy.ops.object.origin_set(type="ORIGIN_GEOMETRY", center="BOUNDS")
 
     logger.debug("Origin set to bounding box center for %s", obj.name)
 

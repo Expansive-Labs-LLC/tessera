@@ -193,8 +193,7 @@ def _init_model_management(gpu_info):
         set_global_download_manager(download_manager)
 
         logger.info(
-            "Model management initialized: %d models registered, "
-            "cache_dir=%s",
+            "Model management initialized: %d models registered, " "cache_dir=%s",
             len(registry),
             cache_dir,
         )

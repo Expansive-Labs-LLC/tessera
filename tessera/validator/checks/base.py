@@ -23,7 +23,10 @@ Spec: SPEC-TS-0006 (Print-Readiness Validator & Export Pipeline)
 from __future__ import annotations
 
 import abc
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from tessera.validator.data_types import CheckResult, RepairResult
 
 
 class BaseCheck(abc.ABC):
@@ -45,7 +48,7 @@ class BaseCheck(abc.ABC):
         self,
         obj: Any,
         settings: dict[str, Any],
-    ) -> "CheckResult":  # noqa: F821
+    ) -> "CheckResult":
         """Run the validation check on *obj*.
 
         Args:
@@ -61,7 +64,7 @@ class BaseCheck(abc.ABC):
         self,
         obj: Any,
         settings: dict[str, Any],
-    ) -> "RepairResult":  # noqa: F821
+    ) -> "RepairResult":
         """Attempt to auto-repair the issue on *obj*.
 
         Args:

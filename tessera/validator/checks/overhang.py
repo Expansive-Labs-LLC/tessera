@@ -99,9 +99,7 @@ class OverhangCheck(BaseCheck):
                 # from up when the face points downward.
                 if angle_from_up > (math.pi - threshold_rad):
                     overhang_count += 1
-                    overhang_deg = math.degrees(
-                        angle_from_up - (math.pi / 2)
-                    )
+                    overhang_deg = math.degrees(angle_from_up - (math.pi / 2))
                     if overhang_deg > max_overhang_deg:
                         max_overhang_deg = overhang_deg
 
@@ -112,9 +110,7 @@ class OverhangCheck(BaseCheck):
             return CheckResult(
                 check_name=self.name,
                 status=CheckStatus.PASS,
-                message=(
-                    f"No faces exceed {threshold_deg}° overhang threshold."
-                ),
+                message=(f"No faces exceed {threshold_deg}° overhang threshold."),
                 details={
                     "overhang_face_count": 0,
                     "overhang_face_percentage": 0.0,

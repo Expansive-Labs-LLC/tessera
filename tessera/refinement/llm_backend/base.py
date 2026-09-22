@@ -25,7 +25,6 @@ Implements: FR-009.
 from __future__ import annotations
 
 import abc
-from typing import Any
 
 
 class LLMBackend(abc.ABC):

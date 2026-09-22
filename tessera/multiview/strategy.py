@@ -34,8 +34,11 @@ Public API:
 
 from __future__ import annotations
 
+import importlib.util as _importlib_util
 import logging
+import os as _os
 import time
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -47,22 +50,23 @@ from tessera.reconstruction.adapter import (
     VisionPipelineOutput,
 )
 from tessera.reconstruction.mesh_output import ReconstructionResult
-import importlib.util as _importlib_util
-import os as _os
 
-# Load VisionResult directly from the types.py file to avoid
-# triggering tessera.vision.__init__ which eagerly imports the
-# full pipeline and its heavy dependencies (PIL, etc.).
-_types_path = _os.path.join(
-    _os.path.dirname(_os.path.dirname(__file__)),
-    "vision",
-    "types.py",
-)
-_spec = _importlib_util.spec_from_file_location("tessera.vision.types", _types_path)
-_vision_types = _importlib_util.module_from_spec(_spec)
-_spec.loader.exec_module(_vision_types)
-VisionResult = _vision_types.VisionResult  # noqa: F401
-del _vision_types, _spec, _types_path, _importlib_util, _os
+if TYPE_CHECKING:
+    from tessera.vision.types import VisionResult
+else:
+    # Load VisionResult directly from the types.py file to avoid
+    # triggering tessera.vision.__init__ which eagerly imports the
+    # full pipeline and its heavy dependencies (PIL, etc.).
+    _types_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)),
+        "vision",
+        "types.py",
+    )
+    _spec = _importlib_util.spec_from_file_location("tessera.vision.types", _types_path)
+    _vision_types = _importlib_util.module_from_spec(_spec)
+    _spec.loader.exec_module(_vision_types)
+    VisionResult = _vision_types.VisionResult  # noqa: F401
+    del _vision_types, _spec, _types_path, _importlib_util, _os
 
 logger = logging.getLogger("tessera.multiview")
 
@@ -117,9 +121,7 @@ class StrategySelector:
         self._multi = multi_adapter
         self._estimator = pose_estimator
 
-    def _count_confirmed_labels(
-        self, vision_results: list[VisionResult]
-    ) -> int:
+    def _count_confirmed_labels(self, vision_results: list[VisionResult]) -> int:
         """Count images with confirmed (non-provisional) view labels.
 
         A label is confirmed when ``label_needs_confirmation`` is
@@ -134,13 +136,9 @@ class StrategySelector:
 
         Implements: FR-002.
         """
-        return sum(
-            1 for vr in vision_results if not vr.label_needs_confirmation
-        )
+        return sum(1 for vr in vision_results if not vr.label_needs_confirmation)
 
-    def _select_best_single_image(
-        self, vision_results: list[VisionResult]
-    ) -> int:
+    def _select_best_single_image(self, vision_results: list[VisionResult]) -> int:
         """Select the best image for single-image reconstruction.
 
         Ranks images by foreground mask area (largest = best),
@@ -254,8 +252,7 @@ class StrategySelector:
 
         if n_images >= _MIN_FOR_MULTIVIEW:
             logger.info(
-                "Strategy: multi_view (num_images=%d, "
-                "confirmed_labels=%d)",
+                "Strategy: multi_view (num_images=%d, " "confirmed_labels=%d)",
                 n_images,
                 n_confirmed,
             )
@@ -264,9 +261,7 @@ class StrategySelector:
         # Should not reach here; kept for completeness
         return "single_image"
 
-    def reconstruct(
-        self, vision_results: list[VisionResult]
-    ) -> ReconstructionResult:
+    def reconstruct(self, vision_results: list[VisionResult]) -> ReconstructionResult:
         """Run reconstruction using the optimal strategy.
 
         Routes to single-image or multi-view based on input count,
@@ -349,8 +344,7 @@ class StrategySelector:
 
         # --- Multi-view path ---
         logger.info(
-            "Multi-view path selected: running pose estimation "
-            "for %d images",
+            "Multi-view path selected: running pose estimation " "for %d images",
             n_images,
         )
 
@@ -367,13 +361,10 @@ class StrategySelector:
             pose_result = self._estimator.estimate_poses(vision_results)
         except Exception as exc:
             logger.warning(
-                "Pose estimation failed: %s. Falling back to "
-                "single-image path.",
+                "Pose estimation failed: %s. Falling back to " "single-image path.",
                 exc,
             )
-            return self._fallback_single_image(
-                vision_results, str(exc), start
-            )
+            return self._fallback_single_image(vision_results, str(exc), start)
 
         # Check pose estimation success
         if not pose_result.success:
@@ -401,9 +392,7 @@ class StrategySelector:
                 "back to single-image path.",
                 exc,
             )
-            return self._fallback_single_image(
-                vision_results, str(exc), start
-            )
+            return self._fallback_single_image(vision_results, str(exc), start)
 
         # FR-004: Add strategy metadata
         if result.mesh is not None:

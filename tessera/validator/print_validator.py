@@ -142,13 +142,8 @@ class PrintValidator:
             )
 
             # Auto-repair if the check failed and repair is enabled.
-            if (
-                result.status == CheckStatus.FAIL
-                and auto_repair
-            ):
-                result = self._attempt_repair(
-                    check, obj, settings, result
-                )
+            if result.status == CheckStatus.FAIL and auto_repair:
+                result = self._attempt_repair(check, obj, settings, result)
 
             report.add_check(result)
 
@@ -188,8 +183,7 @@ class PrintValidator:
         check_name = check.name
 
         logger.info(
-            "Auto-repair attempted: check_name=%s, "
-            "repair_strategy=%s",
+            "Auto-repair attempted: check_name=%s, " "repair_strategy=%s",
             check_name,
             type(check).__name__,
         )
@@ -206,8 +200,7 @@ class PrintValidator:
 
         if repair_result.success:
             logger.info(
-                "Auto-repair succeeded: check_name=%s, "
-                "repair_message=%s",
+                "Auto-repair succeeded: check_name=%s, " "repair_message=%s",
                 check_name,
                 repair_result.message,
             )
@@ -219,8 +212,7 @@ class PrintValidator:
             return recheck_result
         else:
             logger.warning(
-                "Auto-repair failed: check_name=%s, "
-                "error_message=%s",
+                "Auto-repair failed: check_name=%s, " "error_message=%s",
                 check_name,
                 repair_result.message,
             )

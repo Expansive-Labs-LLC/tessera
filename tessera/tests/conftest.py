@@ -31,7 +31,6 @@ from unittest.mock import MagicMock
 
 import pytest
 
-
 # ── Mock Blender modules for non-Blender tests ──────────────────────
 #
 # When running under standard CPython (not Blender's embedded Python),

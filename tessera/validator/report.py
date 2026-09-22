@@ -111,9 +111,7 @@ class ValidationReport:
                 "warnings": self.warnings,
                 "failures": self.failures,
                 "auto_repairs_applied": self.auto_repairs_applied,
-                "validation_time_seconds": round(
-                    self.validation_time_seconds, 2
-                ),
+                "validation_time_seconds": round(self.validation_time_seconds, 2),
                 "export_time_seconds": round(self.export_time_seconds, 2),
             },
         }
@@ -164,9 +162,7 @@ class ValidationReport:
                 suffix = ""
                 if check.repaired:
                     suffix = " (Auto-repaired)"
-                lines.append(
-                    f"{tag} {check.check_name}: {check.message}{suffix}"
-                )
+                lines.append(f"{tag} {check.check_name}: {check.message}{suffix}")
 
         lines.append("")
         lines.append(

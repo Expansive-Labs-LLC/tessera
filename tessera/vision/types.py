@@ -99,16 +99,12 @@ class PipelineError(Exception):
     FR-001: Raised when image list is empty or exceeds MAX_BATCH_SIZE.
     """
 
-    pass
-
 
 class GPUNotAvailableError(PipelineError):
     """No CUDA or ROCm GPU detected.
 
     FR-022: Raised before any model loading or inference is attempted.
     """
-
-    pass
 
 
 class ImageLoadError(PipelineError):
@@ -117,8 +113,6 @@ class ImageLoadError(PipelineError):
     EC-003: Raised when an image is corrupt, truncated, or unreadable.
     """
 
-    pass
-
 
 class InsufficientVRAMError(PipelineError):
     """Not enough GPU memory to load a model.
@@ -126,8 +120,6 @@ class InsufficientVRAMError(PipelineError):
     EC-005: Raised when ``torch.cuda.OutOfMemoryError`` is caught
     during model loading, with available vs. required VRAM details.
     """
-
-    pass
 
 
 # ---------------------------------------------------------------------------

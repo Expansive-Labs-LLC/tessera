@@ -90,9 +90,7 @@ class PreviewRenderer:
             # Copy result to named image data block.
             render_result = bpy.data.images.get("Render Result")
             if render_result is None:
-                logger.warning(
-                    "Preview render produced no result"
-                )
+                logger.warning("Preview render produced no result")
                 return None
 
             # Create a copy as a named image.
@@ -145,10 +143,7 @@ class PreviewRenderer:
 
         # Find all BF_Preview images.
         preview_images = sorted(
-            [
-                img for img in bpy.data.images
-                if img.name.startswith("BF_Preview_")
-            ],
+            [img for img in bpy.data.images if img.name.startswith("BF_Preview_")],
             key=lambda img: img.name,
         )
 

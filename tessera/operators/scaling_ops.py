@@ -197,9 +197,7 @@ class TESSERA_OT_OptimizeOrientation(Operator):
 
     bl_idname = "tessera.optimize_orientation"
     bl_label = "Optimize Orientation"
-    bl_description = (
-        "Rotate the active mesh to minimize print overhang area"
-    )
+    bl_description = "Rotate the active mesh to minimize print overhang area"
     bl_options = {"REGISTER", "UNDO"}
 
     _timer = None
@@ -215,9 +213,7 @@ class TESSERA_OT_OptimizeOrientation(Operator):
         wm = context.window_manager
         self._timer = wm.event_timer_add(0.01, window=context.window)
         wm.modal_handler_add(self)
-        context.workspace.status_text_set(
-            "Tessera: Optimizing orientation…"
-        )
+        context.workspace.status_text_set("Tessera: Optimizing orientation…")
         return {"RUNNING_MODAL"}
 
     def modal(self, context, event):
@@ -258,7 +254,8 @@ class TESSERA_OT_OptimizeOrientation(Operator):
 
         optimizer = OrientationOptimizer()
         result = optimizer.optimize(
-            context, obj,
+            context,
+            obj,
             overhang_threshold_deg=threshold,
             enable_fine_tuning=fine_tuning,
         )
@@ -276,8 +273,7 @@ class TESSERA_OT_OptimizeOrientation(Operator):
         else:
             self.report(
                 {"INFO"},
-                "Mesh is approximately symmetrical — orientation "
-                "unchanged.",
+                "Mesh is approximately symmetrical — orientation " "unchanged.",
             )
 
         return {"FINISHED"}
@@ -294,9 +290,7 @@ class TESSERA_OT_InferDimensions(Operator):
 
     bl_idname = "tessera.infer_dimensions"
     bl_label = "Auto-Infer Dimensions"
-    bl_description = (
-        "Suggest target dimensions based on the object class label"
-    )
+    bl_description = "Suggest target dimensions based on the object class label"
     bl_options = {"REGISTER"}
 
     @classmethod
@@ -337,13 +331,11 @@ class TESSERA_OT_InferDimensions(Operator):
 
         # Report the suggestion.
         conf_label = (
-            "high confidence" if suggestion.confidence == "high"
-            else "low confidence"
+            "high confidence" if suggestion.confidence == "high" else "low confidence"
         )
         self.report(
             {"INFO"},
-            f"Dimension suggestion ({conf_label}): "
-            f"{suggestion.message}",
+            f"Dimension suggestion ({conf_label}): " f"{suggestion.message}",
         )
 
         return {"FINISHED"}

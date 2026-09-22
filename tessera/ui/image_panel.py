@@ -21,7 +21,6 @@ add/remove/reorder controls.
 Implements: FR-004 (position 1), FR-005, FR-006, FR-013, FR-014, EC-004.
 """
 
-import bpy
 from bpy.types import Panel, UIList
 
 

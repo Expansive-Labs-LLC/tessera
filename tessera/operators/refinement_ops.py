@@ -29,7 +29,6 @@ from __future__ import annotations
 import logging
 import queue
 import threading
-from typing import Any, Optional, Union
 
 import bpy
 from bpy.types import Operator
@@ -58,18 +57,22 @@ def _get_or_create_managers():
 
     if _chat_manager is None:
         from ..refinement.chat_manager import ChatManager
+
         _chat_manager = ChatManager()
 
     if _undo_manager is None:
         from ..refinement.undo_manager import UndoManager
+
         _undo_manager = UndoManager()
 
     if _edit_executor is None:
         from ..refinement.edit_executor import EditExecutor
+
         _edit_executor = EditExecutor(_undo_manager)
 
     if _preview_renderer is None:
         from ..refinement.preview_renderer import PreviewRenderer
+
         _preview_renderer = PreviewRenderer()
 
     return _chat_manager, _undo_manager, _edit_executor, _preview_renderer
@@ -89,6 +92,7 @@ def _create_llm_backend():
 
     if backend_type == "API":
         from ..refinement.llm_backend import APILLMBackend
+
         try:
             prefs = bpy.context.preferences.addons["tessera"].preferences
             return APILLMBackend(
@@ -101,6 +105,7 @@ def _create_llm_backend():
             # Fall through to local.
 
     from ..refinement.llm_backend import LocalLLMBackend
+
     return LocalLLMBackend()
 
 
@@ -158,6 +163,7 @@ def _llm_thread_func(command, mesh_context, message_history, result_queue):
     try:
         backend = _create_llm_backend()
         from ..refinement.intent_parser import IntentParser
+
         parser = IntentParser(backend)
         result = parser.parse(command, mesh_context, message_history)
         result_queue.put(("intents", result))
@@ -208,7 +214,7 @@ def _poll_llm_result():
             chat.add_message(
                 "assistant",
                 "I didn't understand that command. Try something like "
-                "'make it 20% taller' or 'smooth the top'."
+                "'make it 20% taller' or 'smooth the top'.",
             )
         settings.status_message = ""
         return None
@@ -224,6 +230,7 @@ def _poll_llm_result():
 
     # Process intents sequentially.
     from ..refinement.region_resolver import RegionResolver
+
     resolver = RegionResolver()
 
     for intent in intents:
@@ -238,7 +245,7 @@ def _poll_llm_result():
             chat.add_message(
                 "assistant",
                 f"I couldn't identify '{intent.target_region}' on the mesh. "
-                f"Please select the target vertices and click 'Confirm Selection'."
+                f"Please select the target vertices and click 'Confirm Selection'.",
             )
             settings.status_message = "Select vertices…"
             return None
@@ -247,9 +254,7 @@ def _poll_llm_result():
 
         # Create spatial vertex group on mesh if needed.
         if region_result.method == "spatial_heuristic":
-            created = resolver.create_selection_from_spatial(
-                obj, intent.target_region
-            )
+            created = resolver.create_selection_from_spatial(obj, intent.target_region)
             if created:
                 vg_name = created
 
@@ -473,9 +478,7 @@ class TESSERA_OT_confirm_edit(Operator):
             return {"CANCELLED"}
 
         for intent in _pending_intents:
-            result = executor.execute(
-                context, obj, intent, _pending_vertex_group
-            )
+            result = executor.execute(context, obj, intent, _pending_vertex_group)
             if result.success:
                 msg = result.description
                 if result.warning:
@@ -483,7 +486,8 @@ class TESSERA_OT_confirm_edit(Operator):
                 image_name = renderer.render(obj)
                 renderer.cleanup_old_previews()
                 chat.add_message(
-                    "assistant", msg,
+                    "assistant",
+                    msg,
                     image_name=image_name,
                     version=undo.current_version,
                 )
@@ -531,6 +535,7 @@ class TESSERA_OT_confirm_selection(Operator):
             return {"CANCELLED"}
 
         from ..refinement.region_resolver import RegionResolver
+
         resolver = RegionResolver()
         vg_name = resolver.create_user_selection_group(obj)
 
@@ -543,7 +548,8 @@ class TESSERA_OT_confirm_selection(Operator):
                 image_name = renderer.render(obj)
                 renderer.cleanup_old_previews()
                 chat.add_message(
-                    "assistant", msg,
+                    "assistant",
+                    msg,
                     image_name=image_name,
                     version=undo.current_version,
                 )

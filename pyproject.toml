@@ -1,0 +1,46 @@
+# Tooling configuration for Tessera.
+#
+# Tessera is a Blender add-on, not a distributable Python package: it is shipped
+# as a zip by scripts/build_addon.sh. This file exists purely to give the CI
+# linters (isort, black, flake8 via .flake8, mypy) and pytest a single, shared
+# source of truth so local runs and CI agree.
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.isort]
+# Required: without this, isort's default wrapping fights black's.
+profile = "black"
+line_length = 88
+known_first_party = ["tessera", "tests"]
+
+[tool.pytest.ini_options]
+# The add-on is never pip-installed, so put the repo root on sys.path to make
+# `import tessera` work from tests/.
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+
+# Blender declares operator/panel properties as `name: StringProperty(...)`.
+# The right-hand side is a function call, not a type, so mypy reports every one
+# as an invalid annotation. The idiom is mandated by Blender, so `valid-type` is
+# disabled for the modules that declare properties -- and only those.
+[[tool.mypy.overrides]]
+module = [
+    "tessera.properties",
+    "tessera.preferences",
+    "tessera.operators.image_ops",
+    "tessera.operators.model_ops",
+    "tessera.operators.sketch_ops",
+]
+disable_error_code = ["valid-type"]
+
+# conftest builds a stand-in `bpy` module at runtime and hangs attributes off
+# it; mypy sees the real (or absent) module and flags every assignment.
+[[tool.mypy.overrides]]
+module = ["tessera.tests.conftest"]
+disable_error_code = ["attr-defined"]

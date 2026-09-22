@@ -29,7 +29,7 @@ Implements: FR-006, FR-007, FR-016, FR-017, CON-002, CON-005,
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -59,7 +59,7 @@ class DepthAnythingAdapter(DepthAdapter):
             model_id: Model identifier for the weight manager (CON-005).
         """
         self._model_id = model_id
-        self._model: Optional[object] = None
+        self._model: Optional[Any] = None
         self._device: Optional[str] = None
 
     @property
@@ -145,9 +145,7 @@ class DepthAnythingAdapter(DepthAdapter):
                 (FR-006, FR-007).
         """
         if self._model is None:
-            raise RuntimeError(
-                "Depth Anything V2 model not loaded. Call load() first."
-            )
+            raise RuntimeError("Depth Anything V2 model not loaded. Call load() first.")
 
         import torch
 
@@ -175,7 +173,7 @@ class DepthAnythingAdapter(DepthAdapter):
             from PIL import Image as PILImage
 
             depth_pil = PILImage.fromarray(depth, mode="F")
-            depth_pil = depth_pil.resize((w, h), PILImage.LANCZOS)
+            depth_pil = depth_pil.resize((w, h), PILImage.Resampling.LANCZOS)
             depth = np.array(depth_pil, dtype=np.float32)
 
         # FR-007: Apply segmentation mask — zero out background.

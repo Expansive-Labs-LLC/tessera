@@ -24,7 +24,9 @@ Implements: FR-019.
 
 from __future__ import annotations
 
-from ..intent_schema import OperationType
+from typing import Callable
+
+from ..intent_schema import EditResult, OperationType
 from .primitive_op import execute_add_geometry, execute_remove_geometry
 from .scale_op import execute_scale
 from .smooth_op import execute_bevel, execute_sharpen, execute_smooth
@@ -36,7 +38,7 @@ from .undo_op import execute_redo, execute_undo
 #: Each handler has signature:
 #:   (context, obj, parameters, vertex_group_name) -> EditResult
 #: Except UNDO/REDO which also accept undo_manager= kwarg.
-OPERATION_HANDLERS = {
+OPERATION_HANDLERS: dict[OperationType, Callable[..., EditResult]] = {
     OperationType.SCALE: execute_scale,
     OperationType.MOVE: execute_move,
     OperationType.ROTATE: execute_rotate,

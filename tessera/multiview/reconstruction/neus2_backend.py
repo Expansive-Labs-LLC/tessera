@@ -156,9 +156,7 @@ class NeuS2Backend:
             device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
             # SEC-002: Load weights safely
-            state_dict = torch.load(
-                weight_path, map_location=device, weights_only=True
-            )
+            state_dict = torch.load(weight_path, map_location=device, weights_only=True)
             model = NeuS2Model()
             model.load_state_dict(state_dict)
             model = model.to(device)
@@ -190,14 +188,11 @@ class NeuS2Backend:
                 for img in images
             ]
             mask_tensors = [
-                torch.from_numpy((m > 0).astype(np.float32))
-                .unsqueeze(0)
-                .to(device)
+                torch.from_numpy((m > 0).astype(np.float32)).unsqueeze(0).to(device)
                 for m in masks
             ]
             depth_tensors = [
-                torch.from_numpy(d).unsqueeze(0).to(device)
-                for d in depth_maps
+                torch.from_numpy(d).unsqueeze(0).to(device) for d in depth_maps
             ]
 
             # FR-019: Resolution ramp training
@@ -225,8 +220,7 @@ class NeuS2Backend:
                     if actual_steps % _LOG_INTERVAL_STEPS == 0:
                         elapsed = time.monotonic() - start
                         logger.debug(
-                            "Training progress: step=%d, loss=%.6f, "
-                            "elapsed_s=%.1f",
+                            "Training progress: step=%d, loss=%.6f, " "elapsed_s=%.1f",
                             actual_steps,
                             final_loss,
                             elapsed,

@@ -35,12 +35,12 @@ Public API:
 
 from .pipeline import VisionPipeline
 from .types import (
+    VIEW_LABEL_POSES,
     GPUNotAvailableError,
     ImageInput,
     ImageLoadError,
     InsufficientVRAMError,
     PipelineError,
-    VIEW_LABEL_POSES,
     VisionResult,
 )
 

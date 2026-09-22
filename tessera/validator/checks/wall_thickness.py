@@ -90,9 +90,7 @@ class WallThicknessCheck(BaseCheck):
             # CON-008: Stratified sampling for large meshes.
             if face_count > _SAMPLING_THRESHOLD:
                 sample_count = min(face_count, _MAX_SAMPLE_COUNT)
-                sample_indices = set(
-                    random.sample(range(face_count), sample_count)
-                )
+                sample_indices = set(random.sample(range(face_count), sample_count))
                 logger.debug(
                     "Wall thickness sampling enabled: "
                     "total_faces=%d, sample_count=%d",
@@ -196,9 +194,7 @@ class WallThicknessCheck(BaseCheck):
         # Re-check to get current stats on the duplicate.
         result = self.check(obj, settings)
         thin_pct = result.details.get("thin_face_percentage", 0.0)
-        min_thickness_mm = result.details.get(
-            "min_thickness_mm", threshold_mm
-        )
+        min_thickness_mm = result.details.get("min_thickness_mm", threshold_mm)
 
         # EC-002: Skip solidify if model is uniformly thin.
         if thin_pct > _UNIFORMLY_THIN_PERCENT:
@@ -215,9 +211,7 @@ class WallThicknessCheck(BaseCheck):
         solidify_m = solidify_mm / 1000.0
 
         try:
-            mod = obj.modifiers.new(
-                name="WallThicknessFix", type="SOLIDIFY"
-            )
+            mod = obj.modifiers.new(name="WallThicknessFix", type="SOLIDIFY")
             mod.thickness = solidify_m
             mod.offset = -1  # Solidify inward.
             mod.use_complex_solver = True
@@ -225,10 +219,7 @@ class WallThicknessCheck(BaseCheck):
             bpy.context.view_layer.objects.active = obj
             bpy.ops.object.modifier_apply(modifier=mod.name)
 
-            msg = (
-                f"Applied Solidify modifier with "
-                f"{solidify_mm:.1f} mm offset."
-            )
+            msg = f"Applied Solidify modifier with " f"{solidify_mm:.1f} mm offset."
             logger.info("Auto-repair (wall thickness): %s", msg)
             return RepairResult(success=True, message=msg)
 

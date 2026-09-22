@@ -33,7 +33,7 @@ Implements: FR-001, FR-015, FR-016, FR-017, FR-019, FR-020, FR-022,
 import logging
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -144,8 +144,7 @@ class VisionPipeline:
             raise PipelineError("No images provided.")
         if len(images) > MAX_BATCH_SIZE:
             raise PipelineError(
-                f"Batch size {len(images)} exceeds maximum of "
-                f"{MAX_BATCH_SIZE}."
+                f"Batch size {len(images)} exceeds maximum of " f"{MAX_BATCH_SIZE}."
             )
 
         # FR-022: Check GPU availability.
@@ -165,14 +164,12 @@ class VisionPipeline:
         # -----------------------------------------------------------
         # Stage 0: Preprocessing
         # -----------------------------------------------------------
-        preprocessed = []
+        preprocessed: list[dict[str, Any]] = []
         valid_indices = []
         timings_preprocessing: list[float] = []
 
         for i, img_input in enumerate(images):
-            self._update_progress(
-                "Preprocessing", i + 1, num_images, num_images
-            )
+            self._update_progress("Preprocessing", i + 1, num_images, num_images)
             t0 = time.monotonic()
             filename = Path(img_input.filepath).name
             try:
@@ -227,9 +224,7 @@ class VisionPipeline:
         try:
             for i, item in enumerate(preprocessed):
                 step = i + 1
-                self._update_progress(
-                    "Segmentation", step, n_valid, total_steps
-                )
+                self._update_progress("Segmentation", step, n_valid, total_steps)
                 t0 = time.monotonic()
                 mask = self._segmentation.predict(item["image"])
                 dt = time.monotonic() - t0
@@ -261,9 +256,7 @@ class VisionPipeline:
         try:
             for i, (item, mask) in enumerate(zip(preprocessed, masks)):
                 step = n_valid + i + 1
-                self._update_progress(
-                    "Depth Estimation", i + 1, n_valid, total_steps
-                )
+                self._update_progress("Depth Estimation", i + 1, n_valid, total_steps)
                 t0 = time.monotonic()
                 depth = self._depth.predict(item["image"], mask)
                 dt = time.monotonic() - t0
@@ -300,7 +293,7 @@ class VisionPipeline:
                 )
                 t0 = time.monotonic()
 
-                img_input: ImageInput = item["input"]
+                img_input = item["input"]
 
                 # FR-009: Auto-classify if no user label.
                 auto_label, auto_conf = self._view_classifier.predict(
@@ -356,9 +349,7 @@ class VisionPipeline:
         try:
             for i, item in enumerate(preprocessed):
                 step = 3 * n_valid + i + 1
-                self._update_progress(
-                    "Feature Extraction", i + 1, n_valid, total_steps
-                )
+                self._update_progress("Feature Extraction", i + 1, n_valid, total_steps)
                 t0 = time.monotonic()
                 feats = self._feature.predict(item["image"])
                 dt = time.monotonic() - t0
@@ -387,9 +378,11 @@ class VisionPipeline:
 
             # FR-019: Per-stage timing.
             processing_time_s = {
-                "preprocessing": timings_preprocessing[valid_indices[i]]
-                if i < len(timings_preprocessing)
-                else 0.0,
+                "preprocessing": (
+                    timings_preprocessing[valid_indices[i]]
+                    if i < len(timings_preprocessing)
+                    else 0.0
+                ),
                 "segmentation": timings_seg[i],
                 "depth": timings_depth[i],
                 "view_classification": timings_view[i],
@@ -458,7 +451,10 @@ class VisionPipeline:
             return {"name": "Unknown", "vram_gb": 0.0, "backend": None}
 
     def _update_progress(
-        self, stage_name: str, image_index: int, total_images: int,
+        self,
+        stage_name: str,
+        image_index: int,
+        total_images: int,
         total_steps: int,
     ) -> None:
         """Update Blender UI progress properties.
@@ -488,9 +484,7 @@ class VisionPipeline:
                 # Compute overall progress as fraction of total steps.
                 # The step number is derived from the current stage and
                 # image index.
-                props.pipeline_progress = min(
-                    1.0, image_index / max(total_steps, 1)
-                )
+                props.pipeline_progress = min(1.0, image_index / max(total_steps, 1))
         except Exception:
             # Running outside Blender (tests) — silently skip.
             pass

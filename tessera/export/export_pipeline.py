@@ -180,9 +180,7 @@ class ExportPipeline:
                     continue
 
                 # CON-005: Handle file collisions.
-                file_path = _resolve_file_path(
-                    export_dir, safe_name, ext
-                )
+                file_path = _resolve_file_path(export_dir, safe_name, ext)
 
                 # SEC-006: Validate path doesn't escape export dir.
                 if not _validate_path_within_dir(export_dir, file_path):
@@ -222,9 +220,7 @@ class ExportPipeline:
             report.export_time_seconds = export_elapsed
 
             # FR-029: Save validation report JSON.
-            report_path = os.path.join(
-                export_dir, f"{safe_name}_validation.json"
-            )
+            report_path = os.path.join(export_dir, f"{safe_name}_validation.json")
             report.save_json(report_path)
 
             return ExportResult(
@@ -237,9 +233,7 @@ class ExportPipeline:
             # FR-024: Delete the _print duplicate.
             self._delete_duplicate(context, duplicate)
 
-    def _duplicate_object(
-        self, context: Any, obj: Any
-    ) -> Any:
+    def _duplicate_object(self, context: Any, obj: Any) -> Any:
         """Duplicate the mesh object for export processing.
 
         Args:
@@ -329,9 +323,7 @@ class ExportPipeline:
             context.view_layer.objects.active = obj
             bpy.ops.object.transform_apply(scale=True)
 
-            logger.debug(
-                "Applied mm scale conversion: factor=%.3f", scale_factor
-            )
+            logger.debug("Applied mm scale conversion: factor=%.3f", scale_factor)
 
     def _align_bottom_z0(self, obj: Any) -> None:
         """Translate object so its lowest vertex Z = 0.
@@ -350,9 +342,7 @@ class ExportPipeline:
             obj.location.z -= min_z
             logger.debug("Aligned bottom to Z=0: offset=%.4f", -min_z)
 
-    def _auto_orient(
-        self, obj: Any, overhang_angle_deg: float
-    ) -> None:
+    def _auto_orient(self, obj: Any, overhang_angle_deg: float) -> None:
         """Rotate object to minimize overhanging face area.
 
         Evaluates 576 candidate rotations (15° increments around
@@ -468,9 +458,7 @@ def _sanitize_filename(name: str) -> str:
     return sanitized
 
 
-def _resolve_file_path(
-    directory: str, name: str, ext: str
-) -> str:
+def _resolve_file_path(directory: str, name: str, ext: str) -> str:
     """Resolve file path with collision avoidance.
 
     Appends numeric suffixes (``_001``, ``_002``, etc.) if the file
@@ -492,9 +480,7 @@ def _resolve_file_path(
 
     counter = 1
     while counter <= 999:
-        suffixed = os.path.join(
-            directory, f"{name}_{counter:03d}.{ext}"
-        )
+        suffixed = os.path.join(directory, f"{name}_{counter:03d}.{ext}")
         if not os.path.exists(suffixed):
             return suffixed
         counter += 1
@@ -505,9 +491,7 @@ def _resolve_file_path(
     )
 
 
-def _validate_path_within_dir(
-    directory: str, file_path: str
-) -> bool:
+def _validate_path_within_dir(directory: str, file_path: str) -> bool:
     """Validate that file_path does not escape the export directory.
 
     Args:

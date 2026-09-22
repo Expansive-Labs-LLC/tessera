@@ -180,8 +180,8 @@ class TESSERA_OT_RunCleanup(Operator):
         else:
             self.report(
                 {"WARNING"},
-                f"Cleanup finished but mesh is NOT manifold. "
-                f"Consider enabling voxel remesh fallback.",
+                "Cleanup finished but mesh is NOT manifold. "
+                "Consider enabling voxel remesh fallback.",
             )
 
         return {"FINISHED"}

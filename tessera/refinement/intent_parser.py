@@ -107,32 +107,39 @@ command into structured JSON edit instructions.
 
 SUPPORTED OPERATIONS:
 - SCALE: Resize along X, Y, Z, or UNIFORM axes. Params: axis, factor (or absolute_mm).
-- MOVE: Translate vertices. Params: direction (UP/DOWN/LEFT/RIGHT/FORWARD/BACK), distance (mm).
-- ROTATE: Rotate vertices. Params: axis (X/Y/Z), angle_degrees, pivot (MEDIAN_POINT/CURSOR/INDIVIDUAL_ORIGINS).
+- MOVE: Translate vertices. Params: direction \
+(UP/DOWN/LEFT/RIGHT/FORWARD/BACK), distance (mm).
+- ROTATE: Rotate vertices. Params: axis (X/Y/Z), angle_degrees, pivot \
+(MEDIAN_POINT/CURSOR/INDIVIDUAL_ORIGINS).
 - SOLIDIFY: Add wall thickness. Params: thickness_mm, offset (-1.0 to 1.0).
 - SMOOTH: Laplacian smoothing. Params: iterations (1-100), factor (0.0-1.0).
 - SHARPEN: Mark edges sharp. Params: angle_threshold_degrees (0-180).
 - BEVEL: Bevel edges. Params: width_mm, segments (1-10).
-- ADD_GEOMETRY: Add primitive (CUBE/SPHERE/CYLINDER/CONE). Params: shape, size_mm, location.
+- ADD_GEOMETRY: Add primitive (CUBE/SPHERE/CYLINDER/CONE). Params: shape, \
+size_mm, location.
 - REMOVE_GEOMETRY: Delete selected vertices and fill holes. No params.
 - UNDO: Undo last edit.
 - REDO: Redo last undone edit.
 
 CURRENT MESH CONTEXT:
-- Bounding box (mm): X={bb.get('x', 0):.1f}, Y={bb.get('y', 0):.1f}, Z={bb.get('z', 0):.1f}
+- Bounding box (mm): X={bb.get('x', 0):.1f}, Y={bb.get('y', 0):.1f}, \
+Z={bb.get('z', 0):.1f}
 - Vertex groups: {json.dumps(vgroups)}
 - Face count: {face_count}
 
 OUTPUT FORMAT: Respond with valid JSON only. For a single command:
-{{"intents": [{{"operation": "SCALE", "target_region": "all", "parameters": {{"axis": "Z", "factor": 1.2}}, "confidence": 0.95}}]}}
+{{"intents": [{{"operation": "SCALE", "target_region": "all", "parameters": \
+{{"axis": "Z", "factor": 1.2}}, "confidence": 0.95}}]}}
 
 For multiple operations in one command, return multiple intents in the array.
 If the command is ambiguous, return candidates with low confidence scores.
 If the command is not understood, return confidence 0.0.
 
-Units: If user says "mm", "cm", "m", "in", or "%", use those units. If no unit, default to mm.
+Units: If user says "mm", "cm", "m", "in", or "%", use those units. If no \
+unit, default to mm.
 Dimensionless words like "taller" mean +10%, "shorter" means -10%.
-"make it X mm tall" = absolute dimension, calculate scale factor from current bounding box.
+"make it X mm tall" = absolute dimension, calculate scale factor from \
+current bounding box.
 """
 
 
@@ -190,35 +197,41 @@ class IntentParser:
                 "Intent parsing completed: operation=UNDO, "
                 "target_region=all, confidence=1.0, parse_time_seconds=0.0"
             )
-            return [EditIntent(
-                operation=OperationType.UNDO,
-                target_region="all",
-                parameters={},
-                confidence=1.0,
-            )]
+            return [
+                EditIntent(
+                    operation=OperationType.UNDO,
+                    target_region="all",
+                    parameters={},
+                    confidence=1.0,
+                )
+            ]
 
         if command_lower in _REDO_TRIGGERS:
             logger.info(
                 "Intent parsing completed: operation=REDO, "
                 "target_region=all, confidence=1.0, parse_time_seconds=0.0"
             )
-            return [EditIntent(
-                operation=OperationType.REDO,
-                target_region="all",
-                parameters={},
-                confidence=1.0,
-            )]
+            return [
+                EditIntent(
+                    operation=OperationType.REDO,
+                    target_region="all",
+                    parameters={},
+                    confidence=1.0,
+                )
+            ]
 
         # FR-033: Check for version-addressed undo.
         version_match = _VERSION_PATTERN.search(command_lower)
         if version_match:
             version = int(version_match.group(1))
-            return [EditIntent(
-                operation=OperationType.UNDO,
-                target_region="all",
-                parameters={"target_version": version},
-                confidence=1.0,
-            )]
+            return [
+                EditIntent(
+                    operation=OperationType.UNDO,
+                    target_region="all",
+                    parameters={"target_version": version},
+                    confidence=1.0,
+                )
+            ]
 
         # Build system prompt and invoke LLM.
         system_prompt = _build_system_prompt(mesh_context)
@@ -350,9 +363,9 @@ class IntentParser:
                 len(ambiguous_intents),
             )
             return AmbiguityResponse(
-                candidates=sorted(
-                    ambiguous_intents, key=lambda x: x[1], reverse=True
-                )[:3],
+                candidates=sorted(ambiguous_intents, key=lambda x: x[1], reverse=True)[
+                    :3
+                ],
                 original_command=command,
             )
 
