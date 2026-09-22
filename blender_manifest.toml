@@ -5,7 +5,7 @@
 schema_version = "1.0.0"
 
 id = "tessera"
-version = "1.2.0"
+version = "1.2.1"
 name = "Tessera"
 tagline = "AI-powered 3D-printable model generation from reference images"
 

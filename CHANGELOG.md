@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/Expansive-Labs-LLC/tessera/compare/1.2.0...1.2.1) (2026-09-22)
+
+
+### Bug Fixes
+
+* **prefs:** resolve the add-on key instead of hard-coding "tessera" ([dbbfd01](https://github.com/Expansive-Labs-LLC/tessera/commit/dbbfd012e79a0d4e4f846e8f11a3657581fdb268))
+
 # [1.2.0](https://github.com/Expansive-Labs-LLC/tessera/compare/1.1.0...1.2.0) (2026-09-22)
 
 
