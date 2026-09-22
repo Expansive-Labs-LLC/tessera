@@ -33,13 +33,13 @@ from unittest.mock import MagicMock
 import pytest
 
 # Import data types and report directly (no bmesh dependency chain).
-from tessera.validator.data_types import (
+from ..validator.data_types import (
     CheckResult,
     CheckStatus,
     ExportResult,
     RepairResult,
 )
-from tessera.validator.report import ValidationReport
+from ..validator.report import ValidationReport
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CheckStatus enum

@@ -33,10 +33,10 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from tessera.sketch.types import SymmetryConfig
+from ..sketch.types import SymmetryConfig
 
 if TYPE_CHECKING:
-    from tessera.reconstruction.mesh_output import StandardMesh
+    from ..reconstruction.mesh_output import StandardMesh
 
 logger = logging.getLogger("tessera.sketch")
 
@@ -236,7 +236,7 @@ class SymmetryEnforcer:
         )
 
         # Build result mesh.
-        from tessera.reconstruction.mesh_output import StandardMesh
+        from ..reconstruction.mesh_output import StandardMesh
 
         result = StandardMesh(
             vertices=new_vertices.astype(np.float32),

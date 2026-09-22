@@ -107,7 +107,7 @@ class TESSERA_OT_MultiViewGenerate(Operator):
         props.pipeline_progress = 0.0
 
         # Build ImageInput list from scene properties
-        from tessera.vision.types import ImageInput
+        from ..vision.types import ImageInput
 
         image_inputs = []
         for item in props.images:
@@ -140,7 +140,7 @@ class TESSERA_OT_MultiViewGenerate(Operator):
             props.pipeline_status = "Running vision analysis..."
             props.pipeline_progress = 0.1
 
-            from tessera.vision import VisionPipeline
+            from ..vision import VisionPipeline
 
             pipeline = VisionPipeline()
             vision_results = pipeline.process(image_inputs)
@@ -164,12 +164,12 @@ class TESSERA_OT_MultiViewGenerate(Operator):
             props.pipeline_status = "Running multi-view reconstruction..."
             props.pipeline_progress = 0.4
 
-            from tessera.multiview import (
+            from ..multiview import (
                 HlocPoseEstimator,
                 MultiViewAdapter,
                 StrategySelector,
             )
-            from tessera.reconstruction.engine import ReconstructionEngine
+            from ..reconstruction.engine import ReconstructionEngine
 
             # Access cache_dir from addon preferences
             addon_prefs = context.preferences.addons.get("tessera")
@@ -234,7 +234,7 @@ class TESSERA_OT_MultiViewGenerate(Operator):
             props.pipeline_status = "Importing mesh..."
             props.pipeline_progress = 0.85
 
-            from tessera.mesh.importer import MeshImporter
+            from ..mesh.importer import MeshImporter
 
             importer = MeshImporter()
             source = result.source_adapter or strategy
@@ -345,7 +345,7 @@ class TESSERA_OT_PreviewRender(Operator):
         output_dir = os.path.join(base_dir, "tessera_previews")
 
         try:
-            from tessera.multiview.preview.renderer import PreviewRenderer
+            from ..multiview.preview.renderer import PreviewRenderer
 
             renderer = PreviewRenderer()
             previews = renderer.render_previews(obj, output_dir)

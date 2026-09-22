@@ -85,7 +85,7 @@ class DINOv2Adapter(FeatureAdapter):
 
         import torch
 
-        from tessera.models import get_model_path
+        from ...models import get_model_path
 
         model_path = get_model_path(self._model_id)
         if model_path is None:
@@ -204,7 +204,7 @@ class DINOv2Adapter(FeatureAdapter):
             ValueError: If the path is outside the cache directory.
         """
         try:
-            from tessera.models.cache_manager import get_global_cache_manager
+            from ...models.cache_manager import get_global_cache_manager
 
             manager = get_global_cache_manager()
             if manager is not None:

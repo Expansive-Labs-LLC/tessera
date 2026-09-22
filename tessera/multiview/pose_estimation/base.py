@@ -31,10 +31,10 @@ import os as _os
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING
 
-from tessera.multiview.pose_estimation.types import PoseEstimationResult
+from ...multiview.pose_estimation.types import PoseEstimationResult
 
 if TYPE_CHECKING:
-    from tessera.vision.types import VisionResult
+    from ...vision.types import VisionResult
 else:
     # Load VisionResult directly from the types.py file to avoid
     # triggering tessera.vision.__init__ which eagerly imports the

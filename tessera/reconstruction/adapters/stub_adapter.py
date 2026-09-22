@@ -31,15 +31,15 @@ import time
 
 import numpy as np
 
-from tessera.reconstruction.adapter import (
+from ...reconstruction.adapter import (
     ReconstructionAdapter,
     VisionPipelineOutput,
 )
-from tessera.reconstruction.mesh_output import (
+from ...reconstruction.mesh_output import (
     AdapterCapabilities,
     ReconstructionResult,
 )
-from tessera.reconstruction.utils.mesh_conversion import normalize_to_standard_mesh
+from ...reconstruction.utils.mesh_conversion import normalize_to_standard_mesh
 
 logger = logging.getLogger("tessera.reconstruction")
 

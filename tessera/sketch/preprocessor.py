@@ -34,12 +34,12 @@ import logging
 import cv2
 import numpy as np
 
-from tessera.sketch.types import (
+from ..sketch.types import (
     MIN_LINE_CONTENT_PIXELS,
     PreprocessedSketch,
     SketchConfig,
 )
-from tessera.sketch.utils.perspective import correct_perspective
+from ..sketch.utils.perspective import correct_perspective
 
 logger = logging.getLogger("tessera.sketch")
 

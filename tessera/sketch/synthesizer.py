@@ -37,7 +37,7 @@ from pathlib import Path
 
 import numpy as np
 
-from tessera.sketch.types import (
+from ..sketch.types import (
     DEFAULT_SYNTHESIS_PROMPT,
     SYNTHESIS_RESOLUTION,
     PreprocessedSketch,

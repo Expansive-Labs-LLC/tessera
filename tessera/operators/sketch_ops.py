@@ -141,7 +141,7 @@ class TESSERA_OT_SketchGenerate(Operator):
         props.pipeline_progress = 0.0
 
         # Build ImageInput list (max 2)
-        from tessera.vision.types import ImageInput
+        from ..vision.types import ImageInput
 
         image_inputs = []
         for item in list(props.images)[:2]:
@@ -170,8 +170,8 @@ class TESSERA_OT_SketchGenerate(Operator):
             props.pipeline_status = "Running sketch pipeline..."
             props.pipeline_progress = 0.1
 
-            from tessera.sketch import SketchPipeline
-            from tessera.sketch.types import SketchConfig
+            from ..sketch import SketchPipeline
+            from ..sketch.types import SketchConfig
 
             # Access cache_dir from addon preferences
             addon_prefs = context.preferences.addons.get("tessera")
@@ -242,7 +242,7 @@ class TESSERA_OT_SketchGenerate(Operator):
             props.pipeline_status = "Importing sketch mesh..."
             props.pipeline_progress = 0.9
 
-            from tessera.mesh.importer import MeshImporter
+            from ..mesh.importer import MeshImporter
 
             importer = MeshImporter()
             obj = importer.import_mesh(
@@ -347,7 +347,7 @@ class TESSERA_OT_SketchDetect(Operator):
             import numpy as np
             from PIL import Image as PILImage
 
-            from tessera.sketch import SketchDetector
+            from ..sketch import SketchDetector
 
             # Access cache_dir from addon preferences
             addon_prefs = context.preferences.addons.get("tessera")

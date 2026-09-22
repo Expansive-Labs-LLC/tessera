@@ -33,7 +33,7 @@ import time
 
 import numpy as np
 
-from tessera.multiview.pose_estimation.types import CameraPose
+from ...multiview.pose_estimation.types import CameraPose
 
 logger = logging.getLogger("tessera.multiview")
 

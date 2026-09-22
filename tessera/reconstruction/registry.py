@@ -29,9 +29,9 @@ from __future__ import annotations
 import logging
 import time
 
-from tessera.reconstruction.adapter import ReconstructionAdapter
-from tessera.reconstruction.adapters.stub_adapter import StubAdapter
-from tessera.reconstruction.mesh_output import AdapterCapabilities
+from ..reconstruction.adapter import ReconstructionAdapter
+from ..reconstruction.adapters.stub_adapter import StubAdapter
+from ..reconstruction.mesh_output import AdapterCapabilities
 
 logger = logging.getLogger("tessera.reconstruction")
 

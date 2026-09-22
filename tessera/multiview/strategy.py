@@ -42,17 +42,17 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from tessera.multiview.pose_estimation.base import PoseEstimator
-from tessera.multiview.pose_estimation.types import CameraPose
-from tessera.multiview.reconstruction.multiview_adapter import MultiViewAdapter
-from tessera.reconstruction.adapter import (
+from ..multiview.pose_estimation.base import PoseEstimator
+from ..multiview.pose_estimation.types import CameraPose
+from ..multiview.reconstruction.multiview_adapter import MultiViewAdapter
+from ..reconstruction.adapter import (
     ReconstructionAdapter,
     VisionPipelineOutput,
 )
-from tessera.reconstruction.mesh_output import ReconstructionResult
+from ..reconstruction.mesh_output import ReconstructionResult
 
 if TYPE_CHECKING:
-    from tessera.vision.types import VisionResult
+    from ..vision.types import VisionResult
 else:
     # Load VisionResult directly from the types.py file to avoid
     # triggering tessera.vision.__init__ which eagerly imports the
