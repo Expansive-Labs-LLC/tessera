@@ -27,6 +27,7 @@ import logging
 import bpy
 
 from . import operators, ui
+from .addon import ADDON_ID, get_addon_preferences
 from .preferences import TesseraPreferences, init_gpu_info
 from .properties import (
     TesseraCleanupSettings,
@@ -43,7 +44,7 @@ logger = logging.getLogger("tessera")
 bl_info = {
     "name": "Tessera",
     "author": "Tessera Team",
-    "version": (1, 1, 0),
+    "version": (1, 2, 1),
     "blender": (4, 2, 0),
     "location": "View3D > Sidebar > Tessera",
     "description": "AI-powered 3D-printable model generation from reference images",
@@ -167,8 +168,14 @@ def _init_model_management(gpu_info):
 
         # Get cache directory from preferences
         try:
-            addon_prefs = bpy.context.preferences.addons["tessera"].preferences
-            cache_dir = addon_prefs.cache_dir
+            addon_prefs = get_addon_preferences()
+            if addon_prefs is None:
+                logger.warning(
+                    "Add-on preferences unavailable for %r; falling back to "
+                    "the default cache directory.",
+                    ADDON_ID,
+                )
+            cache_dir = getattr(addon_prefs, "cache_dir", "")
             if not cache_dir:
                 # Use default if not set
                 from .preferences import _get_default_cache_dir

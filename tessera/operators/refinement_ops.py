@@ -32,6 +32,7 @@ import threading
 
 import bpy
 from bpy.types import Operator
+from ..addon import get_addon_preferences
 
 logger = logging.getLogger("tessera.refinement")
 
@@ -85,7 +86,9 @@ def _create_llm_backend():
         An ``LLMBackend`` instance (local or API).
     """
     try:
-        prefs = bpy.context.preferences.addons["tessera"].preferences
+        prefs = get_addon_preferences()
+        if prefs is None:
+            return None
         backend_type = prefs.llm_backend
     except (KeyError, AttributeError):
         backend_type = "LOCAL"
@@ -94,7 +97,7 @@ def _create_llm_backend():
         from ..refinement.llm_backend import APILLMBackend
 
         try:
-            prefs = bpy.context.preferences.addons["tessera"].preferences
+            prefs = get_addon_preferences()
             return APILLMBackend(
                 endpoint=prefs.llm_api_endpoint,
                 api_key=prefs.llm_api_key,

@@ -102,7 +102,7 @@ tessera/
 
 **Exception hierarchy:** All model-management exceptions are defined in `tessera/models/__init__.py`: `ManifestLoadError`, `ModelNotFoundError`, `ModelLicenseError`, `ModelDownloadError`, `IntegrityError`.
 
-**Integration with SPEC-TS-0001:** The cache directory path is read from `bpy.context.preferences.addons['tessera'].preferences.cache_dir`. The GPU VRAM is read via `tessera.gpu_detection.get_gpu_info()`.
+**Integration with SPEC-TS-0001:** The cache directory path is read via `tessera.addon.get_addon_preferences().cache_dir`. The add-on key SHALL NOT be spelled as a literal: Blender keys `context.preferences.addons` by the package name, which is `tessera` for a legacy add-on install and `bl_ext.user_default.tessera` for an extension install, so `tessera.addon.ADDON_ID` resolves it from `__package__`. The same value SHALL be used as `AddonPreferences.bl_idname` — a mismatch registers the class without associating it, and the preferences panel renders empty with no error. The default cache directory comes from `bpy.utils.extension_path_user(ADDON_ID, path="cache", create=False)`, whose `path` argument is keyword-only. The GPU VRAM is read via `tessera.gpu_detection.get_gpu_info()`.
 
 ---
 
