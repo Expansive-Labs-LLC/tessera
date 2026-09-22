@@ -1,5 +1,19 @@
 # Changelog
 
+# [1.2.0](https://github.com/Expansive-Labs-LLC/tessera/compare/1.1.0...1.2.0) (2026-09-22)
+
+
+### Bug Fixes
+
+* **build:** flatten the add-on archive and use package-relative imports ([ac9cfe7](https://github.com/Expansive-Labs-LLC/tessera/commit/ac9cfe764c0d9da5abf76b2da6cc5e6344008abd))
+* **gpu:** ship v1 as NVIDIA-only and say so before model load ([a7a9274](https://github.com/Expansive-Labs-LLC/tessera/commit/a7a9274afffbd243cc8f74bdc89f19feb9c6f71a))
+* **reconstruction:** resolve and verify Trellis weights via the model cache ([998de16](https://github.com/Expansive-Labs-LLC/tessera/commit/998de16945b87cca5c9b0d1aea32730737966c13))
+
+
+### Features
+
+* **models:** govern weight licences, verify digests, allow user models ([0eff878](https://github.com/Expansive-Labs-LLC/tessera/commit/0eff878520e263193cc9f76da7b6c9f9533d1616))
+
 # [1.1.0](https://github.com/Expansive-Labs-LLC/tessera/compare/1.0.0...1.1.0) (2026-09-22)
 
 
