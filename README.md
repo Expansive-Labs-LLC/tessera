@@ -2,8 +2,8 @@
 
 **AI-powered Blender add-on that turns reference images into 3D-printable models**
 
-<!-- CI badge will activate once .github/workflows/ci.yml is added in TASK-TS-0013 -->
 ![CI](https://github.com/Expansive-Labs-LLC/tessera/actions/workflows/ci.yml/badge.svg)
+![Docs](https://github.com/Expansive-Labs-LLC/tessera/actions/workflows/docs.yml/badge.svg)
 ![License](https://img.shields.io/badge/License-GPL--2.0--or--later-blue.svg)
 ![Blender](https://img.shields.io/badge/Blender-4.2+-orange.svg)
 ![Release](https://img.shields.io/github/v/release/Expansive-Labs-LLC/tessera?include_prereleases)
@@ -77,8 +77,8 @@ Full documentation is available at [https://expansive-labs-llc.github.io/tessera
 Key pages:
 
 - [Installation Guide](https://expansive-labs-llc.github.io/tessera/installation/)
-- [User Guide](https://expansive-labs-llc.github.io/tessera/user-guide/)
-- [API Reference](https://expansive-labs-llc.github.io/tessera/api/)
+- [User Guide: Image Input](https://expansive-labs-llc.github.io/tessera/user-guide/image-input/)
+- [API Reference: Pipeline](https://expansive-labs-llc.github.io/tessera/api/pipeline/)
 - [Troubleshooting](https://expansive-labs-llc.github.io/tessera/troubleshooting/)
 
 ## Contributing
