@@ -27,7 +27,7 @@ jobs:
     steps:
       # FR-011a: Full history required for semantic-release commit analysis
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
