@@ -27,6 +27,21 @@ htmlcov/
 *.zip
 
 # =============================================================================
+# Node
+# The commitlint job runs `npm install` locally, and CONTRIBUTING points
+# contributors at the same command. Only the install tree is ignored --
+# package.json is left visible so that adding a real one is a deliberate,
+# reviewable act rather than something git silently hides.
+# =============================================================================
+node_modules/
+
+# =============================================================================
+# Docs build output
+# `mkdocs build` in the Docs workflow writes the rendered site to ./site.
+# =============================================================================
+site/
+
+# =============================================================================
 # Blender
 # =============================================================================
 *.blend1

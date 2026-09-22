@@ -11,6 +11,9 @@ on:
   pull_request:
     branches:
       - main
+  # Manual re-run from the Actions tab. The ref is chosen in the UI, so this
+  # works against any branch, not just main.
+  workflow_dispatch:
 
 jobs:
   # ---------------------------------------------------------------------------
@@ -35,7 +38,35 @@ jobs:
         run: npm install --save-dev @commitlint/cli @commitlint/config-conventional
 
       - name: Validate commits
-        run: npx commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}
+        env:
+          # These are empty on anything other than a pull_request, so the range
+          # is resolved in the shell rather than interpolated into the command.
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          HEAD_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          if [ -n "$PR_BASE" ]; then
+            # On a PR, lint exactly the commits the PR adds.
+            FROM="$PR_BASE"
+            TO="$PR_HEAD"
+          else
+            # On a manual run there is no PR context, so lint whatever this ref
+            # adds on top of the default branch. Dispatching the default branch
+            # itself gives an empty range, which commitlint passes.
+            BASE="origin/${DEFAULT_BRANCH:-main}"
+            if git rev-parse --verify --quiet "$BASE" >/dev/null; then
+              FROM="$BASE"
+            else
+              # Shallow or missing remote ref: fall back to the last commit.
+              echo "::notice::$BASE not available; linting the head commit only"
+              FROM="${HEAD_SHA}~1"
+            fi
+            TO="$HEAD_SHA"
+          fi
+          echo "Linting commits in range $FROM..$TO"
+          npx commitlint --from "$FROM" --to "$TO"
 
   # ---------------------------------------------------------------------------
   # FR-002, FR-002b: Lint — isort, black, flake8, mypy
