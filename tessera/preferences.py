@@ -30,7 +30,6 @@ from bpy.props import BoolProperty, EnumProperty, StringProperty
 from bpy.types import AddonPreferences
 
 from .addon import ADDON_ID
-
 from .gpu_detection import get_gpu_info
 
 logger = logging.getLogger("tessera")
@@ -53,9 +52,7 @@ def _get_default_cache_dir():
         # keyword-only — passing it positionally raises TypeError, which
         # previously fell through to the legacy add-ons path below and put
         # multi-gigabyte weights outside the extension's own directory.
-        cache_path = bpy.utils.extension_path_user(
-            ADDON_ID, path="cache", create=False
-        )
+        cache_path = bpy.utils.extension_path_user(ADDON_ID, path="cache", create=False)
         if cache_path:
             return cache_path
     except (TypeError, AttributeError) as exc:

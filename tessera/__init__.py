@@ -44,7 +44,8 @@ logger = logging.getLogger("tessera")
 bl_info = {
     "name": "Tessera",
     "author": "Tessera Team",
-    "version": (1, 2, 1),
+    # Placeholder; scripts/build_addon.sh injects the release version.
+    "version": (0, 0, 0),
     "blender": (4, 2, 0),
     "location": "View3D > Sidebar > Tessera",
     "description": "AI-powered 3D-printable model generation from reference images",

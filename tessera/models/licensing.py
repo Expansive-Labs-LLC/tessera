@@ -44,6 +44,7 @@ Public API:
 import logging
 import threading
 from typing import Any
+
 from ..addon import get_addon_preferences
 
 logger = logging.getLogger("tessera.models")

@@ -25,6 +25,7 @@ Implements: FR-005, FR-008, FR-009, FR-010, FR-011, FR-016, FR-018.
 import logging
 
 from bpy.types import Panel
+
 from ..addon import get_addon_preferences
 
 logger = logging.getLogger("tessera.models")

@@ -5,7 +5,9 @@
 schema_version = "1.0.0"
 
 id = "tessera"
-version = "1.2.0"
+# Placeholder. scripts/build_addon.sh injects the release version at build
+# time; it is deliberately not committed back, so source always reads 0.0.0.
+version = "0.0.0"
 name = "Tessera"
 tagline = "AI-powered 3D-printable model generation from reference images"
 

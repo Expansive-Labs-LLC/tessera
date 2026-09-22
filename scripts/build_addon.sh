@@ -41,9 +41,29 @@ echo "Repo:     $REPO_ROOT"
 echo ""
 
 # ---------------------------------------------------------------------------
-# FR-027: Patch bl_info["version"] tuple in tessera/__init__.py
+# Restore the version placeholders on exit.
+#
+# Patching happens in place, so a local build would otherwise leave a real
+# version in the working tree and it would be committed by accident. The
+# release pipeline no longer commits these files back (.releaserc.yml), so
+# source must always read 0.0.0 once a build finishes.
 # ---------------------------------------------------------------------------
 INIT_FILE="$REPO_ROOT/tessera/__init__.py"
+MANIFEST_FILE="$REPO_ROOT/blender_manifest.toml"
+_VERSION_BACKUP_DIR="$(mktemp -d)"
+cp "$INIT_FILE" "$_VERSION_BACKUP_DIR/__init__.py"
+cp "$MANIFEST_FILE" "$_VERSION_BACKUP_DIR/blender_manifest.toml"
+
+restore_version_placeholders() {
+    cp "$_VERSION_BACKUP_DIR/__init__.py" "$INIT_FILE"
+    cp "$_VERSION_BACKUP_DIR/blender_manifest.toml" "$MANIFEST_FILE"
+    rm -rf "$_VERSION_BACKUP_DIR"
+}
+trap restore_version_placeholders EXIT
+
+# ---------------------------------------------------------------------------
+# FR-027: Patch bl_info["version"] tuple in tessera/__init__.py
+# ---------------------------------------------------------------------------
 
 if ! grep -q '"version": ([0-9]*, [0-9]*, [0-9]*),' "$INIT_FILE"; then
     echo "ERROR: Could not find version tuple in $INIT_FILE" >&2
@@ -57,8 +77,6 @@ echo "Patched bl_info[\"version\"] → ($MAJOR, $MINOR, $PATCH)"
 # ---------------------------------------------------------------------------
 # FR-028: Patch version field in blender_manifest.toml
 # ---------------------------------------------------------------------------
-MANIFEST_FILE="$REPO_ROOT/blender_manifest.toml"
-
 sed -i "s/^version = \".*\"/version = \"$MAJOR.$MINOR.$PATCH\"/" "$MANIFEST_FILE"
 echo "Patched blender_manifest.toml version → \"$MAJOR.$MINOR.$PATCH\""
 
