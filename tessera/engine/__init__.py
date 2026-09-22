@@ -35,6 +35,7 @@ Public API:
     EngineStatus — what the UI shows and why
     EngineError and subclasses — failure modes callers distinguish
     PROTOCOL_VERSIONS — protocol versions this add-on can speak
+    REQUEST_ID_HEADER, PROTOCOL_HEADER, TOKEN_HEADER — per-request headers
 """
 
 #: Protocol versions this add-on understands. The engine reports one in its
@@ -45,6 +46,15 @@ PROTOCOL_VERSIONS = frozenset({1})
 #: Default loopback endpoint. Overridable via add-on preferences (FR-017).
 DEFAULT_HOST = "127.0.0.1"
 DEFAULT_PORT = 8765
+
+#: Headers carried by every request. The protocol version travels on each
+#: one, not only on the handshake, so an engine restarted at a different
+#: version underneath a long-lived client is caught rather than misread
+#: (SPEC-TS-0023 FR-036). The token is what makes the caller the add-on
+#: rather than any other local process (FR-037, SEC-007).
+REQUEST_ID_HEADER = "X-Tessera-Request-Id"
+PROTOCOL_HEADER = "X-Tessera-Protocol"
+TOKEN_HEADER = "X-Tessera-Token"
 
 
 class EngineError(Exception):
@@ -67,6 +77,30 @@ class EngineVersionError(EngineError):
     loudly rather than exchanging data it may misinterpret
     (SPEC-TS-0023 FR-011, AC-003, EC-004).
     """
+
+
+class EngineTimeoutError(EngineError):
+    """The engine accepted the request and then stopped answering.
+
+    Distinct from :class:`EngineUnavailableError`, where the process is
+    gone: here it is alive and wedged, which wants a different message and
+    a different remedy (SPEC-TS-0023 EC-006, FR-035). The client issues
+    ``POST /cancel`` before raising, so the engine is not left holding the
+    inference lock for a request nobody is waiting on.
+
+    Attributes:
+        endpoint: The endpoint that did not answer.
+        elapsed_s: Seconds waited before giving up.
+    """
+
+    def __init__(self, endpoint: str, elapsed_s: float):
+        super().__init__(
+            f"The Tessera engine did not respond to {endpoint} within "
+            f"{elapsed_s:.0f} s. It is running but not answering — check "
+            "the engine log, or restart it."
+        )
+        self.endpoint = endpoint
+        self.elapsed_s = elapsed_s
 
 
 class EngineRequestError(EngineError):

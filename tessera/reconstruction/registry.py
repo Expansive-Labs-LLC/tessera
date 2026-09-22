@@ -18,7 +18,8 @@
 Discovers, registers, and selects reconstruction adapters using the
 selection algorithm defined in SPEC-TS-0004 §2.3.
 
-Spec: SPEC-TS-0004 (Single-Image 3D Reconstruction Engine)
+Spec: SPEC-TS-0004 (Single-Image 3D Reconstruction Engine),
+SPEC-TS-0023 FR-012 (engine availability as a selection input)
 
 Public API:
     AdapterRegistry — discovers, registers, selects adapters (FR-006)
@@ -43,12 +44,20 @@ class AdapterRegistry:
 
     1. Filter by input compatibility (min/max images)
     2. Filter by weight availability (model files exist in cache)
+    2b. Filter by engine availability (SPEC-TS-0023 FR-012)
     3. Filter by VRAM (min_vram_gb ≤ available)
     4. Exclude ``StubAdapter`` unless it's the only candidate
     5. Rank by highest ``min_vram_gb`` (prefer most capable)
     6. Fallback to ``StubAdapter`` or ``None``
 
-    Implements: FR-006.
+    Step 2b exists because the adapters that do real work now run in
+    another process. When that process is missing, stopped or version-
+    skewed, selecting one of them would produce a failure inside the
+    transport at generate time; excluding them produces the existing
+    ``StubAdapter`` fallback and an actionable panel instead
+    (SPEC-TS-0023 FR-012, AC-002).
+
+    Implements: FR-006, SPEC-TS-0023 FR-012.
     """
 
     def __init__(self) -> None:
@@ -108,20 +117,45 @@ class AdapterRegistry:
             return adapter.capabilities()
         return None
 
+    def _engine_is_ready(self) -> bool:
+        """Resolve engine availability, once per selection (FR-012).
+
+        Deliberately lazy: a registry holding only in-process adapters
+        never touches the engine at all, so nothing pays for a boundary it
+        does not use.
+
+        Returns:
+            Whether engine-backed adapters may be selected. ``False`` on
+            any failure — an engine we cannot ask about is one we must not
+            route work to.
+        """
+        try:
+            from ..engine.status import resolve_status
+
+            return resolve_status().is_ready
+        except Exception:  # pragma: no cover — defensive
+            logger.debug("engine status unavailable; excluding engine adapters")
+            return False
+
     def select(
         self,
         input_count: int,
         cache_dir: str,
         available_vram_gb: float,
+        engine_available: bool | None = None,
     ) -> ReconstructionAdapter | None:
         """Select the best adapter for the given conditions.
 
-        Implements the six-step selection algorithm from §2.3.
+        Implements the selection algorithm from §2.3, with the engine
+        availability step SPEC-TS-0023 FR-012 adds.
 
         Args:
             input_count: Number of input images.
             cache_dir: Path to the model weight cache directory.
             available_vram_gb: Available GPU VRAM in GB.
+            engine_available: Whether the local inference engine is ready.
+                ``None`` resolves it, but only if some registered adapter
+                actually needs it.
 
         Returns:
             The best matching adapter, or ``None`` if no adapter
@@ -129,6 +163,12 @@ class AdapterRegistry:
         """
         start = time.monotonic()
         candidates: list[tuple[float, str, ReconstructionAdapter]] = []
+
+        needs_engine = any(
+            getattr(a, "requires_engine", False) for a in self._adapters.values()
+        )
+        if needs_engine and engine_available is None:
+            engine_available = self._engine_is_ready()
 
         for name, adapter in self._adapters.items():
             caps = adapter.capabilities()
@@ -152,6 +192,14 @@ class AdapterRegistry:
                         name,
                     )
                     continue
+
+            # Step 2b: Filter by engine availability (SPEC-TS-0023 FR-012)
+            if getattr(adapter, "requires_engine", False) and not engine_available:
+                logger.debug(
+                    "Adapter %s excluded: the local inference engine is not " "ready",
+                    name,
+                )
+                continue
 
             # Step 3: Filter by VRAM
             if caps.min_vram_gb > available_vram_gb and caps.min_vram_gb > 0:

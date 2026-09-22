@@ -8,8 +8,8 @@
 |-------|-------|
 | **Spec ID** | SPEC-TS-0023 |
 | **Task ID** | TASK-TS-0023 |
-| **Status** | Submitted |
-| **Version** | 1.1 |
+| **Status** | Approved |
+| **Version** | 1.3 |
 | **Created** | 2026-09-22 |
 | **Last Updated** | 2026-09-22 |
 | **Author** | Derek |
@@ -145,7 +145,7 @@ Blender process                          Engine process
 | FR-010 | The add-on SHALL provide an engine client exposing `is_available()`, `health()`, `reconstruct()`, `vision()`, `cancel()` and `shutdown()` (§10.2), raising `EngineUnavailableError` when the engine cannot be reached and `EngineTimeoutError` when it does not answer inside the FR-035 budget. |
 | FR-011 | The add-on and engine SHALL exchange an integer protocol version. If the engine's version is not supported by the add-on, the client SHALL raise `EngineVersionError` naming both versions and the required action. |
 | FR-012 | `AdapterRegistry` SHALL treat engine availability as an input to adapter selection: when the engine is unreachable or version-incompatible, engine-backed adapters SHALL be excluded and the existing `StubAdapter` fallback SHALL apply. |
-| FR-013 | The add-on SHALL display engine status in the Tessera panel as exactly one of `Not installed`, `Stopped`, `Starting`, `Ready` or `Version mismatch`, each with its own action: `Not installed` → an **Install Engine** button opening the installation guidance of FR-014; `Stopped` → a **Start Engine** button invoking FR-018; `Starting` → Generate disabled with elapsed seconds shown against the FR-040 budget; `Ready` → Generate enabled; `Version mismatch` → the FR-011 message plus **Update Add-on** or **Update Engine** according to which side is behind (EC-004). |
+| FR-013 | The add-on SHALL display engine status in the Tessera panel as exactly one of `Not installed`, `Stopped`, `Starting`, `Ready`, `Version mismatch` or `Unrecognised process on port`, each with its own action: `Not installed` → an **Install Engine** button opening the installation guidance of FR-014; `Stopped` → a **Start Engine** button invoking FR-018, or, when the engine is listening but not answering (EC-006), a **Restart Engine** button naming the log path; `Starting` → Generate disabled with elapsed seconds shown against the FR-040 budget and no start action offered, so a spawn in flight cannot be started twice; `Ready` → Generate enabled; `Version mismatch` → the FR-011 message plus **Update Add-on** or **Update Engine** according to which side is behind (EC-004); `Unrecognised process on port` → the port preference of FR-017, because something is listening that did not identify itself as a Tessera engine (EC-003, SEC-006). |
 | FR-014 | When the engine is not installed, the add-on SHALL NOT attempt inference and SHALL present installation guidance. It SHALL NOT fail inside `torch` or any engine-side import. |
 | FR-015 | The engine SHALL be installable in a single user-initiated flow that does not require the user to run `pip`, edit a path, or modify Blender's bundled Python. The only step asked of the user beyond consent is the operating system's own elevation or confirmation prompt. |
 | FR-016 | The engine SHALL be installable and updatable independently of the add-on; updating one SHALL NOT require reinstalling the other, subject to FR-011. |
@@ -177,8 +177,8 @@ Blender process                          Engine process
 | FR-032 | On startup the engine SHALL write a runtime descriptor recording `pid`, `port`, `protocol_version`, `engine_version`, the absolute path of its log file, the `cache_root` it was started with, and a per-start random 256-bit `token` rendered as 64 hexadecimal characters. It SHALL live at `%LOCALAPPDATA%\Tessera\engine\runtime.json` on Windows and `${XDG_RUNTIME_DIR:-${XDG_STATE_HOME:-~/.local/state}}/tessera/engine/runtime.json` on Linux, SHALL be created owner-readable only, and SHALL be deleted on clean shutdown (FR-039). |
 | FR-033 | The add-on SHALL pass the absolute cache root it governs to the engine as a launch argument. The engine SHALL hold that root for its process lifetime and SHALL NOT accept a cache root from any request. When attaching to an already-running engine (FR-018) the add-on SHALL compare the descriptor's `cache_root` with its own and SHALL refuse an engine whose root differs, naming the two paths that disagree. |
 | FR-034 | The engine SHALL serve `GET /health` and `POST /cancel` concurrently with an in-flight inference. Only `POST /reconstruct` and `POST /vision` SHALL contend for the single inference lock of FR-021. |
-| FR-035 | The add-on SHALL apply an explicit timeout to every engine call — 2 s to connect, 5 s for `/health`, 300 s for `/vision`, 900 s for `/reconstruct`, the last two overridable by preference. No call SHALL be made without one. On timeout the client SHALL issue `POST /cancel` for that request and raise `EngineTimeoutError` naming the endpoint and the elapsed time. |
-| FR-036 | Every request SHALL carry a client-generated `request_id` and the `protocol_version` the add-on believes it is speaking. The engine SHALL refuse a `protocol_version` it does not serve with `protocol_mismatch`, so an engine restarted at a different version between the health check and the request is caught rather than misread. `POST /cancel` SHALL take a `request_id` and SHALL abort that request if it is the one in flight. |
+| FR-035 | The add-on SHALL apply an explicit socket timeout to every engine call — 5 s for `/health` and `/cancel`, 300 s for `/vision`, 900 s for `/reconstruct`, the inference two overridable by preference. No call SHALL be made without one. These bound a *wedged* engine, not an absent one: nothing listening is refused by the kernel immediately, which is what keeps NFR-002's detection budget independent of them. On timeout the client SHALL issue `POST /cancel` for that request and raise `EngineTimeoutError` naming the endpoint and the elapsed time. |
+| FR-036 | Every request SHALL carry a client-generated request id and the protocol version the add-on believes it is speaking, as the headers `X-Tessera-Request-Id` and `X-Tessera-Protocol`. Headers rather than body fields, so `GET /health` carries them on the same terms as every other call and there is one mechanism rather than two. The engine SHALL refuse a protocol version it does not serve with `protocol_mismatch`, so an engine restarted at a different version between the health check and the request is caught rather than misread. `POST /cancel` SHALL take a `request_id` in its body and SHALL abort that request if it is the one in flight. |
 | FR-037 | The add-on SHALL present the `token` from the runtime descriptor on every request as an `X-Tessera-Token` header. The engine SHALL refuse, with `unauthorized` and without logging any part of the request body, a request whose token does not match, whose `Host` header names anything but the loopback address and port it bound, or which carries an `Origin` header at all. |
 | FR-038 | The engine SHALL refuse a request body larger than 64 MiB with `payload_too_large`, decided from `Content-Length` before the body is read into memory, and SHALL refuse a chunked request that exceeds the bound while streaming. |
 | FR-039 | The engine SHALL shut down cleanly on `POST /shutdown` and on `SIGTERM`: refuse new inference requests, wait up to 30 s for an in-flight request to finish or cancel, free GPU memory (FR-020), delete the runtime descriptor (FR-032), and exit 0. The add-on SHALL shut down an engine it spawned when Blender exits. |
@@ -193,9 +193,9 @@ Blender process                          Engine process
 | `engine_port` | `int` | 1024–65535 | Yes (default `8765`) | `8765` |
 | `cache_root` | `str` | Absolute directory; a launch argument, never a request field (FR-033) | Yes | `"/home/u/.cache/tessera/models"` |
 | `weight_paths` | `dict[str, str]` | Absolute paths under `cache_root` that exist and have passed verification | Yes | `{"trellis": "/…/snapshots/ab12/"}` |
-| `protocol_version` | `int` | Sent on every request; compared against the engine's served set (FR-036) | Yes | `1` |
-| `request_id` | `str` | Client-generated; the handle `POST /cancel` takes (FR-036) | Yes | `"a3f1c2…"` |
-| `token` | `str` | 64 hex characters from the runtime descriptor, sent as `X-Tessera-Token` (FR-037) | Yes | `"9f2c…"` |
+| `X-Tessera-Protocol` | header | Sent on every request; compared against the engine's served set (FR-036) | Yes | `1` |
+| `X-Tessera-Request-Id` | header | Client-generated; the handle `POST /cancel` takes (FR-036) | Yes | `"a3f1c2…"` |
+| `X-Tessera-Token` | header | 64 hex characters from the runtime descriptor (FR-037) | Yes | `"9f2c…"` |
 | `inputs[].image` | `str` | Base64 8-bit RGB PNG (FR-027) | Yes | — |
 | `inputs[].mask` | `str` | Base64 8-bit grayscale PNG, values 0 or 255 | Yes | — |
 | `inputs[].depth_map` | `array` | `{b64, dtype: "float32", shape: [H, W]}`, values in `[0.0, 1.0]` | Yes | — |
@@ -242,14 +242,14 @@ Blender process                          Engine process
 |----|-------------|--------|--------|----------------------|
 | NFR-001 | Engine health check latency | Round trip | < 100 ms | Engine running on loopback |
 | NFR-002 | Engine availability detection when absent | Time to report `Not installed` | < 500 ms | No process listening on the configured port |
-| NFR-003 | IPC overhead relative to inference | Add-on `reconstruct()` duration minus the engine's reported `inference_time_s` | < 500 ms | Single-image reconstruction returning ≤ 200,000 vertices, encoded per FR-027 |
+| NFR-003 | IPC overhead relative to inference | Add-on `reconstruct()` duration minus the engine's reported `inference_time_s` | < 500 ms | Single-image reconstruction returning ≤ 200,000 vertices, encoded per FR-027. Encode, serialise, parse and decode measure 45 ms of that budget at this size and 190 ms at the FR-028 ceiling, leaving the remainder for transport |
 | NFR-004 | Add-on archive size | `scripts/build_addon.sh` output | < 1 MB | Any build |
 | NFR-005 | Engine startup to `Ready` | Cold start | < 30 s | Engine installed, weights cached |
 | NFR-006 | UI responsiveness during inference | Blender viewport frame rate | ≥ 15 fps | Inference in flight |
 | NFR-007 | Per-request GPU memory leak | Residual VRAM above the engine's post-load idle baseline | < 50 MB | 10 sequential reconstructions including at least one failure. Same property and same figure as SPEC-TS-0004 NFR-004, which measured it in-process |
 | NFR-008 | Engine install, unaided completion | Supervised first-time users | ≥ 90%, n ≥ 10 per platform | Usability testing on Windows x64 and Linux x64 (FR-030) |
 | NFR-009 | Engine VRAM at rest | VRAM held by the engine process with no model loaded | < 300 MB | Engine `Ready`, no inference performed since start. Distinguishes the resident-model baseline from the NFR-007 leak |
-| NFR-010 | Reconstruction response size | Encoded body for a 200,000-vertex mesh | < 8 MB | Base64 raw buffers per FR-027 |
+| NFR-010 | Reconstruction response size | Encoded body for a 200,000-vertex, 400,000-face mesh | < 12 MB | Base64 raw buffers per FR-027. Measured at 9.60 MB: base64 costs a third on top of 7.2 MB of raw float32 and int32. At the FR-028 ceiling of 1,000,000 vertices the body is 48 MB, which loopback carries but no wider transport should be assumed to |
 | NFR-011 | Health latency while busy | `GET /health` round trip during an in-flight reconstruction | < 100 ms | Concurrency model of FR-034 |
 
 ---
@@ -429,9 +429,10 @@ Blender process                          Engine process
 
 ### 10.1 Engine HTTP API
 
-Every request carries `X-Tessera-Token` (FR-037), `request_id` and `protocol_version`
-(FR-036). An `Array` is always `{"b64": str, "dtype": str, "shape": [int, ...]}` holding a
-raw little-endian buffer (FR-027) — never nested JSON numbers.
+Every request carries three headers — `X-Tessera-Token` (FR-037),
+`X-Tessera-Request-Id` and `X-Tessera-Protocol` (FR-036) — on GET and POST alike.
+An `Array` is always `{"b64": str, "dtype": str, "shape": [int, ...]}` holding a
+raw little-endian buffer (FR-027), never nested JSON numbers.
 
 ```
 GET  /health                                    served during inference (FR-034)
@@ -443,8 +444,7 @@ GET  /health                                    served during inference (FR-034)
        "cache_root": "/…/.cache/tessera/models"}
 
 POST /vision
-  {"request_id": str, "protocol_version": 1,
-   "stage": "segment" | "depth" | "features",
+  {"stage": "segment" | "depth" | "features",
    "weight_paths": {"sam2": "/abs/path/"},
    "image": "<base64 8-bit RGB PNG>"}
   200 segment  {"mask": "<base64 8-bit grayscale PNG>", "coverage": 0.37,
@@ -453,8 +453,7 @@ POST /vision
   200 features {"features":  Array(float32, [1, D]), "duration_s": 0.3}
 
 POST /reconstruct                               one at a time (FR-021)
-  {"request_id": str, "protocol_version": 1,
-   "weight_paths": {"trellis": "/abs/path/"},
+  {"weight_paths": {"trellis": "/abs/path/"},
    "inputs": [{"image":        "<base64 8-bit RGB PNG>",
                "mask":         "<base64 8-bit grayscale PNG>",
                "depth_map":    Array(float32, [H, W]),
@@ -666,8 +665,8 @@ N/A — local add-on, no telemetry collected per PRD-001 D3.
 
 | Role | Name | Date | Status |
 |------|------|------|--------|
-| Author | Derek | 2026-09-22 | ☐ Submitted |
-| CSO Approval | Derek | | ☐ Approved / ☐ Changes Requested |
+| Author | Derek | 2026-09-22 | ☑ Submitted |
+| CSO Approval | Derek | 2026-09-22 | ☑ Approved |
 | Deputy Review | — | — | ☑ N/A |
 
 **Approval Notes:**
@@ -681,6 +680,8 @@ N/A — local add-on, no telemetry collected per PRD-001 D3.
 |---------|------|--------|-------------------|
 | 1.0 | 2026-09-22 | Derek | Initial draft implementing ADR-0001: thin add-on plus a local engine process. Defines the process boundary, the loopback HTTP contract, protocol-version negotiation, and the rule that weight resolution, digest verification and licence gating stay add-on side so the licence gate remains a single choke point. Carries forward the two premises ADR-0001 was accepted without verifying as FR-001, gating implementation on confirming them. |
 | 1.1 | 2026-09-22 | Derek | Settled the three questions ADR-0001 left open — distribution is a signed native installer per platform (Windows x64, Linux x64), the add-on spawns and supervises the engine, and every request is authenticated. Replaced the sketch of the wire format with the full projection of `VisionPipelineOutput` and `ReconstructionResult`, so `features`, `camera_pose`, `original_size` and the `StandardMesh` metadata keys survive the boundary (FR-025 – FR-029); numeric arrays now cross as base64 raw buffers rather than nested JSON. Added installation marker and runtime descriptor as the basis for discovery, log-path reporting and the request token (FR-030 – FR-033, FR-037, SEC-007 – SEC-009). Added the concurrency model that keeps `/health` answerable during inference, request timeouts, cancellation, clean shutdown and startup failure reporting (FR-034 – FR-036, FR-039, FR-040). Set the engine's licence as GPL-2.0-or-later (CON-010). Reconciled residual-VRAM measurement with SPEC-TS-0004 NFR-004 at 50 MB and separated the at-rest baseline into NFR-009. Extended the amendment list to SPEC-TS-0003, SPEC-TS-0007, SPEC-TS-0010 and SPEC-TS-0011, and recorded the PRD update this PR carries. Routed the installer download through the existing download manager so it is digest-verified like a weight file and the add-on keeps one network module (FR-041). Gave every error slug a standard HTTP status. Added AC-009 – AC-013, EC-006 and TS-021 – TS-039. |
+| 1.3 | 2026-09-22 | Derek | Corrected NFR-010 from 8 MB to 12 MB and recorded the measured figures behind both it and NFR-003. The original bound did not account for base64 costing a third on top of the raw buffers; a 200,000-vertex mesh encodes to 9.60 MB, and the codec accounts for 45 ms of the NFR-003 budget at that size. |
+| 1.2 | 2026-09-22 | Derek | Moved the per-request identity fields from the JSON body to the headers `X-Tessera-Request-Id` and `X-Tessera-Protocol`, so `GET /health` carries them on the same terms as every other call and there is one mechanism rather than two. Replaced FR-035's separate connect bound with per-endpoint socket timeouts, and recorded why an absent engine is still detected inside the NFR-002 budget: the kernel refuses a closed port immediately, so the timeout governs a wedged engine rather than a missing one. Added `Unrecognised process on port` as a sixth engine status — something listening that does not identify itself is not the same as nothing listening, and it wants the port preference rather than an install button. |
 
 ---
 

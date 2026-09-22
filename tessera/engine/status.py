@@ -24,7 +24,8 @@ user should do about each (SPEC-TS-0023 FR-013, FR-014, AC-002, EC-001).
 someone to install software they have already installed is worse than
 saying nothing.
 
-Spec: SPEC-TS-0023 (FR-012, FR-013, FR-014, EC-001, EC-003, EC-004)
+Spec: SPEC-TS-0023 (FR-012, FR-013, FR-014, FR-031, EC-001, EC-003,
+EC-004)
 
 Public API:
     EngineStatus — the states the UI renders
@@ -37,8 +38,9 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from . import EngineUnavailableError, EngineVersionError
+from . import EngineTimeoutError, EngineUnavailableError, EngineVersionError
 from .client import EngineClient
+from .discovery import is_installed
 
 logger = logging.getLogger("tessera.engine")
 
@@ -48,6 +50,7 @@ class EngineStatus(Enum):
 
     NOT_INSTALLED = "Not installed"
     STOPPED = "Stopped"
+    STARTING = "Starting"
     READY = "Ready"
     VERSION_MISMATCH = "Version mismatch"
     UNKNOWN_LISTENER = "Unrecognised process on port"
@@ -77,25 +80,40 @@ class EngineState:
 
 
 def resolve_status(
-    client: Optional[EngineClient] = None, installed: Optional[bool] = None
+    client: Optional[EngineClient] = None,
+    installed: Optional[bool] = None,
+    starting: bool = False,
 ) -> EngineState:
     """Determine the current engine state.
 
     Args:
         client: Client to probe with. Defaults to a client on the
             configured host and port.
-        installed: Whether an engine installation exists on disk. Supplied
-            by the caller because only it knows where the engine was
-            installed; ``None`` means unknown, and an unreachable engine is
-            then reported as not installed.
+        installed: Whether an engine installation exists on disk. Defaults
+            to reading the installation marker (FR-031). Passing it
+            explicitly is for tests and for callers that already know.
+        starting: Whether the add-on has spawned an engine that has not
+            answered yet. Reported as ``Starting`` rather than ``Stopped``,
+            because offering to start something already starting produces
+            two engines racing for one port.
 
     Returns:
         The resolved state, never raising.
     """
     client = client or EngineClient()
+    if installed is None:
+        installed = is_installed()
 
     try:
         health = client.health()
+    except EngineTimeoutError as exc:
+        # Alive, listening, not answering. Not the same as stopped: there
+        # is a process to look at and a log to read (EC-006).
+        return EngineState(
+            status=EngineStatus.STOPPED,
+            message=str(exc),
+            action="Restart the engine, then check its log.",
+        )
     except EngineVersionError as exc:
         return EngineState(
             status=EngineStatus.VERSION_MISMATCH,
@@ -109,6 +127,13 @@ def resolve_status(
                 status=EngineStatus.UNKNOWN_LISTENER,
                 message=str(exc),
                 action="Change the engine port in add-on preferences.",
+            )
+        # A spawn in progress is neither stopped nor absent.
+        if starting:
+            return EngineState(
+                status=EngineStatus.STARTING,
+                message="The Tessera engine is starting.",
+                action=None,
             )
         # EC-001: installed but stopped is not the same as not installed.
         if installed:

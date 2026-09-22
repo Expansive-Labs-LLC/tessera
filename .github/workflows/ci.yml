@@ -92,17 +92,21 @@ jobs:
           # started failing.
           pip install -r requirements-lint.txt
 
+      # tessera_engine/ ships separately from the add-on but lives in this
+      # repo and holds the other half of the SPEC-TS-0023 boundary. Leaving
+      # it out of lint would let the two halves drift in style and in types
+      # while every check stayed green.
       - name: isort
-        run: isort --check --diff tessera/ tests/
+        run: isort --check --diff tessera/ tessera_engine/ tests/
 
       - name: black
-        run: black --check tessera/ tests/
+        run: black --check tessera/ tessera_engine/ tests/
 
       - name: flake8
-        run: flake8 tessera/ tests/
+        run: flake8 tessera/ tessera_engine/ tests/
 
       - name: mypy
-        run: mypy tessera/ --ignore-missing-imports
+        run: mypy tessera/ tessera_engine/ --ignore-missing-imports
 
   # ---------------------------------------------------------------------------
   # FR-003, FR-005: Test — pytest with Python matrix, depends on lint
