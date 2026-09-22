@@ -80,6 +80,20 @@ class ModelEntry:
         sha256: Mapping of filename to expected SHA256 hex digest.
         size_bytes: Total download size in bytes.
         min_vram_gb: Minimum VRAM for default variant.
+        license: SPDX-style licence identifier for the *weights* (not for
+            Tessera itself), e.g. ``"Apache-2.0"``. Weights are third-party
+            and are not covered by Tessera's GPL licence.
+        license_url: Where those terms are published.
+        commercial_use: One of ``"allowed"``, ``"restricted"``,
+            ``"prohibited"`` or ``"unknown"``. Anything other than
+            ``"allowed"`` is gated behind an explicit opt-in — see
+            :mod:`tessera.models.licensing`.
+        family: Architecture family id (:mod:`tessera.models.families`).
+            Required for user-added models so an adapter knows how to load
+            them; empty for bundled entries that adapters address directly.
+        variant: Optional variant within the family, e.g. ``"vitb"``.
+        source: ``"bundled"`` for the shipped manifest, ``"user"`` for a
+            model the user added from Hugging Face.
         variants: Optional list of VRAM-tiered variants.
     """
 
@@ -91,6 +105,12 @@ class ModelEntry:
     sha256: dict[str, str]
     size_bytes: int
     min_vram_gb: float
+    license: str = "unknown"
+    license_url: str = ""
+    commercial_use: str = "unknown"
+    family: str = ""
+    variant: str = ""
+    source: str = "bundled"
     variants: list[ModelVariant] = field(default_factory=list)
 
 
@@ -139,6 +159,16 @@ def _parse_model_entry(data: dict) -> Optional[ModelEntry]:
         )
         return None
 
+    # Licence metadata is optional in the schema so that older manifests
+    # still load, but a missing classification fails closed as "unknown"
+    # and is therefore gated from download (licensing.check_download_allowed).
+    if "commercial_use" not in data:
+        logger.warning(
+            "Model entry '%s' declares no commercial_use classification — "
+            "treating as 'unknown' and gating downloads. See MODEL-LICENSES.md.",
+            data.get("model_id", "<unknown>"),
+        )
+
     # Parse variants (may be empty list)
     variants = []
     for v_data in data.get("variants", []):
@@ -155,8 +185,52 @@ def _parse_model_entry(data: dict) -> Optional[ModelEntry]:
         sha256=dict(data["sha256"]),
         size_bytes=int(data["size_bytes"]),
         min_vram_gb=float(data["min_vram_gb"]),
+        license=str(data.get("license", "unknown")),
+        license_url=str(data.get("license_url", "")),
+        commercial_use=str(data.get("commercial_use", "unknown")),
+        family=str(data.get("family", "")),
+        variant=str(data.get("variant", "")),
+        source=str(data.get("source", "bundled")),
         variants=variants,
     )
+
+
+def _entry_to_dict(entry: ModelEntry) -> dict:
+    """Serialise a model entry back to its manifest representation.
+
+    Args:
+        entry: The entry to serialise.
+
+    Returns:
+        dict: JSON-serialisable manifest entry.
+    """
+    data = {
+        "model_id": entry.model_id,
+        "repo_id": entry.repo_id,
+        "revision": entry.revision,
+        "description": entry.description,
+        "license": entry.license,
+        "license_url": entry.license_url,
+        "commercial_use": entry.commercial_use,
+        "files": list(entry.files),
+        "sha256": dict(entry.sha256),
+        "size_bytes": entry.size_bytes,
+        "min_vram_gb": entry.min_vram_gb,
+        "family": entry.family,
+        "source": entry.source,
+        "variants": [
+            {
+                "variant_id": v.variant_id,
+                "min_vram_gb": v.min_vram_gb,
+                "size_bytes": v.size_bytes,
+                "files": list(v.files),
+            }
+            for v in entry.variants
+        ],
+    }
+    if entry.variant:
+        data["variant"] = entry.variant
+    return data
 
 
 class ModelRegistry:
@@ -176,15 +250,25 @@ class ModelRegistry:
         >>> entry = registry.get_model("depth-anything-v2-large")
     """
 
-    def __init__(self, manifest_path: Optional[Path] = None):
+    def __init__(
+        self,
+        manifest_path: Optional[Path] = None,
+        user_manifest_path: Optional[Path] = None,
+    ):
         """Initialize the registry by loading the manifest.
 
         Args:
             manifest_path: Optional override for the manifest file path.
                 Defaults to the embedded ``manifest.json``.
+            user_manifest_path: Optional path to the user-added model file
+                (FR-025). It lives outside the add-on directory — normally
+                ``<cache_dir>/user_models.json`` — so that user additions
+                survive an add-on update. A missing file is not an error.
 
         Raises:
-            ManifestLoadError: If the file is missing or contains invalid JSON.
+            ManifestLoadError: If the bundled manifest is missing or
+                contains invalid JSON. A malformed *user* manifest is
+                logged and skipped rather than disabling model management.
         """
         from . import ManifestLoadError
 
@@ -217,7 +301,178 @@ class ModelRegistry:
             if entry is not None:
                 self._models[entry.model_id] = entry
 
-        logger.info("Model registry loaded: %d models from manifest", len(self._models))
+        self._bundled_ids = set(self._models)
+        self._user_manifest_path = user_manifest_path
+        self._load_user_manifest()
+
+        logger.info(
+            "Model registry loaded: %d bundled, %d user-added",
+            len(self._bundled_ids),
+            len(self._models) - len(self._bundled_ids),
+        )
+
+    # ------------------------------------------------------------------
+    # User-added models (FR-025 – FR-032)
+    # ------------------------------------------------------------------
+
+    def _load_user_manifest(self) -> None:
+        """Merge user-added models over the bundled manifest.
+
+        A malformed user manifest never takes model management down with
+        it: the problem is logged and the bundled models still load.
+        """
+        path = self._user_manifest_path
+        if path is None or not path.exists():
+            return
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                raw = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            logger.error(
+                "Could not read user model list at %s: %s — "
+                "user-added models are unavailable until it is fixed.",
+                path,
+                e,
+            )
+            return
+
+        for entry_data in (raw or {}).get("models", []):
+            entry_data = dict(entry_data)
+            entry_data["source"] = "user"
+            entry = _parse_model_entry(entry_data)
+            if entry is None:
+                continue
+            if entry.model_id in self._bundled_ids:
+                logger.warning(
+                    "User model '%s' shadows a bundled model — ignoring the "
+                    "user entry.",
+                    entry.model_id,
+                )
+                continue
+            self._models[entry.model_id] = entry
+
+    def _save_user_manifest(self) -> None:
+        """Write the user-added models back to disk atomically.
+
+        Raises:
+            ManifestLoadError: If no user manifest path is configured or the
+                file cannot be written.
+        """
+        from . import ManifestLoadError
+
+        path = self._user_manifest_path
+        if path is None:
+            raise ManifestLoadError(
+                "No user model list is configured, so custom models cannot " "be saved."
+            )
+
+        payload = {
+            "version": "1.0",
+            "models": [_entry_to_dict(entry) for entry in self.list_user_models()],
+        }
+        try:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = path.with_suffix(path.suffix + ".tmp")
+            with open(tmp, "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2)
+                f.write("\n")
+            tmp.replace(path)
+        except OSError as e:
+            raise ManifestLoadError(f"Could not save the user model list: {e}") from e
+
+    def is_user_model(self, model_id: str) -> bool:
+        """Return whether a model was added by the user.
+
+        Args:
+            model_id: Unique model identifier.
+        """
+        entry = self._models.get(model_id)
+        return entry is not None and entry.source == "user"
+
+    def list_user_models(self) -> list[ModelEntry]:
+        """Return every user-added model entry."""
+        return [e for e in self._models.values() if e.source == "user"]
+
+    def add_user_model(self, entry_data: dict) -> ModelEntry:
+        """Register and persist a user-added model.
+
+        Args:
+            entry_data: A manifest entry, typically from
+                :func:`tessera.models.hf_metadata.build_user_entry`.
+
+        Returns:
+            ModelEntry: The registered entry.
+
+        Raises:
+            ManifestLoadError: If the entry is invalid, collides with an
+                existing model, or cannot be saved.
+        """
+        from . import ManifestLoadError
+
+        entry_data = dict(entry_data)
+        entry_data["source"] = "user"
+        entry = _parse_model_entry(entry_data)
+        if entry is None:
+            raise ManifestLoadError(
+                "That model entry is missing required fields and was not added."
+            )
+        if entry.model_id in self._models:
+            raise ManifestLoadError(
+                f"A model named '{entry.model_id}' is already registered. "
+                f"Remove it first, or choose a different name."
+            )
+
+        self._models[entry.model_id] = entry
+        try:
+            self._save_user_manifest()
+        except Exception:
+            del self._models[entry.model_id]
+            raise
+
+        logger.info(
+            "User model added: model_id=%s, repo=%s, license=%s (%s)",
+            entry.model_id,
+            entry.repo_id,
+            entry.license,
+            entry.commercial_use,
+        )
+        return entry
+
+    def remove_user_model(self, model_id: str) -> bool:
+        """Unregister a user-added model and persist the change.
+
+        Cached weight files are left on disk — deleting them is the cache
+        manager's job, and the user may want to re-add the model.
+
+        Args:
+            model_id: Unique model identifier.
+
+        Returns:
+            bool: ``True`` if a user model was removed.
+
+        Raises:
+            ManifestLoadError: If the model is bundled rather than
+                user-added, or the change cannot be saved.
+        """
+        from . import ManifestLoadError
+
+        if model_id in self._bundled_ids:
+            raise ManifestLoadError(
+                f"'{model_id}' ships with Tessera and cannot be removed."
+            )
+        if model_id not in self._models:
+            return False
+
+        entry = self._models.pop(model_id)
+        try:
+            self._save_user_manifest()
+        except Exception:
+            self._models[model_id] = entry
+            raise
+
+        logger.info("User model removed: model_id=%s", model_id)
+        return True
 
     def list_models(self) -> list[ModelEntry]:
         """List all registered models.

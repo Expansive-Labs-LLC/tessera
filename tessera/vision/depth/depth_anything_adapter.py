@@ -33,13 +33,68 @@ from typing import Any, Optional
 
 import numpy as np
 
+from ...models.families import DEPTH_ANYTHING_V2_VARIANTS
 from ..types import InsufficientVRAMError
 from .base import DepthAdapter
 
 logger = logging.getLogger("tessera.vision")
 
 # Model ID in the Tessera model manifest (CON-005).
-_MODEL_ID = "depth-anything-v2-large"
+#
+# The Small checkpoint is the default because it is the only Depth Anything
+# V2 checkpoint published under Apache-2.0. Base/Large/Giant are
+# CC-BY-NC-4.0 (non-commercial only) and are licence-gated by
+# tessera.models.licensing — see MODEL-LICENSES.md.
+_MODEL_ID = "depth-anything-v2-small"
+
+
+# Architecture configs live in tessera.models.families so that a
+# user-added checkpoint (FR-025) resolves to the same table the bundled
+# models use. Bundled ids map to their encoder here.
+_BUNDLED_VARIANTS = {
+    "depth-anything-v2-small": "vits",
+    "depth-anything-v2-large": "vitl",
+}
+
+_FAMILY_ID = "depth-anything-v2"
+
+
+def _resolve_variant(model_id: str, variant_id: Optional[str]) -> str:
+    """Resolve which Depth Anything V2 encoder a model id refers to.
+
+    Args:
+        model_id: Manifest model id.
+        variant_id: Explicit variant, if the caller knows it.
+
+    Returns:
+        str: Encoder id such as ``"vits"``.
+
+    Raises:
+        ValueError: If the variant cannot be determined.
+    """
+    if variant_id:
+        return variant_id
+    if model_id in _BUNDLED_VARIANTS:
+        return _BUNDLED_VARIANTS[model_id]
+
+    # A user-added checkpoint records its variant in the manifest entry.
+    try:
+        from ...models.cache_manager import get_global_cache_manager
+
+        cache_manager = get_global_cache_manager()
+        if cache_manager is not None:
+            entry = cache_manager._registry.get_model(model_id)
+            if entry.family == _FAMILY_ID and entry.variant:
+                return entry.variant
+    except Exception:  # pragma: no cover — registry unavailable
+        logger.debug("Could not resolve variant for '%s' from registry", model_id)
+
+    raise ValueError(
+        f"Unknown depth model '{model_id}'. Add it as a "
+        f"'{_FAMILY_ID}' model and choose its encoder "
+        f"({', '.join(sorted(DEPTH_ANYTHING_V2_VARIANTS))}), or use one of "
+        f"{sorted(_BUNDLED_VARIANTS)}."
+    )
 
 
 class DepthAnythingAdapter(DepthAdapter):
@@ -52,20 +107,37 @@ class DepthAnythingAdapter(DepthAdapter):
     Implements: FR-006, FR-007, FR-016, FR-017, EC-005.
     """
 
-    def __init__(self, model_id: str = _MODEL_ID) -> None:
+    def __init__(
+        self, model_id: str = _MODEL_ID, variant_id: Optional[str] = None
+    ) -> None:
         """Initialise the Depth Anything V2 adapter.
 
         Args:
             model_id: Model identifier for the weight manager (CON-005).
+            variant_id: Encoder to load (``"vits"``, ``"vitb"``, ``"vitl"``
+                or ``"vitg"``). Resolved from the model id or the manifest
+                entry when omitted.
+
+        Raises:
+            ValueError: If the variant cannot be resolved or is unknown.
         """
+        variant = _resolve_variant(model_id, variant_id)
+        config = DEPTH_ANYTHING_V2_VARIANTS.get(variant)
+        if config is None:
+            raise ValueError(
+                f"Unknown Depth Anything V2 encoder '{variant}'. Known "
+                f"encoders: {sorted(DEPTH_ANYTHING_V2_VARIANTS)}."
+            )
         self._model_id = model_id
+        self._variant = variant
+        self._config: dict = config
         self._model: Optional[Any] = None
         self._device: Optional[str] = None
 
     @property
     def model_name(self) -> str:
         """Return the human-readable model name."""
-        return "Depth Anything V2 Large"
+        return self._config["display_name"]
 
     def load(self) -> None:
         """Load Depth Anything V2 model weights to GPU.
@@ -81,7 +153,7 @@ class DepthAnythingAdapter(DepthAdapter):
 
         import torch
 
-        from tessera.models import get_model_path
+        from ...models import get_model_path
 
         model_path = get_model_path(self._model_id)
         if model_path is None:
@@ -97,17 +169,15 @@ class DepthAnythingAdapter(DepthAdapter):
         try:
             from depth_anything_v2.dpt import DepthAnythingV2
 
-            # Model configuration for Large variant.
-            model_configs = {
-                "encoder": "vitl",
-                "features": 256,
-                "out_channels": [256, 512, 1024, 1024],
-            }
-
-            self._model = DepthAnythingV2(**model_configs)
+            # Architecture configuration for the selected checkpoint.
+            self._model = DepthAnythingV2(
+                encoder=self._config["encoder"],
+                features=self._config["features"],
+                out_channels=self._config["out_channels"],
+            )
 
             # SEC-002: Load weights safely.
-            checkpoint = model_path / "depth_anything_v2_vitl.pth"
+            checkpoint = model_path / self._config["checkpoint"]
             state_dict = torch.load(
                 str(checkpoint), map_location="cpu", weights_only=True
             )
@@ -128,8 +198,9 @@ class DepthAnythingAdapter(DepthAdapter):
             available_gb = torch.cuda.mem_get_info()[0] / (1024**3)
             raise InsufficientVRAMError(
                 f"Insufficient GPU VRAM: {available_gb:.1f} GB available, "
-                f"~3.0 GB required for {self.model_name}. Consider enabling "
-                f"low-VRAM mode in add-on preferences."
+                f"~{self._config['vram_gb']:.1f} GB required for "
+                f"{self.model_name}. Consider enabling low-VRAM mode in "
+                f"add-on preferences."
             ) from e
 
     def predict(self, image: np.ndarray, mask: np.ndarray) -> np.ndarray:
@@ -203,7 +274,7 @@ class DepthAnythingAdapter(DepthAdapter):
             ValueError: If the path is outside the cache directory.
         """
         try:
-            from tessera.models.cache_manager import get_global_cache_manager
+            from ...models.cache_manager import get_global_cache_manager
 
             manager = get_global_cache_manager()
             if manager is not None:

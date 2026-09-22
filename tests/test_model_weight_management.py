@@ -49,6 +49,9 @@ def manifest_data():
                 "repo_id": "org/test-model-a",
                 "revision": "abc123",
                 "description": "Test Model A",
+                "license": "Apache-2.0",
+                "license_url": "https://example.invalid/licence",
+                "commercial_use": "allowed",
                 "files": ["model.safetensors", "config.json"],
                 "sha256": {
                     "model.safetensors": "aaa111",
@@ -76,6 +79,9 @@ def manifest_data():
                 "repo_id": "org/test-model-b",
                 "revision": "def456",
                 "description": "Test Model B",
+                "license": "Apache-2.0",
+                "license_url": "https://example.invalid/licence",
+                "commercial_use": "allowed",
                 "files": ["model.safetensors"],
                 "sha256": {"model.safetensors": "ccc333"},
                 "size_bytes": 900000000,
@@ -87,6 +93,9 @@ def manifest_data():
                 "repo_id": "org/test-model-c",
                 "revision": "ghi789",
                 "description": "Test Model C",
+                "license": "Apache-2.0",
+                "license_url": "https://example.invalid/licence",
+                "commercial_use": "allowed",
                 "files": ["weights.safetensors", "config.json"],
                 "sha256": {
                     "weights.safetensors": "ddd444",
@@ -617,9 +626,10 @@ class TestDownloadConcurrency:
         download_call_count = 0
         download_lock = threading.Lock()
 
-        # Update entry SHA to TODO so verification is skipped
+        # Declare the digest of the bytes the mock download writes, so
+        # verification runs for real rather than being bypassed.
         entry = registry.get_model("test-model-b")
-        entry.sha256["model.safetensors"] = "TODO"
+        entry.sha256["model.safetensors"] = hashlib.sha256(b"\x00" * 1024).hexdigest()
 
         def mock_hf_download(**kwargs):
             nonlocal download_call_count
@@ -1088,7 +1098,7 @@ class TestDownloadUI:
             return str(fpath)
 
         entry = registry.get_model("test-model-b")
-        entry.sha256["model.safetensors"] = "TODO"
+        entry.sha256["model.safetensors"] = hashlib.sha256(b"\x00" * 1024).hexdigest()
 
         # Patch at module level for background thread visibility
         mock_huggingface_hub.hf_hub_download = MagicMock(side_effect=mock_slow_download)
@@ -1117,6 +1127,77 @@ class TestDownloadUI:
 # ---------------------------------------------------------------------------
 # TestFileExtensionValidation (CON-006, SEC-004)
 # ---------------------------------------------------------------------------
+class TestChecksumEnforcement:
+    """TS-020 → FR-007a, SEC-001: every declared file carries a verifiable digest.
+
+    Placeholder digests used to be skipped, which silently disabled the
+    integrity control. Verification now fails closed (TASK-TS-0018).
+    """
+
+    def test_shipped_manifest_has_no_placeholder_digests(self):
+        """No model in the shipped manifest may declare a TODO digest."""
+        manifest_path = (
+            Path(__file__).resolve().parents[1] / "tessera" / "models" / "manifest.json"
+        )
+        manifest = json.loads(manifest_path.read_text())
+
+        placeholders = [
+            f"{model['model_id']}/{fname}"
+            for model in manifest["models"]
+            for fname, digest in model["sha256"].items()
+            if not digest or digest == "TODO"
+        ]
+        assert not placeholders, (
+            f"Files without a verified SHA256 digest: {placeholders}. "
+            f"Downloads for these cannot be integrity-checked."
+        )
+
+    def test_shipped_manifest_digests_are_well_formed(self):
+        """Digests are 64-character lowercase hex."""
+        manifest_path = (
+            Path(__file__).resolve().parents[1] / "tessera" / "models" / "manifest.json"
+        )
+        manifest = json.loads(manifest_path.read_text())
+
+        for model in manifest["models"]:
+            for fname, digest in model["sha256"].items():
+                assert len(digest) == 64 and all(
+                    c in "0123456789abcdef" for c in digest
+                ), f"Malformed digest for {model['model_id']}/{fname}: {digest!r}"
+
+    def test_verify_integrity_fails_closed_on_placeholder(
+        self, registry, cache_manager, cache_dir
+    ):
+        """A TODO digest is reported as a failure, not skipped."""
+        snapshot_dir = cache_dir / "models--org--test-model-b" / "snapshots" / "def456"
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        (snapshot_dir / "model.safetensors").write_bytes(b"\x00" * 1024)
+
+        entry = registry.get_model("test-model-b")
+        entry.sha256["model.safetensors"] = "TODO"
+
+        is_valid, error_msg = cache_manager.verify_integrity("test-model-b")
+
+        assert is_valid is False
+        assert "No SHA256 digest declared" in error_msg
+
+    def test_verify_integrity_fails_closed_on_empty_digest(
+        self, registry, cache_manager, cache_dir
+    ):
+        """An empty digest is treated the same way as a placeholder."""
+        snapshot_dir = cache_dir / "models--org--test-model-b" / "snapshots" / "def456"
+        snapshot_dir.mkdir(parents=True, exist_ok=True)
+        (snapshot_dir / "model.safetensors").write_bytes(b"\x00" * 1024)
+
+        entry = registry.get_model("test-model-b")
+        entry.sha256["model.safetensors"] = ""
+
+        is_valid, error_msg = cache_manager.verify_integrity("test-model-b")
+
+        assert is_valid is False
+        assert "No SHA256 digest declared" in error_msg
+
+
 class TestFileExtensionValidation:
     """Tests for file extension allowlisting (CON-006, SEC-004)."""
 

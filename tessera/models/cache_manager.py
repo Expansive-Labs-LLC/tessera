@@ -320,14 +320,17 @@ class CacheManager:
         entry = self._registry.get_model(model_id)
 
         for filename, expected_hash in entry.sha256.items():
-            if expected_hash == "TODO":
-                # Skip placeholder hashes
-                logger.debug(
-                    "Skipping SHA256 verify for %s/%s — hash is TODO",
-                    model_id,
-                    filename,
+            # SEC-001: a missing or placeholder digest fails closed. Skipping
+            # verification would defeat the control entirely, so an unverifiable
+            # entry is treated as a failure rather than a pass (TASK-TS-0018).
+            if not expected_hash or expected_hash == "TODO":
+                error_msg = (
+                    f"No SHA256 digest declared for {filename} in model "
+                    f"{model_id}. Downloads cannot be verified — add the "
+                    f"digest to manifest.json."
                 )
-                continue
+                logger.error(error_msg)
+                return False, error_msg
 
             file_path = (path / filename).resolve()
 

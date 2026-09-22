@@ -19,13 +19,13 @@ Provides operators for downloading, deleting, and updating model weights.
 All download operations run in background threads with progress
 polling via ``bpy.app.timers`` (CON-003).
 
-Implements: FR-009, FR-010, FR-016, FR-017.
+Implements: FR-009, FR-010, FR-016, FR-017, FR-025 – FR-032.
 """
 
 import logging
 
 import bpy
-from bpy.props import StringProperty
+from bpy.props import EnumProperty, StringProperty
 from bpy.types import Operator
 
 logger = logging.getLogger("tessera.models")
@@ -155,6 +155,12 @@ class TESSERA_OT_DownloadModel(Operator):
 
     def execute(self, context):
         """Start background download for a single model."""
+        # Main thread: refresh the licence gate before the worker thread
+        # reads it (SPEC-TS-0002 CON-003).
+        from ..models import licensing
+
+        licensing.sync_from_preferences()
+
         dm = _get_download_manager()
         if dm is None:
             self.report(
@@ -174,6 +180,19 @@ class TESSERA_OT_DownloadModel(Operator):
                 "A download is already in progress. " "Please wait for it to complete.",
             )
             return {"CANCELLED"}
+
+        # Surface licence gating here rather than as a background failure,
+        # so the user gets an actionable message.
+        try:
+            entry = dm._registry.get_model(self.model_id)
+        except Exception:
+            entry = None
+        if entry is not None:
+            try:
+                licensing.check_download_allowed(entry)
+            except Exception as e:
+                self.report({"ERROR"}, str(e))
+                return {"CANCELLED"}
 
         # Start background download (FR-003, CON-003)
         dm.start_background_download(self.model_id)
@@ -204,6 +223,11 @@ class TESSERA_OT_DownloadAllModels(Operator):
 
     def execute(self, context):
         """Start sequential background download of all missing models."""
+        # Main thread: refresh the licence gate before worker threads read it.
+        from ..models import licensing
+
+        licensing.sync_from_preferences()
+
         dm = _get_download_manager()
         if dm is None:
             self.report(
@@ -364,7 +388,187 @@ class TESSERA_OT_OpenPreferencesModels(Operator):
 
 
 # Classes to register
+def _family_items(self, context):
+    """Enum items for the architecture family selector (FR-026)."""
+    from ..models.families import family_choices
+
+    return family_choices()
+
+
+class TESSERA_OT_AddUserModel(Operator):
+    """Add a model from Hugging Face to the local model list.
+
+    Resolves the repository's declared licence and per-file checksums
+    before anything is downloaded, so a user-added model is governed the
+    same way a bundled one is: non-commercial, restricted and undeclared
+    licences are refused unless the user has opted in.
+
+    Implements: FR-025 – FR-031, SEC-007.
+    """
+
+    bl_idname = "tessera.add_user_model"
+    bl_label = "Add Model from Hugging Face"
+    bl_description = (
+        "Look up a model on Hugging Face and add it to your model list. "
+        "Its licence and checksums are verified before it is added"
+    )
+    bl_options = {"REGISTER", "UNDO"}
+
+    repo_id: StringProperty(
+        name="Repository",
+        description="Hugging Face repository, in the form 'owner/name'",
+        default="",
+    )  # type: ignore[assignment]
+
+    family: EnumProperty(
+        name="Architecture",
+        description="Which of Tessera's model families this checkpoint belongs to",
+        items=_family_items,
+    )  # type: ignore[assignment]
+
+    variant: StringProperty(
+        name="Variant",
+        description=(
+            "Variant within the family, where it applies — for Depth "
+            "Anything V2 this is the encoder: vits, vitb, vitl or vitg"
+        ),
+        default="",
+    )  # type: ignore[assignment]
+
+    model_id: StringProperty(
+        name="Name",
+        description="Name to list it under. Derived from the repository if left blank",
+        default="",
+    )  # type: ignore[assignment]
+
+    def invoke(self, context, event):
+        """Open a properties dialog so the user can fill in the fields."""
+        return context.window_manager.invoke_props_dialog(self, width=420)
+
+    def draw(self, context):
+        """Draw the dialog, including the licence policy note."""
+        layout = self.layout
+        layout.prop(self, "repo_id")
+        layout.prop(self, "family")
+        layout.prop(self, "variant")
+        layout.prop(self, "model_id")
+
+        box = layout.box()
+        box.label(text="Model weights are third-party.", icon="INFO")
+        box.label(text="Tessera checks the licence Hugging Face declares and")
+        box.label(text="refuses non-commercial or undeclared ones unless you")
+        box.label(text="have enabled restricted models in preferences.")
+        box.label(text="You are responsible for complying with each licence.")
+
+    def execute(self, context):
+        """Resolve, licence-check and register the model."""
+        from ..models import licensing
+        from ..models.hf_metadata import (
+            MetadataError,
+            build_user_entry,
+            fetch_model_metadata,
+        )
+
+        licensing.sync_from_preferences()
+
+        cm = _get_cache_manager()
+        if cm is None:
+            self.report({"ERROR"}, "Model management is not initialized.")
+            return {"CANCELLED"}
+
+        registry = cm._registry
+
+        try:
+            metadata = fetch_model_metadata(self.repo_id, self.family, revision=None)
+        except MetadataError as e:
+            self.report({"ERROR"}, str(e))
+            return {"CANCELLED"}
+
+        # FR-029: classify before download, and say what was found either way.
+        if (
+            licensing.classify_license(metadata.license_id)
+            != (licensing.COMMERCIAL_USE_ALLOWED)
+            and not licensing.restricted_models_allowed()
+        ):
+            self.report(
+                {"ERROR"},
+                (
+                    f"{metadata.repo_id} declares its licence as "
+                    f"'{metadata.license_display}', which Tessera treats as "
+                    f"{licensing.classify_license(metadata.license_id)}. It "
+                    f"was not added. Enable 'Allow Restricted-Licence "
+                    f"Models' in preferences if your use complies with "
+                    f"those terms — see MODEL-LICENSES.md."
+                ),
+            )
+            return {"CANCELLED"}
+
+        try:
+            entry_data = build_user_entry(
+                metadata,
+                family_id=self.family,
+                model_id=self.model_id.strip() or None,
+                variant_id=self.variant.strip() or None,
+            )
+            entry = registry.add_user_model(entry_data)
+        except Exception as e:
+            self.report({"ERROR"}, str(e))
+            return {"CANCELLED"}
+
+        self.report(
+            {"INFO"},
+            (
+                f"Added '{entry.model_id}' ({metadata.license_display}, "
+                f"{entry.size_bytes / 1e9:.2f} GB). Download it from the "
+                f"model list below."
+            ),
+        )
+        return {"FINISHED"}
+
+
+class TESSERA_OT_RemoveUserModel(Operator):
+    """Remove a user-added model from the model list.
+
+    Cached files are left on disk — use Delete to reclaim the space.
+
+    Implements: FR-032.
+    """
+
+    bl_idname = "tessera.remove_user_model"
+    bl_label = "Remove Model"
+    bl_description = "Remove this user-added model from the list"
+    bl_options = {"REGISTER", "UNDO"}
+
+    model_id: StringProperty(
+        name="Model ID",
+        description="Unique model identifier",
+        default="",
+    )  # type: ignore[assignment]
+
+    def execute(self, context):
+        """Unregister the model."""
+        cm = _get_cache_manager()
+        if cm is None:
+            self.report({"ERROR"}, "Model management is not initialized.")
+            return {"CANCELLED"}
+
+        try:
+            removed = cm._registry.remove_user_model(self.model_id)
+        except Exception as e:
+            self.report({"ERROR"}, str(e))
+            return {"CANCELLED"}
+
+        if not removed:
+            self.report({"WARNING"}, f"'{self.model_id}' is not in the list.")
+            return {"CANCELLED"}
+
+        self.report({"INFO"}, f"Removed '{self.model_id}'.")
+        return {"FINISHED"}
+
+
 classes = [
+    TESSERA_OT_AddUserModel,
+    TESSERA_OT_RemoveUserModel,
     TESSERA_OT_DownloadModel,
     TESSERA_OT_DownloadAllModels,
     TESSERA_OT_ClearModelCache,

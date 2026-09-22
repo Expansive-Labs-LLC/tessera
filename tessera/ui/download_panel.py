@@ -222,8 +222,12 @@ def draw_models_preferences(layout, context):
     if dm and dm.is_downloading:
         row.enabled = False
     row.operator("tessera.download_all_models", icon="IMPORT")
+    row.operator("tessera.add_user_model", text="Add from Hugging Face", icon="ADD")
 
     box.separator()
+
+    from ..models import licensing
+    from ..models.families import get_family
 
     # FR-008: Model table
     for model_report in report["models"]:
@@ -262,15 +266,46 @@ def draw_models_preferences(layout, context):
             sub.label(text=f"Size: ~{_format_bytes(entry.size_bytes)}")
         sub.label(text=f"VRAM: {entry.min_vram_gb:.0f} GB")
 
+        # Weight licence. Third-party terms, not Tessera's GPL licence.
+        lic_row = col.row()
+        lic_row.alert = licensing.is_gated(entry)
+        lic_row.label(text=f"Licence: {licensing.license_summary(entry)}")
+
+        # User-added models say where they came from, and whether the
+        # adapter for their family can load them yet (FR-030).
+        if getattr(entry, "source", "bundled") == "user":
+            src = col.row()
+            src.label(text=f"Added by you — {entry.repo_id}", icon="USER")
+            family = get_family(entry.family)
+            if family is not None and not family.adapter_ready:
+                warn = col.row()
+                warn.alert = True
+                warn.label(
+                    text=(
+                        f"{family.display_name} loading is not wired up yet "
+                        f"({family.pending_task})"
+                    ),
+                    icon="INFO",
+                )
+
+        gated = licensing.is_gated(entry) and not licensing.restricted_models_allowed()
+
         # Action buttons (FR-010, FR-016)
         action_row = model_box.row(align=True)
         if status == "Not Downloaded":
-            op = action_row.operator(
-                "tessera.download_model",
-                text="Download",
-                icon="IMPORT",
-            )
-            op.model_id = model_id
+            if gated:
+                action_row.enabled = False
+                action_row.label(
+                    text="Blocked by licence — see preferences",
+                    icon="LOCKED",
+                )
+            else:
+                op = action_row.operator(
+                    "tessera.download_model",
+                    text="Download",
+                    icon="IMPORT",
+                )
+                op.model_id = model_id
         elif status == "Downloaded":
             op = action_row.operator(
                 "tessera.clear_model_cache",
@@ -297,6 +332,14 @@ def draw_models_preferences(layout, context):
                 text="Cancel",
                 icon="CANCEL",
             )
+
+        if getattr(entry, "source", "bundled") == "user":
+            op_rm = action_row.operator(
+                "tessera.remove_user_model",
+                text="Remove",
+                icon="X",
+            )
+            op_rm.model_id = model_id
 
     # VRAM warnings for models (EC-005)
     from ..models.variant_selector import select_variant
