@@ -2,11 +2,11 @@
 
 | Field | Value |
 |---|---|
-| **Version** | 0.3.0-DRAFT |
+| **Version** | 0.5.0-DRAFT |
 | **Status** | 🟡 Draft — Incorporating Stakeholder Feedback |
 | **Author** | Derek (Owner) |
 | **Created** | 2026-03-25 |
-| **Last Updated** | 2026-03-26 |
+| **Last Updated** | 2026-09-21 |
 
 ---
 
@@ -40,6 +40,7 @@
 | G4 | Support common consumer printers (FDM & resin/SLA) with configurable print constraints |
 | G5 | Provide an iterative feedback loop — user can request modifications in natural language |
 | G6 | Export to `.stl`, `.3mf`, and `.obj` with correct unit scaling (mm) |
+| G7 | Let users choose their own models — the curated list is a default, not a limit — without weakening the licence or integrity guarantees (added 2026-09-21) |
 
 ### Non-Goals (v1)
 
@@ -52,6 +53,7 @@
 | NG5 | Cloud-hosted or CLI deployment | Add-on only — stakeholder decision (2026-03-26) |
 | NG6 | CPU-only inference fallback | GPU required — stakeholder decision (2026-03-26) |
 | NG7 | External commercial API calls (Tripo, Meshy, etc.) | Local/self-hosted only — stakeholder decision (2026-03-26) |
+| NG8 | Non-CUDA inference backends — AMD (ROCm) and Apple Silicon (Metal) | **v1 is NVIDIA CUDA only** — stakeholder decision (2026-09-21). GPU *detection* still covers all three backends, but no inference adapter implements a non-CUDA device path, and the add-on says so before generation rather than failing at model load. Support is tracked by TASK-TS-0022 and is a prerequisite for the v1.0 marketplace listing. |
 
 ---
 
@@ -114,7 +116,7 @@ This is the core intelligence layer. It combines outputs from §5.1 to produce a
 | Strategy | When to use | Tech |
 |---|---|---|
 | **Multi-view reconstruction** | ≥3 images with different viewpoints | Classical MVS + neural refinement (e.g., NeuS2, Instant-NGP → mesh extraction) — runs locally on GPU |
-| **Single/few-image generation** | 1–2 images | Image-conditioned 3D diffusion model (e.g., Zero-1-to-3++, OpenLRM, Trellis) — all local inference, no external API calls |
+| **Single/few-image generation** | 1–2 images | Image-conditioned 3D diffusion model — **TRELLIS (MIT) in v1**; all local inference, no external API calls. The adapter layer accepts alternatives, but any new weight must clear the licence gate (D8) before it ships |
 | **Sketch-to-3D** | Hand-drawn input detected | Specialized sketch-conditioned model with symmetry priors — local inference |
 
 > [!IMPORTANT]
@@ -224,8 +226,10 @@ When view labels are omitted, the agent runs a lightweight view-direction classi
 | Deployment | **Blender add-on** (GPL-licensed) | Native UI integration; user stays in Blender |
 | Agent framework | LangGraph / custom agent loop | Tool-use orchestration with state management |
 | LLM backbone | Local LLM (e.g., Llama 3, Qwen 2.5) or local API to Claude / Gemini | Code generation + vision understanding; must run locally or via user's own API key |
-| Vision models | Depth Anything V2, SAM 2, DINOv2 | Depth, segmentation, feature extraction — **local GPU inference only** |
-| 3D reconstruction | Zero-1-to-3++, OpenLRM, Trellis, InstantMesh | Pluggable; best-of-breed per input type — **all self-hosted, no external APIs** |
+| Compute backend | **NVIDIA CUDA only (v1)** | Every inference adapter targets CUDA. AMD (ROCm) and Apple Silicon (Metal) GPUs are detected and displayed but cannot run inference — see NG8 and TASK-TS-0022 |
+| Vision models | Depth Anything V2 (Small, Apache-2.0), SAM 2, DINOv2 | Depth, segmentation, feature extraction — **local GPU inference only**. Weight licences are recorded in `MODEL-LICENSES.md`; non-commercial weights are gated |
+| Model distribution | **No weights bundled.** A small curated set downloads on first use; the list is **user-extensible** from Hugging Face | Keeps the add-on small and the licence surface narrow, and lets users trade VRAM for accuracy or follow the field without waiting for a release. Added models are licence-classified, commit-pinned and checksum-verified before download (SPEC-TS-0002 FR-026 – FR-033) |
+| 3D reconstruction | **TRELLIS (MIT)** in v1; adapter layer is model-agnostic | Pluggable; best-of-breed per input type — **all self-hosted, no external APIs**. Zero-1-to-3++ and InstantMesh were evaluated and removed from the shipped manifest on 2026-09-21 — no adapter used them, and their terms are unresolved (see `MODEL-LICENSES.md`) |
 | 3D engine | Blender 4.x+ (`bpy` Python API) | Industry-standard, scriptable, free |
 | Mesh processing | `trimesh`, `PyMeshLab`, Blender modifiers | Repair, remesh, boolean operations |
 | Export | Blender built-in exporters | STL, 3MF, OBJ |
@@ -313,6 +317,9 @@ When view labels are omitted, the agent runs a lightweight view-direction classi
 | Single-image depth ambiguity leads to wrong proportions | Medium | High | Prompt user for dimensions or additional views; use object-class priors |
 | Blender API breaking changes across versions | Medium | Low | Pin minimum Blender version; abstract `bpy` calls behind versioned adapter |
 | Local GPU VRAM insufficient for large models | Medium | Medium | Tiered model selection based on detected VRAM; graceful error with minimum-spec guidance |
+| **Mac and AMD buyers cannot run v1** — Blender's user base is Mac-heavy | High | High | NVIDIA-only stated in every listing, the README, the docs site and a runtime banner; MPS support raised as TASK-TS-0022 before the v1.0 listing |
+| Third-party model weights carry non-commercial or undeclared licences | High | Medium | Licence metadata per model in the manifest, fail-closed download gate, `MODEL-LICENSES.md` (SPEC-TS-0002 v1.2) |
+| A user adds a model whose licence forbids their use of it | Medium | Medium | Declared licence classified and shown before download; non-commercial, restricted and undeclared terms refused unless the user opts in; responsibility stated in the add dialog and the Custom Models documentation. Tessera never hosts or redistributes weights (SPEC-TS-0002 v1.3) |
 | Model weight download size / disk usage | Low | High | Lazy download on first use; clear cache management in add-on preferences |
 | Reconstruction model quality degrades on unusual objects | High | Medium | Model-agnostic adapter allows hot-swap; ensemble multiple models and pick best |
 | Natural-language edit misinterpretation | Medium | Medium | Confirm ambiguous edits with user before applying; show diff preview |
@@ -328,11 +335,14 @@ When view labels are omitted, the agent runs a lightweight view-direction classi
 | # | Question | Decision | Impact |
 |---|---|---|---|
 | D1 | Deployment model | **Blender add-on** | Architecture is add-on-first; UI lives in Blender's sidebar panel. No web UI or CLI needed. |
-| D2 | GPU requirements | **GPU required — no CPU fallback** | Simplifies inference stack; add-on checks for CUDA/ROCm on install and reports minimum VRAM. |
+| D2 | GPU requirements | **GPU required — no CPU fallback** | Simplifies inference stack; add-on checks for a usable GPU on install and reports minimum VRAM. |
 | D3 | Commercial API fallback | **Local / self-hosted only** | All models run on user's hardware. No network calls for inference. User data never leaves their machine. |
 | D4 | Multi-part objects | **Deferred to v2+** | v1 treats all input as a single solid object. Multi-part support is a future milestone. |
 | D5 | Texture / color | **Deferred to v2+** | v1 exports geometry only (no vertex colors or textures). Color support is a future milestone. |
 | D6 | Licensing | **GPL accepted** | Add-on code will be GPL v2+, consistent with Blender's license. |
+| D8 | Model selection | **Curated default set, user-extensible list** (2026-09-21) | Tessera ships no weights. The bundled manifest is the recommended set; users may add any compatible Hugging Face model, which Tessera licence-classifies, commit-pins and checksum-verifies before download. Adapters can only load architectures they implement, so additions are constrained to known families. |
+| D7 | Non-CUDA GPUs | **NVIDIA CUDA only in v1** (2026-09-21) | Detection covers CUDA/ROCm/Metal, but no adapter implements a non-CUDA device path. Shipping the claim without the implementation was the single largest refund risk in the GTM analysis. MPS support is TASK-TS-0022; the thin-add-on / local-engine ADR would unlock ROCm and Metal together with the free Extensions Platform channel. |
+| D8 | Third-party weight licences | **Fail closed — refuse by default** (2026-09-21) | Model weights are not covered by Tessera's GPL-2.0-or-later licence. Every manifest entry declares `license`, `license_url` and `commercial_use`; anything not unambiguously `allowed` — including undeclared terms — is refused unless the user opts in via **Allow Restricted-Licence Models**. Implemented in SPEC-TS-0002 v1.2; terms recorded in `MODEL-LICENSES.md` and re-verified before any commercial release. |
 
 ---
 
@@ -362,3 +372,14 @@ When view labels are omitted, the agent runs a lightweight view-direction classi
 | **Blender (manual)** | Full creative control | Requires expert skill; no AI assistance |
 
 Tessera combines AI reconstruction with Blender's full editing power and print-specific validation — a combination no existing tool provides end-to-end.
+
+---
+
+## Appendix B · Revision History
+
+| Version | Date | Author | Summary of Changes |
+|---|---|---|---|
+| 0.1.0-DRAFT | 2026-03-25 | Derek | Initial PRD. |
+| 0.2.0-DRAFT | 2026-03-26 | Derek | Incorporated stakeholder feedback; recorded decisions D1–D6 and non-goals NG1–NG7. |
+| 0.3.0-DRAFT | 2026-03-26 | Derek | Phased roadmap, success metrics and risk register finalised for Phase 1 kickoff. |
+| 0.4.0-DRAFT | 2026-09-21 | Derek | Added NG8 and D7 — v1 is NVIDIA CUDA only; GPU detection still covers ROCm and Metal but no adapter implements a non-CUDA device path (TASK-TS-0022 gates the v1.0 listing). Added the Mac/AMD addressable-market risk to §11. Added D8 — third-party model weights fail closed on licence, implemented by SPEC-TS-0002 v1.2, with a matching §11 risk row and a licence note on the §8 vision-model row. Narrowed the §5.2 and §8 reconstruction entries to TRELLIS, the only reconstruction weight in the shipped manifest. |

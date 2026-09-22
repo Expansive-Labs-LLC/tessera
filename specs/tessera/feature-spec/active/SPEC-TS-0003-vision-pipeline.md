@@ -10,10 +10,10 @@
 |-------|-------|
 | **Spec ID** | SPEC-TS-0003 |
 | **Task ID** | TASK-TS-0003 |
-| **Status** | Approved |
-| **Version** | 1.2 |
+| **Status** | In Review — amendment v1.3 awaiting CSO approval |
+| **Version** | 1.3 |
 | **Created** | 2026-04-09 |
-| **Last Updated** | 2026-04-14 |
+| **Last Updated** | 2026-09-21 |
 | **Author** | Orchestrator (AI) |
 | **Pod** | Tessera |
 | **CSO Approver** | Derek |
@@ -149,7 +149,7 @@ flowchart LR
 | FR-019 | The system SHOULD report per-stage timing (wall-clock seconds) in the `VisionResult` metadata for profiling and user feedback. |
 | FR-020 | The system SHOULD display a progress indicator in the Blender UI during pipeline execution showing: current stage name, current image index / total images, and elapsed time. |
 | FR-021 | The system MAY support a "low-VRAM" mode that uses smaller model variants (e.g., SAM 2 Tiny instead of SAM 2 Large) when detected VRAM is < 8 GB. |
-| FR-022 | The system SHALL validate that a CUDA or ROCm GPU is available before starting the pipeline, and raise a `GPUNotAvailableError` with the message "Vision pipeline requires a CUDA or ROCm GPU. No compatible device detected." if none is found. |
+| FR-022 | *(v1.3)* The system SHALL validate that a GPU it can run inference on is available before starting the pipeline, and raise a `GPUNotAvailableError` if none is. v1 supports **CUDA only** — the supported set is `gpu_detection.SUPPORTED_INFERENCE_BACKENDS`. The error SHALL distinguish the two cases: no GPU detected ("Tessera requires an NVIDIA GPU with CUDA. No compatible GPU was detected.") versus a GPU detected on an unsupported backend, which SHALL name the device and its backend. *(Previously this check accepted ROCm, which then failed inside `torch` at `device="cuda"`. Reversal is tracked by TASK-TS-0022.)* |
 
 ### 3.2 Input Specifications
 
@@ -279,7 +279,7 @@ class VisionResult:
 ### AC-004: No GPU Available — Error Handling
 **Given** a system with no CUDA or ROCm compatible GPU detected by `gpu_detection.get_gpu_info()`,  
 **When** `VisionPipeline.process(...)` is called,  
-**Then** the method raises `GPUNotAvailableError` with the message "Vision pipeline requires a CUDA or ROCm GPU. No compatible device detected." and no model loading or inference is attempted.
+**Then** the method raises `GPUNotAvailableError` naming the NVIDIA CUDA requirement, and no model loading or inference is attempted. *(v1.3: a detected-but-unsupported GPU — AMD or Apple Silicon — raises the same error with the device and backend named, instead of passing validation and failing later inside `torch`.)*
 
 ### AC-005: HEIC Image Format Support
 **Given** a single `.heic` image captured from an iPhone,  
@@ -628,6 +628,7 @@ N/A — local add-on, no telemetry collected per decision D3 (local/self-hosted 
 |---------|------|--------|-------------------|
 | 1.0 | 2026-04-09 | Orchestrator (AI) | Initial draft |
 | 1.1 | 2026-04-14 | Spec Review (AI) | Address review findings: added view-label UI to out-of-scope (M1), added VIEW_LABEL_POSES camera-pose mapping to API contract (M2), documented 6-image batch limit rationale with boundary error handling (M3), added segmentation tie-breaking rule (m1), parameterized feature dimension in AC-001 (m2), added NFR-009 minimum VRAM requirement (m3), added boundary tests TS-019/TS-020 (m4) |
+| 1.3 | 2026-09-21 | Orchestrator (AI) | **Amendment — awaiting CSO approval.** Narrowed FR-022 to the backends the adapters actually implement (CUDA only, per PRD-001 D7 / NG8). The previous wording accepted ROCm, which passed validation and then failed inside `torch` at `device="cuda"`; a detected-but-unsupported GPU is now rejected up front with the device named. Reversal is tracked by TASK-TS-0022. |
 | 1.2 | 2026-04-14 | AI (cross-spec update) | Added `force_sketch: bool = False` field to canonical `ImageInput` dataclass and input specification table to support sketch detection override (SPEC-TS-0010 FR-006). Backward-compatible — defaults to `False`. |
 
 ---

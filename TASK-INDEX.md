@@ -117,3 +117,21 @@ flowchart TD
 | [TASK-TS-0015](tasks/TASK-TS-0015-marketplace-publication.md) | Marketplace Strategy & Publication | L | Med | ☐ Not Started |
 
 **Phase 5 Exit Criteria:** Tessera is publicly available on GitHub with automated CI/CD, listed on at least 2 marketplaces, and has comprehensive user documentation.
+
+---
+
+## Phase 6 — Integration & Pre-Launch (raised during implementation)
+
+> These tasks were raised after the original 20-week plan and were not previously indexed here. **Statuses in this file are stale** — Phases 1–5 are marked "Not Started" although much of that code exists. Treat each task file as the source of truth.
+
+| Task ID | Title | Size | Risk | Status |
+|---------|-------|------|------|--------|
+| [TASK-TS-0016](tasks/TASK-TS-0016-vision-adapter-validation.md) | Vision Pipeline Adapter Validation | L | High | See task file |
+| [TASK-TS-0017](tasks/TASK-TS-0017-trellis-real-inference.md) | Trellis Adapter Real Inference | L | High | See task file — also owns reconciling the adapter's placeholder weight filenames with the `trellis-image-large` manifest entry |
+| [TASK-TS-0018](tasks/TASK-TS-0018-sha256-hash-generation.md) | SHA256 Hash Generation for Model Manifest | S | Med | ✅ Complete (2026-09-21) — all 25 files verified, placeholder bypass removed |
+| [TASK-TS-0019](tasks/TASK-TS-0019-sketch-operator-integration.md) | Sketch-to-3D Operator Integration | M | Med | See task file |
+| [TASK-TS-0020](tasks/TASK-TS-0020-multiview-pipeline-integration.md) | Multi-View Reconstruction Pipeline Integration | L | High | See task file |
+| [TASK-TS-0021](tasks/TASK-TS-0021-refinement-llm-backend.md) | Refinement LLM Backend Configuration | M | Med | See task file — also owns adding `tessera-intent-parser` to the model manifest |
+| [TASK-TS-0022](tasks/TASK-TS-0022-apple-silicon-mps-support.md) | Apple Silicon (MPS) Inference Support | L | Med | ☐ Not Started — gates the v1.0 marketplace listing (PRD D7) |
+
+**Phase 6 Exit Criteria:** The generate pipeline runs end to end on real weights, integrity and licence controls are enforced, and the platform-support claims in the listings match what the code does.

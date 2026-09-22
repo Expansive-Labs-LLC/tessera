@@ -11,9 +11,9 @@
 | **Spec ID** | SPEC-TS-0001 |
 | **Task ID** | TASK-TS-0001 |
 | **Status** | Draft |
-| **Version** | 1.1 |
+| **Version** | 1.2 |
 | **Created** | 2026-03-26 |
-| **Last Updated** | 2026-04-14 |
+| **Last Updated** | 2026-09-21 |
 | **Author** | Orchestrator (AI) |
 | **Pod** | Tessera |
 | **CSO Approver** | Derek |
@@ -124,7 +124,8 @@ GPU detection SHALL use Blender's Cycles device API as the primary mechanism:
 | FR-007 | The add-on SHALL provide an `AddonPreferences` panel accessible via Edit → Preferences → Add-ons → Tessera, containing: GPU device selector, VRAM display (read-only), model cache directory path, and a "Clear Cache" button. |
 | FR-008 | The add-on SHALL detect available GPU devices (CUDA, ROCm, or Metal) on registration and populate the GPU device selector in preferences. On macOS with Apple Silicon, Metal SHALL be detected as a compatible backend. See §2.3 "GPU Detection Mechanism" for implementation details. |
 | FR-009 | The add-on SHALL display the detected GPU name and available VRAM (in GB) as a read-only label in the preferences panel. For Apple Silicon (Metal), VRAM SHALL be reported as shared system memory with a "(shared)" suffix (e.g., "16 GB (shared)"). |
-| FR-010 | The add-on SHALL display a warning banner in the main panel if no compatible GPU is detected, with the message: "Tessera requires a CUDA, ROCm, or Metal compatible GPU. No compatible GPU was detected." |
+| FR-010 | The add-on SHALL display a warning banner in the main panel if no GPU is detected, with the message: "Tessera requires an NVIDIA GPU with CUDA. No compatible GPU was detected." *(v1.2: message narrowed from "CUDA, ROCm, or Metal" — see FR-010a.)* |
+| FR-010a | *(v1.2)* The add-on SHALL also display a warning banner when a GPU **is** detected but its backend is not one Tessera can run inference on. v1 supports **CUDA only**; AMD (ROCm) and Apple Silicon (Metal) are detected and reported (FR-008, FR-009) but no inference adapter implements a device path for them. The banner SHALL name the detected device and state that generation will not work on it. The supported set SHALL be declared in one place (`gpu_detection.SUPPORTED_INFERENCE_BACKENDS`) so that adding a backend (TASK-TS-0022) updates detection, validation and UI together. |
 | FR-011 | The Generation, Validation, and Export sub-panels SHALL display placeholder text ("Coming soon — waiting for pipeline integration") and disabled operator buttons. |
 | FR-012 | The add-on SHALL store the list of uploaded images and their view labels as a `CollectionProperty` on `bpy.types.Scene`. |
 | FR-013 | The add-on SHOULD allow users to reorder images in the UIList via up/down buttons. |
@@ -252,7 +253,7 @@ This task produces no data outputs — it is a UI/infrastructure scaffold. Outpu
 |--------|--------|
 | **Scenario** | User enables Tessera on a Mac with Apple M-series chip (Metal backend, no CUDA/ROCm) |
 | **Input Example** | macOS 14, MacBook Pro M3 Pro, 18 GB unified memory |
-| **Expected Behavior** | The add-on SHALL detect the Metal backend as a compatible GPU. The preferences panel SHALL display the GPU name (e.g., "Apple M3 Pro"), VRAM as shared system memory (e.g., "18 GB (shared)"), and backend as "METAL". No warning banner SHALL appear in the main panel. |
+| **Expected Behavior** | The add-on SHALL detect the Metal backend and report it accurately: the preferences panel SHALL display the GPU name (e.g., "Apple M3 Pro"), VRAM as shared system memory (e.g., "18 GB (shared)"), and backend as "METAL". *(v1.2)* Because no inference adapter supports Metal in v1, the main panel SHALL display a warning banner naming the device and stating that generation will not work on it. Detection succeeding is not the same as the pipeline being able to run — the previous expectation ("No warning banner SHALL appear") let a Mac user reach model load before discovering the limitation. Restoring the no-banner behaviour is part of TASK-TS-0022. |
 | **Test ID** | TS-015 |
 
 ---
@@ -461,6 +462,7 @@ N/A — local add-on, no telemetry collected per decision D3 (local/self-hosted 
 | Version | Date | Author | Summary of Changes |
 |---------|------|--------|-------------------|
 | 1.0 | 2026-03-26 | Orchestrator (AI) | Initial draft |
+| 1.2 | 2026-09-21 | Orchestrator (AI) | **Amendment — awaiting CSO approval.** v1 ships NVIDIA CUDA only (PRD-001 D7 / NG8): narrowed FR-010's message, added FR-010a (warn on a detected-but-unusable backend) and revised EC-006 so an Apple Silicon Mac is warned up front rather than failing at model load. Detection behaviour (FR-008, FR-009) is unchanged. Reversal is tracked by TASK-TS-0022. |
 | 1.1 | 2026-04-14 | Spec Review Remediation | Resolved 7 review issues: clarified custom view label as simple tag (deferred angle input), documented enum identifier vs display name convention, added HEIC platform edge case (EC-005), added Apple Silicon/Metal edge case (EC-006), specified GPU detection mechanism (Cycles API + subprocess fallback), documented cache_dir fallback for manual installs, recalibrated self-score |
 
 ---
