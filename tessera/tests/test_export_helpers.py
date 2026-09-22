@@ -29,17 +29,17 @@ EC-004: Export directory validation.
 from __future__ import annotations
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
-
-# bpy and related Blender modules are mocked globally in conftest.py.
 
 from tessera.export.export_pipeline import (  # noqa: E402
     _resolve_file_path,
     _sanitize_filename,
     _validate_path_within_dir,
 )
+
+# bpy and related Blender modules are mocked globally in conftest.py.
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -172,9 +172,7 @@ class TestValidatePathWithinDir:
 
     def test_nested_path_traversal_blocked(self, tmp_path):
         """SEC-006: Deep path traversal (../../..) is blocked."""
-        file_path = os.path.join(
-            str(tmp_path), "a", "..", "..", "..", "etc", "passwd"
-        )
+        file_path = os.path.join(str(tmp_path), "a", "..", "..", "..", "etc", "passwd")
         assert _validate_path_within_dir(str(tmp_path), file_path) is False
 
 
@@ -194,6 +192,7 @@ class TestResolveExportDirectory:
     def pipeline(self):
         """Create an ExportPipeline instance with bpy mocked."""
         from tessera.export.export_pipeline import ExportPipeline
+
         return ExportPipeline()
 
     def test_explicit_directory_used(self, pipeline, tmp_path):

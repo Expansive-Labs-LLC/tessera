@@ -25,13 +25,11 @@ GPU and model dependencies are fully mocked — no GPU hardware required.
 """
 
 import logging
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 from PIL import Image
-
 
 # ---------------------------------------------------------------------------
 # Mock Adapter Helpers
@@ -200,7 +198,8 @@ class TestPipelineHappyPath:
     def test_TS001_single_jpg_user_label_front(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-001 → AC-001: Process single JPG with user-supplied "front" label — verify all output fields.
+        """TS-001 → AC-001: Process single JPG with user-supplied "front" label — verify
+        all output fields.
 
         Given: A single 2048×1536 .jpg image of a ceramic mug on a white
                background, with user-supplied view label "front"
@@ -218,14 +217,14 @@ class TestPipelineHappyPath:
         pipeline, adapters = pipeline_with_mocks
 
         # Given — create a 2048×1536 image
-        img_path = _create_test_image(
-            tmp_path, "mug_front.jpg", 2048, 1536
-        )
+        img_path = _create_test_image(tmp_path, "mug_front.jpg", 2048, 1536)
 
         # When
-        results = pipeline.process([
-            ImageInput(filepath=str(img_path), view_label="front"),
-        ])
+        results = pipeline.process(
+            [
+                ImageInput(filepath=str(img_path), view_label="front"),
+            ]
+        )
 
         # Then — exactly 1 result
         assert len(results) == 1
@@ -264,18 +263,21 @@ class TestPipelineHappyPath:
 
         # Processing times have all expected keys.
         expected_keys = {
-            "preprocessing", "segmentation", "depth",
-            "view_classification", "feature_extraction",
+            "preprocessing",
+            "segmentation",
+            "depth",
+            "view_classification",
+            "feature_extraction",
         }
         assert set(r.processing_time_s.keys()) == expected_keys
         for key, val in r.processing_time_s.items():
             assert isinstance(val, float), f"{key} timing is not float"
             assert val >= 0.0, f"{key} timing is negative"
 
-    def test_TS002_batch_4_images_mixed_labels(
-        self, mock_bpy, tmp_path, mock_gpu_cuda
-    ):
-        """TS-002 → AC-002: Process batch of 4 images with mixed user/auto labels — verify label sources.
+    def test_TS002_batch_4_images_mixed_labels(self, mock_bpy, tmp_path, mock_gpu_cuda):
+        """TS-002 → AC-002: Process batch of 4 images with mixed user/auto labels —
+        verify
+        label sources.
 
         Given: 4 images (.jpg and .png mix) of a vase from front, back,
                left, and right angles, with view labels "front", None,
@@ -344,7 +346,8 @@ class TestPipelineHappyPath:
     def test_TS009_heic_image_format_support(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-009 → AC-005: Process .heic image — verify successful conversion and full pipeline.
+        """TS-009 → AC-005: Process .heic image — verify successful conversion and full
+        pipeline.
 
         Given: A single .heic image captured from an iPhone
         When: VisionPipeline.process([ImageInput(filepath="object.heic")])
@@ -386,9 +389,11 @@ class TestPipelineHappyPath:
                 # Write a dummy file with .heic ext
                 heic_path.write_bytes(png_path.read_bytes())
 
-                results = pipeline.process([
-                    ImageInput(filepath=str(heic_path)),
-                ])
+                results = pipeline.process(
+                    [
+                        ImageInput(filepath=str(heic_path)),
+                    ]
+                )
 
         assert len(results) == 1
         r = results[0]
@@ -412,13 +417,13 @@ class TestPipelineHappyPath:
         Type: Integration | Priority: Must Pass
         """
         import bpy
+
         from tessera.vision.pipeline import VisionPipeline
         from tessera.vision.types import ImageInput
 
         # Create 3 images
         paths = [
-            _create_test_image(tmp_path, f"img{i}.jpg", 512, 512)
-            for i in range(3)
+            _create_test_image(tmp_path, f"img{i}.jpg", 512, 512) for i in range(3)
         ]
 
         # Track status updates
@@ -452,9 +457,7 @@ class TestPipelineHappyPath:
             feature_adapter=_make_mock_feature_adapter(),
         )
 
-        inputs = [
-            ImageInput(filepath=str(p)) for p in paths
-        ]
+        inputs = [ImageInput(filepath=str(p)) for p in paths]
 
         # When
         pipeline.process(inputs)
@@ -470,8 +473,14 @@ class TestPipelineHappyPath:
         # Verify stage names appear in status updates
         stage_names_found = set()
         for s in status_updates:
-            for stage in ["Preprocessing", "Segmentation", "Depth Estimation",
-                          "View Classification", "Feature Extraction", "Complete"]:
+            for stage in [
+                "Preprocessing",
+                "Segmentation",
+                "Depth Estimation",
+                "View Classification",
+                "Feature Extraction",
+                "Complete",
+            ]:
                 if stage in s:
                     stage_names_found.add(stage)
 
@@ -479,9 +488,9 @@ class TestPipelineHappyPath:
         assert "Feature Extraction" in stage_names_found
 
         # Verify format "Stage — Image N/3"
-        assert any("Image 2/3" in s for s in status_updates), (
-            "Expected status like 'Stage — Image 2/3'"
-        )
+        assert any(
+            "Image 2/3" in s for s in status_updates
+        ), "Expected status like 'Stage — Image 2/3'"
 
         # Progress values should be in [0.0, 1.0]
         for p in progress_updates:
@@ -497,7 +506,8 @@ class TestViewClassification:
     """Tests for view label auto-detection and resolution (AC-003, EC-004)."""
 
     def test_TS003_auto_detect_low_confidence_confirmation(self, mock_bpy):
-        """TS-003 → AC-003: Auto-detect view label with low confidence — verify confirmation flag.
+        """TS-003 → AC-003: Auto-detect view label with low confidence — verify
+        confirmation flag.
 
         Given: An ambiguous image of a cylindrical object with no
                user-supplied view label
@@ -527,12 +537,13 @@ class TestViewClassification:
         assert label == "front"
         assert conf == 0.55
         assert source == "auto"
-        assert needs_confirm is True, (
-            "Low confidence (0.55 < 0.80) should flag for confirmation"
-        )
+        assert (
+            needs_confirm is True
+        ), "Low confidence (0.55 < 0.80) should flag for confirmation"
 
     def test_TS007_custom_azimuth_elevation_label(self, mock_bpy):
-        """TS-007 → EC-004: Process image with custom:127.5,-15.0 label — verify angle normalisation.
+        """TS-007 → EC-004: Process image with custom:127.5,-15.0 label — verify angle
+        normalisation.
 
         Given: ImageInput(filepath="obj.jpg", view_label="custom",
                custom_azimuth=127.5, custom_elevation=-15.0)
@@ -570,9 +581,9 @@ class TestViewClassification:
             auto_label="front",
             auto_confidence=0.5,
         )
-        assert label2 == "custom:40.0,-90.0", (
-            "Azimuth should wrap to [0, 360), elevation clamp to [-90, 90]"
-        )
+        assert (
+            label2 == "custom:40.0,-90.0"
+        ), "Azimuth should wrap to [0, 360), elevation clamp to [-90, 90]"
 
 
 # ---------------------------------------------------------------------------
@@ -586,7 +597,9 @@ class TestEdgeCases:
     def test_TS004_very_small_image_upscale(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-004 → EC-001: Process 48×48 image — verify upscale to 256 px min and correct original_size.
+        """TS-004 → EC-001: Process 48×48 image — verify upscale to 256 px min and
+        correct
+        original_size.
 
         Given: A 48×48 pixel .png file
         When: The pipeline preprocesses this image
@@ -604,9 +617,11 @@ class TestEdgeCases:
         img_path = _create_test_image(tmp_path, "tiny.png", 48, 48)
 
         # When
-        results = pipeline.process([
-            ImageInput(filepath=str(img_path)),
-        ])
+        results = pipeline.process(
+            [
+                ImageInput(filepath=str(img_path)),
+            ]
+        )
 
         # Then
         assert len(results) == 1
@@ -617,14 +632,15 @@ class TestEdgeCases:
 
         # Image should have been upscaled to at least 256 px
         h, w = r.image.shape[:2]
-        assert max(h, w) >= 256, (
-            f"Image should be upscaled to ≥256 px, got max({h}, {w})"
-        )
+        assert (
+            max(h, w) >= 256
+        ), f"Image should be upscaled to ≥256 px, got max({h}, {w})"
 
     def test_TS005_no_foreground_object_full_mask(
         self, mock_bpy, tmp_path, mock_gpu_cuda, caplog
     ):
-        """TS-005 → EC-002: Process image of plain wall — verify full-image mask and warning log.
+        """TS-005 → EC-002: Process image of plain wall — verify full-image mask and
+        warning log.
 
         Given: A 1024×768 .jpg of a solid blue wall
         When: The segmentation adapter processes this image
@@ -665,16 +681,18 @@ class TestEdgeCases:
 
         # When
         with caplog.at_level(logging.WARNING, logger="tessera.vision"):
-            results = pipeline.process([
-                ImageInput(filepath=str(img_path)),
-            ])
+            results = pipeline.process(
+                [
+                    ImageInput(filepath=str(img_path)),
+                ]
+            )
 
         # Then
         assert len(results) == 1
         # Mask should be all-255 (full image foreground)
-        assert np.all(results[0].mask == 255), (
-            "Mask should cover entire image when no foreground detected"
-        )
+        assert np.all(
+            results[0].mask == 255
+        ), "Mask should cover entire image when no foreground detected"
 
         # Warning should be logged
         assert any(
@@ -685,7 +703,9 @@ class TestEdgeCases:
     def test_TS006_corrupt_image_skip_continue(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-006 → EC-003: Process corrupt .jpg file — verify ImageLoadError raised, other images succeed.
+        """TS-006 → EC-003: Process corrupt .jpg file — verify ImageLoadError raised,
+        other
+        images succeed.
 
         Given: A 500-byte .jpg file that cannot be decoded, plus a
                valid image
@@ -710,10 +730,12 @@ class TestEdgeCases:
         valid_path = _create_test_image(tmp_path, "valid.jpg", 512, 512)
 
         # When — process both
-        results = pipeline.process([
-            ImageInput(filepath=str(corrupt_path)),
-            ImageInput(filepath=str(valid_path)),
-        ])
+        results = pipeline.process(
+            [
+                ImageInput(filepath=str(corrupt_path)),
+                ImageInput(filepath=str(valid_path)),
+            ]
+        )
 
         # Then — only the valid image produces a result
         assert len(results) == 1
@@ -724,15 +746,16 @@ class TestEdgeCases:
         corrupt2_path.write_bytes(b"\xff\xd8\xff" + b"\x00" * 100)
 
         with pytest.raises(PipelineError, match="No valid images could be processed"):
-            pipeline.process([
-                ImageInput(filepath=str(corrupt_path)),
-                ImageInput(filepath=str(corrupt2_path)),
-            ])
+            pipeline.process(
+                [
+                    ImageInput(filepath=str(corrupt_path)),
+                    ImageInput(filepath=str(corrupt2_path)),
+                ]
+            )
 
-    def test_TS008_no_gpu_available_error(
-        self, mock_bpy, tmp_path, mock_gpu_none
-    ):
-        """TS-008 → AC-004: Call pipeline with no GPU — verify GPUNotAvailableError raised.
+    def test_TS008_no_gpu_available_error(self, mock_bpy, tmp_path, mock_gpu_none):
+        """TS-008 → AC-004: Call pipeline with no GPU — verify GPUNotAvailableError
+        raised.
 
         Given: A system with no CUDA or ROCm compatible GPU detected
                by gpu_detection.get_gpu_info()
@@ -758,9 +781,11 @@ class TestEdgeCases:
 
         # When/Then
         with pytest.raises(GPUNotAvailableError) as exc_info:
-            pipeline.process([
-                ImageInput(filepath=str(img_path)),
-            ])
+            pipeline.process(
+                [
+                    ImageInput(filepath=str(img_path)),
+                ]
+            )
 
         assert "CUDA or ROCm GPU" in str(exc_info.value)
         assert "No compatible device detected" in str(exc_info.value)
@@ -769,10 +794,9 @@ class TestEdgeCases:
         seg = pipeline._segmentation
         seg.load.assert_not_called()
 
-    def test_TS008b_insufficient_vram_error(
-        self, mock_bpy, tmp_path, mock_gpu_cuda
-    ):
-        """TS-008b → EC-005: Call pipeline with GPU OOM — verify InsufficientVRAMError raised.
+    def test_TS008b_insufficient_vram_error(self, mock_bpy, tmp_path, mock_gpu_cuda):
+        """TS-008b → EC-005: Call pipeline with GPU OOM — verify InsufficientVRAMError
+        raised.
 
         Given: A CUDA GPU is available but has insufficient VRAM to load
                the segmentation model (torch.cuda.OutOfMemoryError during load)
@@ -808,9 +832,11 @@ class TestEdgeCases:
 
         # When/Then
         with pytest.raises(InsufficientVRAMError) as exc_info:
-            pipeline.process([
-                ImageInput(filepath=str(img_path)),
-            ])
+            pipeline.process(
+                [
+                    ImageInput(filepath=str(img_path)),
+                ]
+            )
 
         error_msg = str(exc_info.value)
         assert "Insufficient GPU VRAM" in error_msg
@@ -833,7 +859,8 @@ class TestOutputFormats:
     def test_TS011_segmentation_mask_format(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-011 → FR-005: Segmentation mask output: verify shape matches input, dtype uint8, values 0 or 255.
+        """TS-011 → FR-005: Segmentation mask output: verify shape matches input, dtype
+        uint8, values 0 or 255.
 
         Given: A valid pipeline input image
         When: The segmentation stage completes
@@ -847,30 +874,31 @@ class TestOutputFormats:
         pipeline, _ = pipeline_with_mocks
         img_path = _create_test_image(tmp_path, "test.png", 640, 480)
 
-        results = pipeline.process([
-            ImageInput(filepath=str(img_path)),
-        ])
+        results = pipeline.process(
+            [
+                ImageInput(filepath=str(img_path)),
+            ]
+        )
 
         r = results[0]
 
         # FR-005: Mask shape matches input image spatial dimensions
-        assert r.mask.shape == r.image.shape[:2], (
-            f"Mask shape {r.mask.shape} != image shape {r.image.shape[:2]}"
-        )
+        assert (
+            r.mask.shape == r.image.shape[:2]
+        ), f"Mask shape {r.mask.shape} != image shape {r.image.shape[:2]}"
 
         # dtype uint8
         assert r.mask.dtype == np.uint8
 
         # All values are 0 or 255
         unique_vals = set(np.unique(r.mask))
-        assert unique_vals.issubset({0, 255}), (
-            f"Mask values should be 0 or 255, got {unique_vals}"
-        )
+        assert unique_vals.issubset(
+            {0, 255}
+        ), f"Mask values should be 0 or 255, got {unique_vals}"
 
-    def test_TS012_depth_map_format(
-        self, mock_bpy, tmp_path, pipeline_with_mocks
-    ):
-        """TS-012 → FR-006, FR-007: Depth map output: verify shape, dtype float32, range [0.0, 1.0], background zeroed.
+    def test_TS012_depth_map_format(self, mock_bpy, tmp_path, pipeline_with_mocks):
+        """TS-012 → FR-006, FR-007: Depth map output: verify shape, dtype float32, range
+        [0.0, 1.0], background zeroed.
 
         Given: A valid pipeline input image with a non-trivial mask
         When: The depth estimation stage completes
@@ -885,39 +913,37 @@ class TestOutputFormats:
         pipeline, _ = pipeline_with_mocks
         img_path = _create_test_image(tmp_path, "test.jpg", 512, 384)
 
-        results = pipeline.process([
-            ImageInput(filepath=str(img_path)),
-        ])
+        results = pipeline.process(
+            [
+                ImageInput(filepath=str(img_path)),
+            ]
+        )
 
         r = results[0]
 
         # Shape matches image
-        assert r.depth_map.shape == r.image.shape[:2], (
-            f"Depth shape {r.depth_map.shape} != image shape {r.image.shape[:2]}"
-        )
+        assert (
+            r.depth_map.shape == r.image.shape[:2]
+        ), f"Depth shape {r.depth_map.shape} != image shape {r.image.shape[:2]}"
 
         # dtype float32
         assert r.depth_map.dtype == np.float32
 
         # Range [0.0, 1.0]
-        assert r.depth_map.min() >= 0.0, (
-            f"Depth min {r.depth_map.min()} < 0.0"
-        )
-        assert r.depth_map.max() <= 1.0, (
-            f"Depth max {r.depth_map.max()} > 1.0"
-        )
+        assert r.depth_map.min() >= 0.0, f"Depth min {r.depth_map.min()} < 0.0"
+        assert r.depth_map.max() <= 1.0, f"Depth max {r.depth_map.max()} > 1.0"
 
         # FR-007: Background regions (mask == 0) should be 0.0
         bg_pixels = r.depth_map[r.mask == 0]
         if len(bg_pixels) > 0:
-            assert np.all(bg_pixels == 0.0), (
-                "Background depth values should be 0.0 (FR-007)"
-            )
+            assert np.all(
+                bg_pixels == 0.0
+            ), "Background depth values should be 0.0 (FR-007)"
 
-    def test_TS013_feature_vector_format(
-        self, mock_bpy, tmp_path, pipeline_with_mocks
-    ):
-        """TS-013 → FR-013: Feature vector output: verify shape (1, D), dtype float32, non-zero values.
+    def test_TS013_feature_vector_format(self, mock_bpy, tmp_path, pipeline_with_mocks):
+        """TS-013 → FR-013: Feature vector output: verify shape (1, D), dtype float32,
+        non-
+        zero values.
 
         Given: A valid pipeline input image
         When: The feature extraction stage completes
@@ -933,26 +959,28 @@ class TestOutputFormats:
         pipeline, _ = pipeline_with_mocks
         img_path = _create_test_image(tmp_path, "test.jpg", 600, 400)
 
-        results = pipeline.process([
-            ImageInput(filepath=str(img_path)),
-        ])
+        results = pipeline.process(
+            [
+                ImageInput(filepath=str(img_path)),
+            ]
+        )
 
         r = results[0]
 
         # Shape (1, D)
         assert r.features.ndim == 2
         assert r.features.shape[0] == 1
-        assert r.features.shape[1] == 768, (
-            f"Expected embedding dim 768, got {r.features.shape[1]}"
-        )
+        assert (
+            r.features.shape[1] == 768
+        ), f"Expected embedding dim 768, got {r.features.shape[1]}"
 
         # dtype float32
         assert r.features.dtype == np.float32
 
         # Non-zero values (a valid embedding should not be all zeros)
-        assert not np.allclose(r.features, 0.0), (
-            "Feature vector should contain non-zero values"
-        )
+        assert not np.allclose(
+            r.features, 0.0
+        ), "Feature vector should contain non-zero values"
 
 
 # ---------------------------------------------------------------------------
@@ -966,7 +994,9 @@ class TestPerformance:
     def test_TS014_batch_6_images_latency_and_vram(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-014 → NFR-001–003: Process 6 images on RTX 3060 — verify ≤ 30s total and ≤ 6 GB peak VRAM.
+        """TS-014 → NFR-001–003: Process 6 images on RTX 3060 — verify ≤ 30s total and ≤
+        6
+        GB peak VRAM.
 
         Given: 6 images at 1024×1024 pixel max dimension
         When: VisionPipeline.process(...) is called on an NVIDIA RTX
@@ -984,8 +1014,7 @@ class TestPerformance:
 
         # Given — 6 images at 1024×1024
         paths = [
-            _create_test_image(tmp_path, f"perf{i}.jpg", 1024, 1024)
-            for i in range(6)
+            _create_test_image(tmp_path, f"perf{i}.jpg", 1024, 1024) for i in range(6)
         ]
         inputs = [ImageInput(filepath=str(p)) for p in paths]
 
@@ -999,9 +1028,9 @@ class TestPerformance:
 
         # With mock adapters, wall-clock should be well under 30s.
         # In production with real GPU, this validates NFR-001.
-        assert elapsed <= 30.0, (
-            f"Pipeline took {elapsed:.2f}s, exceeds 30s target (NFR-001)"
-        )
+        assert (
+            elapsed <= 30.0
+        ), f"Pipeline took {elapsed:.2f}s, exceeds 30s target (NFR-001)"
 
         # Verify all adapter stages were called the correct number of times
         assert adapters["seg"].load.call_count == 1
@@ -1021,7 +1050,8 @@ class TestModelLifecycle:
     def test_TS015_model_unload_vram_recovery(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-015 → FR-017: Verify model unload after batch completion — VRAM returns to pre-pipeline level.
+        """TS-015 → FR-017: Verify model unload after batch completion — VRAM returns to
+        pre-pipeline level.
 
         Given: A batch of images processed through the pipeline
         When: All stages are complete
@@ -1035,8 +1065,7 @@ class TestModelLifecycle:
         pipeline, adapters = pipeline_with_mocks
 
         paths = [
-            _create_test_image(tmp_path, f"vram{i}.jpg", 512, 512)
-            for i in range(3)
+            _create_test_image(tmp_path, f"vram{i}.jpg", 512, 512) for i in range(3)
         ]
         inputs = [ImageInput(filepath=str(p)) for p in paths]
 
@@ -1045,12 +1074,12 @@ class TestModelLifecycle:
 
         # Then — verify load/unload lifecycle for each adapter
         for name, adapter in adapters.items():
-            assert adapter.load.call_count == 1, (
-                f"{name} adapter load() not called exactly once"
-            )
-            assert adapter.unload.call_count == 1, (
-                f"{name} adapter unload() not called exactly once"
-            )
+            assert (
+                adapter.load.call_count == 1
+            ), f"{name} adapter load() not called exactly once"
+            assert (
+                adapter.unload.call_count == 1
+            ), f"{name} adapter unload() not called exactly once"
 
         # Verify call ordering: load → predict(s) → unload for each stage
         for name, adapter in adapters.items():
@@ -1058,17 +1087,17 @@ class TestModelLifecycle:
             calls = [c[0] for c in adapter.method_calls]
             call_names = [c for c in calls if c in ("load", "predict", "unload")]
             if call_names:
-                assert call_names[0] == "load", (
-                    f"{name}: Expected load() before predict()"
-                )
-                assert call_names[-1] == "unload", (
-                    f"{name}: Expected unload() after all predict() calls"
-                )
+                assert (
+                    call_names[0] == "load"
+                ), f"{name}: Expected load() before predict()"
+                assert (
+                    call_names[-1] == "unload"
+                ), f"{name}: Expected unload() after all predict() calls"
 
-    def test_TS016_custom_segmentation_adapter(
-        self, mock_bpy, tmp_path, mock_gpu_cuda
-    ):
-        """TS-016 → FR-018: Register custom segmentation adapter — verify it's used instead of SAM 2.
+    def test_TS016_custom_segmentation_adapter(self, mock_bpy, tmp_path, mock_gpu_cuda):
+        """TS-016 → FR-018: Register custom segmentation adapter — verify it's used
+        instead
+        of SAM 2.
 
         Given: A custom SegmentationAdapter subclass that returns a
                known fixed mask
@@ -1103,9 +1132,11 @@ class TestModelLifecycle:
         )
 
         img_path = _create_test_image(tmp_path, "custom.jpg", 512, 512)
-        results = pipeline.process([
-            ImageInput(filepath=str(img_path)),
-        ])
+        results = pipeline.process(
+            [
+                ImageInput(filepath=str(img_path)),
+            ]
+        )
 
         assert len(results) == 1
         r = results[0]
@@ -1115,12 +1146,12 @@ class TestModelLifecycle:
         top_half = r.mask[: h // 2, :]
         bottom_half = r.mask[h // 2 :, :]
 
-        assert np.all(top_half == 255), (
-            "Custom adapter's top-half foreground not preserved"
-        )
-        assert np.all(bottom_half == 0), (
-            "Custom adapter's bottom-half background not preserved"
-        )
+        assert np.all(
+            top_half == 255
+        ), "Custom adapter's top-half foreground not preserved"
+        assert np.all(
+            bottom_half == 0
+        ), "Custom adapter's bottom-half background not preserved"
 
         # Verify load/unload called on custom adapter
         custom_seg.load.assert_called_once()
@@ -1138,7 +1169,8 @@ class TestSecurity:
     def test_TS017_file_size_exceeds_50mb(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-017 → SEC-005: Process image exceeding 50 MB file size — verify rejection before loading.
+        """TS-017 → SEC-005: Process image exceeding 50 MB file size — verify rejection
+        before loading.
 
         Given: An image file larger than 50 MB
         When: The preprocessing stage validates it
@@ -1161,14 +1193,15 @@ class TestSecurity:
             load_and_preprocess(ImageInput(filepath=str(large_path)))
 
         error_msg = str(exc_info.value)
-        assert "exceeds maximum" in error_msg.lower() or "file size" in error_msg.lower(), (
-            f"Expected file size error message, got: {error_msg}"
-        )
+        assert (
+            "exceeds maximum" in error_msg.lower() or "file size" in error_msg.lower()
+        ), f"Expected file size error message, got: {error_msg}"
 
     def test_TS018_path_traversal_prevention(
         self, mock_bpy, tmp_path, pipeline_with_mocks
     ):
-        """TS-018 → SEC-001: Attempt path traversal in filepath — verify SEC-001 catches it.
+        """TS-018 → SEC-001: Attempt path traversal in filepath — verify SEC-001 catches
+        it.
 
         Given: An ImageInput with filepath containing path traversal
                sequences (e.g., "../../etc/passwd")
@@ -1182,15 +1215,11 @@ class TestSecurity:
 
         # Test 1: Path traversal to non-existent file
         with pytest.raises(ImageLoadError):
-            load_and_preprocess(
-                ImageInput(filepath="../../etc/passwd.jpg")
-            )
+            load_and_preprocess(ImageInput(filepath="../../etc/passwd.jpg"))
 
         # Test 2: Path traversal with null bytes
         with pytest.raises(ImageLoadError):
-            load_and_preprocess(
-                ImageInput(filepath="/tmp/\x00evil.jpg")
-            )
+            load_and_preprocess(ImageInput(filepath="/tmp/\x00evil.jpg"))
 
         # Test 3: Non-existent deeply nested traversal path
         with pytest.raises(ImageLoadError):
@@ -1207,10 +1236,9 @@ class TestSecurity:
 class TestBatchValidation:
     """Tests for batch size validation (FR-001)."""
 
-    def test_TS019_empty_image_list(
-        self, mock_bpy, pipeline_with_mocks
-    ):
-        """TS-019 → FR-001: Call pipeline.process([]) with empty list — verify PipelineError("No images provided.") raised.
+    def test_TS019_empty_image_list(self, mock_bpy, pipeline_with_mocks):
+        """TS-019 → FR-001: Call pipeline.process([]) with empty list — verify
+        PipelineError("No images provided.") raised.
 
         Given: An empty list of ImageInput objects
         When: VisionPipeline.process([]) is called
@@ -1226,10 +1254,9 @@ class TestBatchValidation:
         with pytest.raises(PipelineError, match="No images provided"):
             pipeline.process([])
 
-    def test_TS020_batch_exceeds_maximum(
-        self, mock_bpy, tmp_path, pipeline_with_mocks
-    ):
-        """TS-020 → FR-001: Call pipeline.process(...) with 7 images — verify PipelineError("Batch size 7 exceeds maximum of 6.") raised.
+    def test_TS020_batch_exceeds_maximum(self, mock_bpy, tmp_path, pipeline_with_mocks):
+        """TS-020 → FR-001: Call pipeline.process(...) with 7 images — verify
+        PipelineError("Batch size 7 exceeds maximum of 6.") raised.
 
         Given: A list of 7 ImageInput objects
         When: VisionPipeline.process(seven_images) is called
@@ -1244,8 +1271,7 @@ class TestBatchValidation:
 
         # Given — 7 images
         paths = [
-            _create_test_image(tmp_path, f"batch{i}.jpg", 256, 256)
-            for i in range(7)
+            _create_test_image(tmp_path, f"batch{i}.jpg", 256, 256) for i in range(7)
         ]
         inputs = [ImageInput(filepath=str(p)) for p in paths]
 

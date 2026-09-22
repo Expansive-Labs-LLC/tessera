@@ -41,13 +41,9 @@ class ManifestLoadError(Exception):
     EC-006: Covers missing file, invalid JSON, and missing required fields.
     """
 
-    pass
-
 
 class ModelNotFoundError(Exception):
     """Raised when a requested model_id is not found in the registry."""
-
-    pass
 
 
 class ModelDownloadError(Exception):
@@ -56,16 +52,12 @@ class ModelDownloadError(Exception):
     EC-004: Covers network errors, server errors, and timeout failures.
     """
 
-    pass
-
 
 class IntegrityError(Exception):
     """Raised when SHA256 verification fails for a downloaded file.
 
     FR-007, SEC-001: Integrity check failure with expected vs actual hash.
     """
-
-    pass
 
 
 __all__ = [

@@ -30,9 +30,7 @@ EC: EC-001 through EC-007.
 
 from __future__ import annotations
 
-import math
 import os
-import sys
 
 import pytest
 
@@ -40,8 +38,8 @@ import pytest
 # conftest.py mocks bpy so importorskip always succeeds; instead,
 # check for bpy.app.version which only real Blender provides.
 try:
-    import bpy
     import bmesh
+    import bpy
 
     _has_blender = hasattr(bpy, "app") and hasattr(bpy.app, "version")
 except ImportError:
@@ -61,10 +59,9 @@ from tessera.validator.checks.self_intersection import (
 )
 from tessera.validator.checks.volume import VolumeCheck
 from tessera.validator.checks.wall_thickness import WallThicknessCheck
-from tessera.validator.data_types import CheckResult, CheckStatus
+from tessera.validator.data_types import CheckStatus
 from tessera.validator.print_validator import PrintValidator
 from tessera.validator.report import ValidationReport
-
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Blender fixture helpers
@@ -459,10 +456,7 @@ class TestExportPipelineIntegration:
         )
 
         # Find the validation JSON.
-        json_files = [
-            f for f in os.listdir(tmp_path)
-            if f.endswith("_validation.json")
-        ]
+        json_files = [f for f in os.listdir(tmp_path) if f.endswith("_validation.json")]
         assert len(json_files) == 1
 
     def test_validation_failure_blocks_export(self):
@@ -536,8 +530,6 @@ class TestExportPipelineIntegration:
         assert result.success is True
         assert len(result.exported_files) == 2
 
-        extensions = {
-            os.path.splitext(f)[1] for f in result.exported_files
-        }
+        extensions = {os.path.splitext(f)[1] for f in result.exported_files}
         assert ".stl" in extensions
         assert ".obj" in extensions

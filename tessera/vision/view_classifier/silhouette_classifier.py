@@ -71,9 +71,7 @@ class SilhouetteClassifier(ViewClassifierAdapter):
         self._loaded = True
         logger.debug("Model loaded to GPU: model_name=%s", self.model_name)
 
-    def predict(
-        self, image: np.ndarray, mask: np.ndarray
-    ) -> tuple[str, float]:
+    def predict(self, image: np.ndarray, mask: np.ndarray) -> tuple[str, float]:
         """Classify view direction from segmentation mask silhouette.
 
         Args:
@@ -117,9 +115,7 @@ class SilhouetteClassifier(ViewClassifierAdapter):
         if min_w > 0:
             left_half = left_half[:, :min_w]
             right_flipped = right_flipped[:, :min_w]
-            symmetry = float(
-                np.mean(left_half == right_flipped)
-            )
+            symmetry = float(np.mean(left_half == right_flipped))
         else:
             symmetry = 0.5
 

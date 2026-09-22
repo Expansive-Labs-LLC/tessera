@@ -29,13 +29,9 @@ for Blender-dependent APIs.
 """
 
 import json
-import re
-from dataclasses import dataclass
-from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-
 
 # ===================================================================
 # Fixtures
@@ -165,9 +161,17 @@ class TestIntentSchemaModels:
         from tessera.refinement.intent_schema import OperationType
 
         expected = {
-            "SCALE", "MOVE", "ROTATE", "SOLIDIFY", "SMOOTH",
-            "SHARPEN", "BEVEL", "ADD_GEOMETRY", "REMOVE_GEOMETRY",
-            "UNDO", "REDO",
+            "SCALE",
+            "MOVE",
+            "ROTATE",
+            "SOLIDIFY",
+            "SMOOTH",
+            "SHARPEN",
+            "BEVEL",
+            "ADD_GEOMETRY",
+            "REMOVE_GEOMETRY",
+            "UNDO",
+            "REDO",
         }
         actual = {op.value for op in OperationType}
         assert actual == expected
@@ -251,9 +255,7 @@ class TestParameterClamping:
         """FR-044: Each parameter is clamped to its defined range."""
         from tessera.refinement.intent_schema import OperationType, clamp_parameters
 
-        clamped, warnings = clamp_parameters(
-            OperationType(op), {param: value}
-        )
+        clamped, warnings = clamp_parameters(OperationType(op), {param: value})
         assert clamped[param] == pytest.approx(expected)
         if value != expected:
             assert len(warnings) >= 1
@@ -273,9 +275,7 @@ class TestParameterClamping:
         """FR-044: Warning message follows spec format."""
         from tessera.refinement.intent_schema import OperationType, clamp_parameters
 
-        _, warnings = clamp_parameters(
-            OperationType.SCALE, {"factor": 200.0}
-        )
+        _, warnings = clamp_parameters(OperationType.SCALE, {"factor": 200.0})
         assert "Parameter 'factor' was 200.0" in warnings[0]
         assert "allowed range: 0.01–100.0" in warnings[0]
 
@@ -305,10 +305,15 @@ class TestDimensionlessDefaults:
     @pytest.mark.parametrize(
         "word,expected_pct",
         [
-            ("taller", 10.0), ("bigger", 10.0), ("wider", 10.0),
-            ("longer", 10.0), ("thicker", 10.0),
-            ("shorter", -10.0), ("smaller", -10.0),
-            ("narrower", -10.0), ("thinner", -10.0),
+            ("taller", 10.0),
+            ("bigger", 10.0),
+            ("wider", 10.0),
+            ("longer", 10.0),
+            ("thicker", 10.0),
+            ("shorter", -10.0),
+            ("smaller", -10.0),
+            ("narrower", -10.0),
+            ("thinner", -10.0),
         ],
     )
     def test_dimensionless_mapping_complete(self, word, expected_pct):
@@ -388,14 +393,18 @@ class TestIntentParserLLMParsing:
 
     def test_parse_single_intent_from_llm(self):
         """FR-007 / AC-001: Single intent JSON parsed correctly."""
-        response = json.dumps({
-            "intents": [{
-                "operation": "SCALE",
-                "target_region": "all",
-                "parameters": {"axis": "Z", "factor": 1.2},
-                "confidence": 0.95,
-            }]
-        })
+        response = json.dumps(
+            {
+                "intents": [
+                    {
+                        "operation": "SCALE",
+                        "target_region": "all",
+                        "parameters": {"axis": "Z", "factor": 1.2},
+                        "confidence": 0.95,
+                    }
+                ]
+            }
+        )
         from tessera.refinement.intent_parser import IntentParser
         from tessera.refinement.intent_schema import OperationType
 
@@ -412,14 +421,24 @@ class TestIntentParserLLMParsing:
 
     def test_parse_multiple_intents_from_llm(self):
         """FR-007 / EC-001: Multiple intents decomposed from compound command."""
-        response = json.dumps({
-            "intents": [
-                {"operation": "SCALE", "target_region": "top",
-                 "parameters": {"factor": 1.1}, "confidence": 0.9},
-                {"operation": "SCALE", "target_region": "base",
-                 "parameters": {"factor": 0.9}, "confidence": 0.88},
-            ]
-        })
+        response = json.dumps(
+            {
+                "intents": [
+                    {
+                        "operation": "SCALE",
+                        "target_region": "top",
+                        "parameters": {"factor": 1.1},
+                        "confidence": 0.9,
+                    },
+                    {
+                        "operation": "SCALE",
+                        "target_region": "base",
+                        "parameters": {"factor": 0.9},
+                        "confidence": 0.88,
+                    },
+                ]
+            }
+        )
         from tessera.refinement.intent_parser import IntentParser
 
         parser = IntentParser(backend=MockLLMBackend(response))
@@ -434,14 +453,24 @@ class TestIntentParserLLMParsing:
 
     def test_ambiguity_response_below_threshold(self):
         """FR-012 / AC-004: Low confidence triggers AmbiguityResponse."""
-        response = json.dumps({
-            "intents": [
-                {"operation": "SMOOTH", "target_region": "all",
-                 "parameters": {}, "confidence": 0.4},
-                {"operation": "UNDO", "target_region": "all",
-                 "parameters": {}, "confidence": 0.3},
-            ]
-        })
+        response = json.dumps(
+            {
+                "intents": [
+                    {
+                        "operation": "SMOOTH",
+                        "target_region": "all",
+                        "parameters": {},
+                        "confidence": 0.4,
+                    },
+                    {
+                        "operation": "UNDO",
+                        "target_region": "all",
+                        "parameters": {},
+                        "confidence": 0.3,
+                    },
+                ]
+            }
+        )
         from tessera.refinement.intent_parser import IntentParser
         from tessera.refinement.intent_schema import AmbiguityResponse
 
@@ -455,14 +484,16 @@ class TestIntentParserLLMParsing:
 
     def test_ambiguity_max_3_candidates(self):
         """FR-017: At most 3 candidate interpretations returned."""
-        response = json.dumps({
-            "intents": [
-                {"operation": "SMOOTH", "confidence": 0.5},
-                {"operation": "SCALE", "confidence": 0.4},
-                {"operation": "SOLIDIFY", "confidence": 0.3},
-                {"operation": "BEVEL", "confidence": 0.2},
-            ]
-        })
+        response = json.dumps(
+            {
+                "intents": [
+                    {"operation": "SMOOTH", "confidence": 0.5},
+                    {"operation": "SCALE", "confidence": 0.4},
+                    {"operation": "SOLIDIFY", "confidence": 0.3},
+                    {"operation": "BEVEL", "confidence": 0.2},
+                ]
+            }
+        )
         from tessera.refinement.intent_parser import IntentParser
         from tessera.refinement.intent_schema import AmbiguityResponse
 
@@ -524,14 +555,18 @@ class TestIntentParserDimensionless:
 
     def test_dimensionless_adjective_infers_factor(self):
         """FR-008: 'taller' with no value infers +10% scale factor."""
-        response = json.dumps({
-            "intents": [{
-                "operation": "SCALE",
-                "target_region": "all",
-                "parameters": {},
-                "confidence": 0.9,
-            }]
-        })
+        response = json.dumps(
+            {
+                "intents": [
+                    {
+                        "operation": "SCALE",
+                        "target_region": "all",
+                        "parameters": {},
+                        "confidence": 0.9,
+                    }
+                ]
+            }
+        )
         from tessera.refinement.intent_parser import IntentParser
 
         parser = IntentParser(backend=MockLLMBackend(response))
@@ -580,11 +615,13 @@ class TestIntentParserSystemPrompt:
         """FR-011: System prompt contains bounding box, vgroups, face count."""
         from tessera.refinement.intent_parser import _build_system_prompt
 
-        prompt = _build_system_prompt({
-            "bounding_box_mm": {"x": 50.0, "y": 30.0, "z": 100.0},
-            "vertex_groups": ["handle", "base"],
-            "face_count": 5000,
-        })
+        prompt = _build_system_prompt(
+            {
+                "bounding_box_mm": {"x": 50.0, "y": 30.0, "z": 100.0},
+                "vertex_groups": ["handle", "base"],
+                "face_count": 5000,
+            }
+        )
         assert "50.0" in prompt
         assert "30.0" in prompt
         assert "100.0" in prompt
@@ -597,8 +634,17 @@ class TestIntentParserSystemPrompt:
         from tessera.refinement.intent_parser import _build_system_prompt
 
         prompt = _build_system_prompt({"bounding_box_mm": {}, "face_count": 0})
-        for op in ["SCALE", "MOVE", "ROTATE", "SOLIDIFY", "SMOOTH",
-                    "SHARPEN", "BEVEL", "ADD_GEOMETRY", "REMOVE_GEOMETRY"]:
+        for op in [
+            "SCALE",
+            "MOVE",
+            "ROTATE",
+            "SOLIDIFY",
+            "SMOOTH",
+            "SHARPEN",
+            "BEVEL",
+            "ADD_GEOMETRY",
+            "REMOVE_GEOMETRY",
+        ]:
             assert op in prompt
 
 
@@ -653,8 +699,17 @@ class TestRegionResolverSpatialnHeuristics:
         """FR-014: All standard spatial terms are defined."""
         from tessera.refinement.region_resolver import SPATIAL_HEURISTICS
 
-        for term in ["base", "bottom", "top", "middle", "center",
-                     "left", "right", "front", "back"]:
+        for term in [
+            "base",
+            "bottom",
+            "top",
+            "middle",
+            "center",
+            "left",
+            "right",
+            "front",
+            "back",
+        ]:
             assert term in SPATIAL_HEURISTICS
 
     def test_top_heuristic_selects_top_20_pct(self):
@@ -829,8 +884,14 @@ class TestUndoManagerStackInfo:
 
         mgr = UndoManager()
         info = mgr.get_stack_info()
-        for key in ["current_version", "undo_depth", "redo_depth",
-                     "can_undo", "can_redo", "history"]:
+        for key in [
+            "current_version",
+            "undo_depth",
+            "redo_depth",
+            "can_undo",
+            "can_redo",
+            "history",
+        ]:
             assert key in info
 
 
@@ -971,7 +1032,7 @@ class TestChatManagerFIFO:
 
     def test_fifo_eviction_at_capacity(self):
         """FR-042: Oldest messages evicted when exceeding 200."""
-        from tessera.refinement.chat_manager import ChatManager, MAX_HISTORY_LENGTH
+        from tessera.refinement.chat_manager import MAX_HISTORY_LENGTH, ChatManager
 
         mgr = ChatManager()
         for i in range(MAX_HISTORY_LENGTH + 5):
@@ -980,7 +1041,7 @@ class TestChatManagerFIFO:
 
     def test_fifo_preserves_latest(self):
         """FR-042: After eviction, latest messages are preserved."""
-        from tessera.refinement.chat_manager import ChatManager, MAX_HISTORY_LENGTH
+        from tessera.refinement.chat_manager import MAX_HISTORY_LENGTH, ChatManager
 
         mgr = ChatManager()
         for i in range(MAX_HISTORY_LENGTH + 10):
@@ -1165,6 +1226,7 @@ class TestSecurityConstraints:
         """SEC-002 / CON-003: Intent parser uses json.loads, not eval."""
         import ast
         import inspect
+
         from tessera.refinement import intent_parser
 
         source = inspect.getsource(intent_parser)
@@ -1180,6 +1242,7 @@ class TestSecurityConstraints:
         """SEC-002: Region resolver does not use eval/exec."""
         import ast
         import inspect
+
         from tessera.refinement import region_resolver
 
         source = inspect.getsource(region_resolver)
@@ -1194,6 +1257,7 @@ class TestSecurityConstraints:
         """SEC-002: Edit executor does not use eval/exec."""
         import ast
         import inspect
+
         from tessera.refinement import edit_executor
 
         source = inspect.getsource(edit_executor)
@@ -1224,8 +1288,14 @@ class TestSecurityConstraints:
         from tessera.refinement.intent_schema import PARAMETER_RANGES
 
         expected_ops = [
-            "SCALE", "MOVE", "ROTATE", "SOLIDIFY",
-            "SMOOTH", "SHARPEN", "BEVEL", "ADD_GEOMETRY",
+            "SCALE",
+            "MOVE",
+            "ROTATE",
+            "SOLIDIFY",
+            "SMOOTH",
+            "SHARPEN",
+            "BEVEL",
+            "ADD_GEOMETRY",
         ]
         for op in expected_ops:
             assert op in PARAMETER_RANGES, f"Missing range for {op}"

@@ -37,10 +37,14 @@ def cube_vertices() -> np.ndarray:
     """Unit cube vertices (8, 3)."""
     return np.array(
         [
-            [-0.5, -0.5, -0.5], [0.5, -0.5, -0.5],
-            [0.5, 0.5, -0.5], [-0.5, 0.5, -0.5],
-            [-0.5, -0.5, 0.5], [0.5, -0.5, 0.5],
-            [0.5, 0.5, 0.5], [-0.5, 0.5, 0.5],
+            [-0.5, -0.5, -0.5],
+            [0.5, -0.5, -0.5],
+            [0.5, 0.5, -0.5],
+            [-0.5, 0.5, -0.5],
+            [-0.5, -0.5, 0.5],
+            [0.5, -0.5, 0.5],
+            [0.5, 0.5, 0.5],
+            [-0.5, 0.5, 0.5],
         ],
         dtype=np.float64,
     )
@@ -51,9 +55,18 @@ def cube_faces() -> np.ndarray:
     """Unit cube faces (12, 3)."""
     return np.array(
         [
-            [0, 1, 2], [0, 2, 3], [4, 6, 5], [4, 7, 6],
-            [0, 4, 5], [0, 5, 1], [2, 6, 7], [2, 7, 3],
-            [0, 3, 7], [0, 7, 4], [1, 5, 6], [1, 6, 2],
+            [0, 1, 2],
+            [0, 2, 3],
+            [4, 6, 5],
+            [4, 7, 6],
+            [0, 4, 5],
+            [0, 5, 1],
+            [2, 6, 7],
+            [2, 7, 3],
+            [0, 3, 7],
+            [0, 7, 4],
+            [1, 5, 6],
+            [1, 6, 2],
         ],
         dtype=np.int64,
     )
@@ -65,9 +78,7 @@ def cube_faces() -> np.ndarray:
 class TestMeshHash:
     """Test deterministic mesh hashing."""
 
-    def test_identical_mesh_produces_same_hash(
-        self, cube_vertices, cube_faces
-    ) -> None:
+    def test_identical_mesh_produces_same_hash(self, cube_vertices, cube_faces) -> None:
         """Same vertices and faces → identical hash."""
         from tessera.testing.mesh_hash import compute_mesh_hash
 
@@ -86,9 +97,7 @@ class TestMeshHash:
         h_shuffled = compute_mesh_hash(shuffled, cube_faces)
         assert h_original == h_shuffled
 
-    def test_shuffled_faces_produce_same_hash(
-        self, cube_vertices, cube_faces
-    ) -> None:
+    def test_shuffled_faces_produce_same_hash(self, cube_vertices, cube_faces) -> None:
         """Shuffled face order → same hash (canonical sorting)."""
         from tessera.testing.mesh_hash import compute_mesh_hash
 
@@ -109,9 +118,7 @@ class TestMeshHash:
         h_modified = compute_mesh_hash(modified, cube_faces)
         assert h_original != h_modified
 
-    def test_hash_format_is_vertex_colon_face(
-        self, cube_vertices, cube_faces
-    ) -> None:
+    def test_hash_format_is_vertex_colon_face(self, cube_vertices, cube_faces) -> None:
         """Hash format: 'vertex_hash:face_hash'."""
         from tessera.testing.mesh_hash import compute_mesh_hash
 
@@ -147,18 +154,14 @@ class TestGoldenMeshRegistry:
         from tessera.testing.golden_mesh import GoldenMeshRegistry
 
         registry = GoldenMeshRegistry(tmp_path / "golden")
-        ref = registry.create_reference(
-            "cube", cube_vertices, cube_faces, "unit cube"
-        )
+        ref = registry.create_reference("cube", cube_vertices, cube_faces, "unit cube")
         loaded = registry.load_reference("cube")
         assert loaded is not None
         assert loaded.mesh_hash == ref.mesh_hash
         assert loaded.vertex_count == 8
         assert loaded.face_count == 12
 
-    def test_list_references(
-        self, tmp_path, cube_vertices, cube_faces
-    ) -> None:
+    def test_list_references(self, tmp_path, cube_vertices, cube_faces) -> None:
         """list_references() returns all saved reference names."""
         from tessera.testing.golden_mesh import GoldenMeshRegistry
 
@@ -289,9 +292,7 @@ class TestSecondaryComparison:
 class TestBoundingBox:
     """Test bounding box metadata in references."""
 
-    def test_bounding_box_stored(
-        self, tmp_path, cube_vertices, cube_faces
-    ) -> None:
+    def test_bounding_box_stored(self, tmp_path, cube_vertices, cube_faces) -> None:
         """Reference stores correct bounding box."""
         from tessera.testing.golden_mesh import GoldenMeshRegistry
 

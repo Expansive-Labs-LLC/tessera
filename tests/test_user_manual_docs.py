@@ -30,7 +30,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
@@ -47,6 +46,7 @@ _SCREENSHOTS_README = _DOCS_ROOT / "assets" / "screenshots" / "README.md"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _read(path: Path) -> str:
     """Read a file as UTF-8 text."""
@@ -123,9 +123,9 @@ class TestExistingPagePreservation:
         full_path = _DOCS_ROOT / page
 
         # Then
-        assert full_path.exists(), (
-            f"Preserved page '{page}' is missing — CON-008 violation"
-        )
+        assert (
+            full_path.exists()
+        ), f"Preserved page '{page}' is missing — CON-008 violation"
 
     def test_TS016_total_page_count_ge_18(self):
         """TS-016 → NFR-002: Total .md page count in docs/docs/ is ≥ 18.
@@ -140,9 +140,7 @@ class TestExistingPagePreservation:
         md_files = list(_DOCS_ROOT.rglob("*.md"))
 
         # Then
-        assert len(md_files) >= 18, (
-            f"Expected ≥ 18 .md pages, found {len(md_files)}"
-        )
+        assert len(md_files) >= 18, f"Expected ≥ 18 .md pages, found {len(md_files)}"
 
 
 # ---------------------------------------------------------------------------
@@ -165,9 +163,9 @@ class TestMkDocsConfig:
         content = _read(_MKDOCS_YML)
 
         # Then
-        assert "fallback_to_build_date: true" in content, (
-            "git-revision-date-localized must have fallback_to_build_date: true"
-        )
+        assert (
+            "fallback_to_build_date: true" in content
+        ), "git-revision-date-localized must have fallback_to_build_date: true"
 
     def test_TS002_git_dates_env_toggle(self):
         """TS-002 (ext): git-dates plugin can be disabled via ENABLE_GIT_DATES env.
@@ -182,9 +180,9 @@ class TestMkDocsConfig:
         content = _read(_MKDOCS_YML)
 
         # Then
-        assert "ENABLE_GIT_DATES" in content, (
-            "git-dates plugin must support !ENV [ENABLE_GIT_DATES, ...] toggle"
-        )
+        assert (
+            "ENABLE_GIT_DATES" in content
+        ), "git-dates plugin must support !ENV [ENABLE_GIT_DATES, ...] toggle"
 
     def test_TS013_nav_has_7_top_level_sections(self):
         """TS-013 → AC-007, FR-001: mkdocs.yml nav has 7 top-level sections.
@@ -336,9 +334,9 @@ class TestRequirementsTxt:
         ]
 
         # Then
-        assert len(lines) >= 4, (
-            f"Expected ≥ 4 dependencies, found {len(lines)}: {lines}"
-        )
+        assert (
+            len(lines) >= 4
+        ), f"Expected ≥ 4 dependencies, found {len(lines)}: {lines}"
 
     @pytest.mark.parametrize(
         "dep",
@@ -382,9 +380,7 @@ class TestQuickstart:
         step_count = len(re.findall(r"^## Step", content, re.MULTILINE))
 
         # Then
-        assert step_count <= 5, (
-            f"Quickstart has {step_count} steps (max 5)"
-        )
+        assert step_count <= 5, f"Quickstart has {step_count} steps (max 5)"
         assert step_count >= 1, "Quickstart has no steps at all"
 
     def test_FR016_each_step_has_screenshot_placeholder(self):
@@ -400,15 +396,13 @@ class TestQuickstart:
         content = _read(_DOCS_ROOT / "quickstart.md")
 
         # When
-        screenshots = re.findall(
-            r"!\[.*?\]\(.*?quickstart-step\d+\.png\)", content
-        )
+        screenshots = re.findall(r"!\[.*?\]\(.*?quickstart-step\d+\.png\)", content)
 
         # Then
         step_count = len(re.findall(r"^## Step", content, re.MULTILINE))
-        assert len(screenshots) >= step_count, (
-            f"Expected ≥ {step_count} quickstart screenshots, found {len(screenshots)}"
-        )
+        assert (
+            len(screenshots) >= step_count
+        ), f"Expected ≥ {step_count} quickstart screenshots, found {len(screenshots)}"
 
     def test_FR017_next_steps_section_exists(self):
         """FR-017: Quickstart has a 'Next Steps' section linking to ≥ 3 pages.
@@ -423,18 +417,16 @@ class TestQuickstart:
         content = _read(_DOCS_ROOT / "quickstart.md")
 
         # Then
-        assert "## Next Steps" in content or "## What's Next" in content, (
-            "Quickstart is missing a 'Next Steps' section"
-        )
+        assert (
+            "## Next Steps" in content or "## What's Next" in content
+        ), "Quickstart is missing a 'Next Steps' section"
         # Count markdown links after the Next Steps heading
         next_steps_match = re.split(
             r"^## (?:Next Steps|What's Next)", content, flags=re.MULTILINE
         )
         assert len(next_steps_match) >= 2, "Could not locate Next Steps section"
         links = re.findall(r"\[.*?\]\(.*?\.md.*?\)", next_steps_match[-1])
-        assert len(links) >= 3, (
-            f"Next Steps has {len(links)} links (need ≥ 3)"
-        )
+        assert len(links) >= 3, f"Next Steps has {len(links)} links (need ≥ 3)"
 
 
 # ---------------------------------------------------------------------------
@@ -467,9 +459,9 @@ class TestUserGuide:
         md_files = sorted(f.name for f in _USER_GUIDE_DIR.glob("*.md"))
 
         # Then
-        assert len(md_files) == 8, (
-            f"Expected 8 user-guide pages, found {len(md_files)}: {md_files}"
-        )
+        assert (
+            len(md_files) == 8
+        ), f"Expected 8 user-guide pages, found {len(md_files)}: {md_files}"
 
     @pytest.mark.parametrize("page", EXPECTED_PAGES)
     def test_TS006_expected_page_exists(self, page):
@@ -481,9 +473,7 @@ class TestUserGuide:
 
         Type: Script | Priority: Must Pass
         """
-        assert (_USER_GUIDE_DIR / page).exists(), (
-            f"Missing user-guide page: {page}"
-        )
+        assert (_USER_GUIDE_DIR / page).exists(), f"Missing user-guide page: {page}"
 
     @pytest.mark.parametrize("page", EXPECTED_PAGES)
     def test_TS017_user_guide_page_has_see_also(self, page):
@@ -499,9 +489,7 @@ class TestUserGuide:
         content = _read(_USER_GUIDE_DIR / page)
 
         # Then
-        assert "## See Also" in content, (
-            f"'{page}' is missing a '## See Also' section"
-        )
+        assert "## See Also" in content, f"'{page}' is missing a '## See Also' section"
 
     @pytest.mark.parametrize("page", EXPECTED_PAGES)
     def test_FR028_user_guide_page_has_admonition(self, page):
@@ -518,9 +506,7 @@ class TestUserGuide:
 
         # Then — admonitions start with !!! or ???
         admonitions = re.findall(r"^(?:!!!|\?\?\?)\s+\w+", content, re.MULTILINE)
-        assert len(admonitions) >= 1, (
-            f"'{page}' has no admonitions (need ≥ 1)"
-        )
+        assert len(admonitions) >= 1, f"'{page}' has no admonitions (need ≥ 1)"
 
     @pytest.mark.parametrize("page", EXPECTED_PAGES)
     def test_FR029_user_guide_page_has_screenshot_placeholder(self, page):
@@ -536,12 +522,8 @@ class TestUserGuide:
         content = _read(_USER_GUIDE_DIR / page)
 
         # Then
-        screenshots = re.findall(
-            r"!\[.*?\]\(.*?assets/screenshots/.*?\.png\)", content
-        )
-        assert len(screenshots) >= 1, (
-            f"'{page}' has no screenshot placeholders"
-        )
+        screenshots = re.findall(r"!\[.*?\]\(.*?assets/screenshots/.*?\.png\)", content)
+        assert len(screenshots) >= 1, f"'{page}' has no screenshot placeholders"
 
 
 # ---------------------------------------------------------------------------
@@ -576,9 +558,8 @@ class TestScreenshotAltText:
                     )
 
         # Then
-        assert not violations, (
-            f"Screenshot alt text must be ≥ 10 words:\n"
-            + "\n".join(violations)
+        assert not violations, "Screenshot alt text must be ≥ 10 words:\n" + "\n".join(
+            violations
         )
 
 
@@ -615,9 +596,9 @@ class TestViewLabels:
         content = _read(_REFERENCE_DIR / "view-labels.md")
 
         # Then — label should appear as a code span in a table row
-        assert f"`{label}" in content, (
-            f"View label '{label}' not found in view-labels.md"
-        )
+        assert (
+            f"`{label}" in content
+        ), f"View label '{label}' not found in view-labels.md"
 
     def test_TS007_view_labels_table_columns(self):
         """TS-007 (ext): View labels table has required columns.
@@ -670,9 +651,7 @@ class TestGlossary:
         term_count = _count_h2(content)
 
         # Then
-        assert term_count >= 25, (
-            f"Glossary has {term_count} terms (need ≥ 25)"
-        )
+        assert term_count >= 25, f"Glossary has {term_count} terms (need ≥ 25)"
 
     @pytest.mark.parametrize("term", PRD_TERMS)
     def test_TS008_prd_glossary_term_present(self, term):
@@ -688,9 +667,9 @@ class TestGlossary:
         content = _read(_REFERENCE_DIR / "glossary.md")
 
         # Then
-        assert f"## {term}" in content, (
-            f"PRD glossary term '{term}' missing from glossary.md"
-        )
+        assert (
+            f"## {term}" in content
+        ), f"PRD glossary term '{term}' missing from glossary.md"
 
 
 # ---------------------------------------------------------------------------
@@ -729,9 +708,7 @@ class TestFAQ:
         question_count = _count_h3(content)
 
         # Then
-        assert question_count >= 15, (
-            f"FAQ has {question_count} questions (need ≥ 15)"
-        )
+        assert question_count >= 15, f"FAQ has {question_count} questions (need ≥ 15)"
 
     @pytest.mark.parametrize("substring", REQUIRED_QUESTIONS)
     def test_TS010_required_question_present(self, substring):
@@ -747,9 +724,9 @@ class TestFAQ:
         content = _read(_DOCS_ROOT / "faq.md").lower()
 
         # Then
-        assert substring.lower() in content, (
-            f"Required FAQ question containing '{substring}' is missing"
-        )
+        assert (
+            substring.lower() in content
+        ), f"Required FAQ question containing '{substring}' is missing"
 
     def test_FR036_faq_has_4_categories(self):
         """FR-036: FAQ is organized into 4 categories.
@@ -769,9 +746,9 @@ class TestFAQ:
         category_count = len(h2_headings)
 
         # Then
-        assert category_count >= 4, (
-            f"FAQ has {category_count} categories (need ≥ 4): {h2_headings}"
-        )
+        assert (
+            category_count >= 4
+        ), f"FAQ has {category_count} categories (need ≥ 4): {h2_headings}"
 
 
 # ---------------------------------------------------------------------------
@@ -789,9 +766,9 @@ class TestScreenshotManifest:
 
         Type: Script | Priority: Must Pass
         """
-        assert _SCREENSHOTS_README.exists(), (
-            "docs/docs/assets/screenshots/README.md is missing"
-        )
+        assert (
+            _SCREENSHOTS_README.exists()
+        ), "docs/docs/assets/screenshots/README.md is missing"
 
     def test_TS015_manifest_ge_15_screenshots(self):
         """TS-015 → FR-042: Manifest lists ≥ 15 screenshots.
@@ -859,9 +836,9 @@ class TestHelpPanel:
         from tessera.ui.help_panel import _DOCS_URL
 
         # Then
-        assert _DOCS_URL == "https://expansive-labs-llc.github.io/tessera/", (
-            f"_DOCS_URL = '{_DOCS_URL}' — wrong domain"
-        )
+        assert (
+            _DOCS_URL == "https://expansive-labs-llc.github.io/tessera/"
+        ), f"_DOCS_URL = '{_DOCS_URL}' — wrong domain"
 
     def test_TS012_quickstart_url_constant(self, mock_bpy):
         """TS-012 (ext): _QUICKSTART_URL constant uses correct domain.
@@ -890,14 +867,12 @@ class TestHelpPanel:
         Type: Script | Priority: Must Pass
         """
         # Given — read the source file directly
-        source = _read(
-            _PROJECT_ROOT / "tessera" / "ui" / "help_panel.py"
-        )
+        source = _read(_PROJECT_ROOT / "tessera" / "ui" / "help_panel.py")
 
         # Then — verify the URL is a hardcoded string literal, not dynamic
-        assert '_DOCS_URL = "https://' in source, (
-            "_DOCS_URL must be a hardcoded HTTPS string literal"
-        )
+        assert (
+            '_DOCS_URL = "https://' in source
+        ), "_DOCS_URL must be a hardcoded HTTPS string literal"
 
     def test_TS012_help_panel_uses_url_open(self, mock_bpy):
         """TS-012 → FR-043: Help panel uses wm.url_open operator.
@@ -909,17 +884,11 @@ class TestHelpPanel:
         Type: Script | Priority: Must Pass
         """
         # Given
-        source = _read(
-            _PROJECT_ROOT / "tessera" / "ui" / "help_panel.py"
-        )
+        source = _read(_PROJECT_ROOT / "tessera" / "ui" / "help_panel.py")
 
         # Then
-        assert "wm.url_open" in source, (
-            "help_panel.py must use 'wm.url_open' operator"
-        )
-        assert "_DOCS_URL" in source, (
-            "help_panel.py must reference _DOCS_URL"
-        )
+        assert "wm.url_open" in source, "help_panel.py must use 'wm.url_open' operator"
+        assert "_DOCS_URL" in source, "help_panel.py must reference _DOCS_URL"
 
 
 # ---------------------------------------------------------------------------
@@ -946,9 +915,7 @@ class TestSecurityCompliance:
                 violations.append(str(rel_path))
 
         # Then
-        assert not violations, (
-            f"Personal paths found in: {violations}"
-        )
+        assert not violations, f"Personal paths found in: {violations}"
 
     def test_TS020_no_windows_user_paths(self):
         """TS-020 (ext) → SEC-002: No C:\\Users\\derek paths in docs.
@@ -967,9 +934,7 @@ class TestSecurityCompliance:
                 violations.append(str(md_file.relative_to(_DOCS_ROOT)))
 
         # Then
-        assert not violations, (
-            f"Personal Windows paths found in: {violations}"
-        )
+        assert not violations, f"Personal Windows paths found in: {violations}"
 
     def test_SEC001_no_api_keys_in_docs(self):
         """SEC-001: No API keys or secrets in documentation.
@@ -982,9 +947,9 @@ class TestSecurityCompliance:
         """
         # Given
         secret_patterns = [
-            r"sk-[a-zA-Z0-9]{20,}",         # OpenAI API key
-            r"ghp_[a-zA-Z0-9]{36}",          # GitHub PAT
-            r"AKIA[0-9A-Z]{16}",             # AWS access key
+            r"sk-[a-zA-Z0-9]{20,}",  # OpenAI API key
+            r"ghp_[a-zA-Z0-9]{36}",  # GitHub PAT
+            r"AKIA[0-9A-Z]{16}",  # AWS access key
             r"(?i)api[_-]?key\s*[:=]\s*['\"][a-zA-Z0-9]{16,}",
         ]
         violations = []
@@ -998,9 +963,7 @@ class TestSecurityCompliance:
                     )
 
         # Then
-        assert not violations, (
-            f"Potential secrets found:\n" + "\n".join(violations)
-        )
+        assert not violations, "Potential secrets found:\n" + "\n".join(violations)
 
     def test_SEC004_no_script_tags_in_docs(self):
         """SEC-004: No <script> tags in documentation.
@@ -1020,9 +983,7 @@ class TestSecurityCompliance:
                 violations.append(str(md_file.relative_to(_DOCS_ROOT)))
 
         # Then
-        assert not violations, (
-            f"<script> tags found in: {violations}"
-        )
+        assert not violations, f"<script> tags found in: {violations}"
 
     def test_CON004_no_agent_dir_references(self):
         """CON-004: No references to .agent/ directory in docs.
@@ -1041,9 +1002,7 @@ class TestSecurityCompliance:
                 violations.append(str(md_file.relative_to(_DOCS_ROOT)))
 
         # Then
-        assert not violations, (
-            f".agent/ references found in: {violations}"
-        )
+        assert not violations, f".agent/ references found in: {violations}"
 
 
 # ---------------------------------------------------------------------------
@@ -1067,13 +1026,11 @@ class TestInstallationContent:
         # Then
         assert "VRAM" in content, "installation.md must mention VRAM"
         # Count table data rows (lines starting with |, excluding header/separator)
-        vram_section = content[content.index("VRAM"):]
+        vram_section = content[content.index("VRAM") :]
         table_rows = re.findall(r"^\|[^-].*\|$", vram_section, re.MULTILINE)
         # Subtract header row
         data_rows = max(0, len(table_rows) - 1)
-        assert data_rows >= 4, (
-            f"VRAM table has {data_rows} data rows (need ≥ 4)"
-        )
+        assert data_rows >= 4, f"VRAM table has {data_rows} data rows (need ≥ 4)"
 
     def test_TS019_build_from_source_section(self):
         """TS-019 → FR-011: Installation has a 'Build from Source' section.
@@ -1088,9 +1045,9 @@ class TestInstallationContent:
         content = _read(_DOCS_ROOT / "installation.md")
 
         # Then
-        assert "Build from Source" in content, (
-            "installation.md is missing a 'Build from Source' section"
-        )
+        assert (
+            "Build from Source" in content
+        ), "installation.md is missing a 'Build from Source' section"
 
     def test_TS019_build_from_source_le_6_steps(self):
         """TS-019 (ext) → FR-011: Build from Source has ≤ 6 steps.
@@ -1114,9 +1071,7 @@ class TestInstallationContent:
         steps = re.findall(r"^\d+\.", bfs_text, re.MULTILINE)
 
         # Then
-        assert len(steps) <= 6, (
-            f"Build from Source has {len(steps)} steps (max 6)"
-        )
+        assert len(steps) <= 6, f"Build from Source has {len(steps)} steps (max 6)"
 
     def test_FR014_apple_silicon_admonition(self):
         """FR-014: Installation has an Apple Silicon / MPS admonition.
@@ -1131,9 +1086,9 @@ class TestInstallationContent:
         content = _read(_DOCS_ROOT / "installation.md").lower()
 
         # Then
-        assert "apple silicon" in content or "mps" in content, (
-            "installation.md must mention Apple Silicon or MPS"
-        )
+        assert (
+            "apple silicon" in content or "mps" in content
+        ), "installation.md must mention Apple Silicon or MPS"
 
 
 # ---------------------------------------------------------------------------
@@ -1155,16 +1110,12 @@ class TestPrinterProfiles:
         content = _read(_REFERENCE_DIR / "printer-profiles.md")
 
         # When — count table rows (lines with | that aren't header separator)
-        table_lines = re.findall(
-            r"^\|[^-].*\|$", content, re.MULTILINE
-        )
+        table_lines = re.findall(r"^\|[^-].*\|$", content, re.MULTILINE)
         # Subtract header row(s)
         data_rows = max(0, len(table_lines) - 1)
 
         # Then
-        assert data_rows >= 7, (
-            f"Printer profiles has {data_rows} rows (need ≥ 7)"
-        )
+        assert data_rows >= 7, f"Printer profiles has {data_rows} rows (need ≥ 7)"
 
     def test_TS021_required_profile_names(self):
         """TS-021 (ext): Required profiles are present.
@@ -1189,9 +1140,9 @@ class TestPrinterProfiles:
             "Custom",
         ]
         for profile in required:
-            assert profile in content, (
-                f"Printer profile '{profile}' missing from printer-profiles.md"
-            )
+            assert (
+                profile in content
+            ), f"Printer profile '{profile}' missing from printer-profiles.md"
 
 
 # ---------------------------------------------------------------------------
@@ -1201,9 +1152,7 @@ class TestErrorCodes:
     """TS-022: error-codes.md contains all defined error codes."""
 
     # Error codes BF-E001 through BF-E016 plus BF-E999.
-    REQUIRED_CODES = [
-        f"BF-E{i:03d}" for i in range(1, 17)
-    ] + ["BF-E999"]
+    REQUIRED_CODES = [f"BF-E{i:03d}" for i in range(1, 17)] + ["BF-E999"]
 
     def test_TS022_error_code_count(self):
         """TS-022 → FR-033: error-codes.md has 17 error code entries.
@@ -1240,9 +1189,7 @@ class TestErrorCodes:
         content = _read(_REFERENCE_DIR / "error-codes.md")
 
         # Then
-        assert code in content, (
-            f"Error code '{code}' missing from error-codes.md"
-        )
+        assert code in content, f"Error code '{code}' missing from error-codes.md"
 
 
 # ---------------------------------------------------------------------------
@@ -1272,9 +1219,9 @@ class TestTroubleshooting:
         content = _read(_DOCS_ROOT / "troubleshooting.md")
 
         # Then
-        assert "Common Issues" in content, (
-            "troubleshooting.md is missing 'Common Issues' section"
-        )
+        assert (
+            "Common Issues" in content
+        ), "troubleshooting.md is missing 'Common Issues' section"
 
     @pytest.mark.parametrize("issue_substr", COMMON_ISSUES)
     def test_FR039_common_issue_present(self, issue_substr):
@@ -1290,9 +1237,9 @@ class TestTroubleshooting:
         content = _read(_DOCS_ROOT / "troubleshooting.md").lower()
 
         # Then
-        assert issue_substr.lower() in content, (
-            f"Common issue '{issue_substr}' not found in troubleshooting.md"
-        )
+        assert (
+            issue_substr.lower() in content
+        ), f"Common issue '{issue_substr}' not found in troubleshooting.md"
 
 
 # ---------------------------------------------------------------------------
@@ -1314,14 +1261,12 @@ class TestGallery:
         content = _read(_DOCS_ROOT / "gallery" / "index.md")
 
         # When — count gallery input/output image pairs
-        input_images = re.findall(
-            r"!\[.*?\]\(.*?gallery-.*?-input\.png\)", content
-        )
+        input_images = re.findall(r"!\[.*?\]\(.*?gallery-.*?-input\.png\)", content)
 
         # Then
-        assert len(input_images) >= 3, (
-            f"Gallery has {len(input_images)} entries (need ≥ 3)"
-        )
+        assert (
+            len(input_images) >= 3
+        ), f"Gallery has {len(input_images)} entries (need ≥ 3)"
 
     def test_FR046_gallery_entries_have_generation_time(self):
         """FR-046 (ext): Gallery entries include generation times.
@@ -1339,6 +1284,4 @@ class TestGallery:
         times = re.findall(r"~\d+s", content)
 
         # Then
-        assert len(times) >= 3, (
-            f"Gallery has {len(times)} generation times (need ≥ 3)"
-        )
+        assert len(times) >= 3, f"Gallery has {len(times)} generation times (need ≥ 3)"

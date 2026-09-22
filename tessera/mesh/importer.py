@@ -102,8 +102,7 @@ class MeshImporter:
 
         # §11.1: Log import started before mesh operations.
         logger.info(
-            "Mesh import started: vertex_count=%d, face_count=%d, "
-            "source_model=%s",
+            "Mesh import started: vertex_count=%d, face_count=%d, " "source_model=%s",
             len(verts),
             len(face_indices),
             sanitized_source,
@@ -119,9 +118,7 @@ class MeshImporter:
             n_faces = len(face_indices)
 
             mesh_data.vertices.add(n_verts)
-            mesh_data.vertices.foreach_set(
-                "co", verts.ravel().astype(float)
-            )
+            mesh_data.vertices.foreach_set("co", verts.ravel().astype(float))
 
             mesh_data.loops.add(n_faces * 3)
             mesh_data.loops.foreach_set(
@@ -134,9 +131,7 @@ class MeshImporter:
                 "loop_start",
                 [i * 3 for i in range(n_faces)],
             )
-            mesh_data.polygons.foreach_set(
-                "loop_total", [3] * n_faces
-            )
+            mesh_data.polygons.foreach_set("loop_total", [3] * n_faces)
 
             mesh_data.update()
             mesh_data.validate()
@@ -145,9 +140,7 @@ class MeshImporter:
             # environments or older Blender builds where foreach_set
             # is unavailable on mesh elements.
             mesh_data = bpy.data.meshes.new(name=obj_name)
-            mesh_data.from_pydata(
-                verts.tolist(), [], face_indices.tolist()
-            )
+            mesh_data.from_pydata(verts.tolist(), [], face_indices.tolist())
             mesh_data.update()
 
         # --- Create object and link to scene ---
@@ -197,14 +190,10 @@ class MeshImporter:
             )
 
         if vertices.ndim != 2 or vertices.shape[1] != 3:
-            raise ValueError(
-                f"vertices must have shape (N, 3), got {vertices.shape}"
-            )
+            raise ValueError(f"vertices must have shape (N, 3), got {vertices.shape}")
 
         if vertices.dtype != np.float32:
-            raise ValueError(
-                f"vertices dtype must be float32, got {vertices.dtype}"
-            )
+            raise ValueError(f"vertices dtype must be float32, got {vertices.dtype}")
 
         # SEC-001: Reject NaN / Inf values.
         if np.any(np.isnan(vertices)):
@@ -237,9 +226,7 @@ class MeshImporter:
         Implements: SEC-001, SEC-002, EC-003, EC-005.
         """
         if not isinstance(faces, np.ndarray):
-            raise ValueError(
-                f"faces must be a numpy array, got {type(faces).__name__}"
-            )
+            raise ValueError(f"faces must be a numpy array, got {type(faces).__name__}")
 
         # EC-005: Must be triangular.
         if faces.ndim != 2 or faces.shape[1] != 3:
@@ -249,9 +236,7 @@ class MeshImporter:
             )
 
         if faces.dtype != np.int32:
-            raise ValueError(
-                f"faces dtype must be int32, got {faces.dtype}"
-            )
+            raise ValueError(f"faces dtype must be int32, got {faces.dtype}")
 
         # EC-003: Minimum mesh requirements.
         if len(faces) < _MIN_FACES:

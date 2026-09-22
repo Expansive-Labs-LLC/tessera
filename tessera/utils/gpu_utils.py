@@ -77,7 +77,7 @@ def get_amd_vram_gb():
                             value = float(part)
                             # Heuristic: if value > 1_000_000, assume bytes
                             if value > 1_000_000:
-                                return round(value / (1024 ** 3), 1)
+                                return round(value / (1024**3), 1)
                             # If value > 1000, assume MiB
                             elif value > 1000:
                                 return round(value / 1024.0, 1)
@@ -100,7 +100,7 @@ def get_apple_silicon_memory_gb():
         page_size = os.sysconf("SC_PAGE_SIZE")
         page_count = os.sysconf("SC_PHYS_PAGES")
         total_bytes = page_size * page_count
-        return round(total_bytes / (1024 ** 3), 1)
+        return round(total_bytes / (1024**3), 1)
     except (ValueError, OSError) as e:
         logger.debug("Apple Silicon memory query failed: %s", e)
     return 0.0

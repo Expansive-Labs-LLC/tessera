@@ -61,9 +61,7 @@ class ViewClassifierAdapter(ABC):
         ...
 
     @abstractmethod
-    def predict(
-        self, image: np.ndarray, mask: np.ndarray
-    ) -> tuple[str, float]:
+    def predict(self, image: np.ndarray, mask: np.ndarray) -> tuple[str, float]:
         """Classify the view direction of an image.
 
         Args:

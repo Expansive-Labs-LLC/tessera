@@ -138,8 +138,7 @@ class ChatManager:
             if old.image_name:
                 self._cleanup_image(old.image_name)
             logger.debug(
-                "Message history overflow: removed oldest "
-                "message (role=%s)",
+                "Message history overflow: removed oldest " "message (role=%s)",
                 old.role,
             )
 

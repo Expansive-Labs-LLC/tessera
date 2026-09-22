@@ -74,7 +74,7 @@ def _detect_cuda_gpu():
 
     # Try to get VRAM from Cycles device data
     if hasattr(device, "total_memory") and device.total_memory > 0:
-        vram_gb = round(device.total_memory / (1024 ** 3), 1)
+        vram_gb = round(device.total_memory / (1024**3), 1)
     else:
         # Fallback: nvidia-smi subprocess
         vram_gb = get_nvidia_vram_gb()
@@ -101,7 +101,7 @@ def _detect_hip_gpu():
     vram_gb = 0.0
 
     if hasattr(device, "total_memory") and device.total_memory > 0:
-        vram_gb = round(device.total_memory / (1024 ** 3), 1)
+        vram_gb = round(device.total_memory / (1024**3), 1)
     else:
         # Fallback: rocm-smi subprocess
         vram_gb = get_amd_vram_gb()
@@ -136,7 +136,7 @@ def _detect_metal_gpu():
     if shared:
         vram_gb = get_apple_silicon_memory_gb()
     elif hasattr(device, "total_memory") and device.total_memory > 0:
-        vram_gb = round(device.total_memory / (1024 ** 3), 1)
+        vram_gb = round(device.total_memory / (1024**3), 1)
     else:
         vram_gb = 0.0
 

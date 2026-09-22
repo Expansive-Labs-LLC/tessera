@@ -24,10 +24,8 @@ All ``bpy`` dependencies are mocked via conftest.py fixtures.
 """
 
 import os
-import sys
 import time
-from pathlib import Path
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -48,7 +46,7 @@ class TestAddonInstallation:
         Type: Integration | Priority: Must Pass
         """
         # Given
-        from tessera import bl_info, register, _classes
+        from tessera import _classes, bl_info
 
         # When — verify bl_info metadata
         assert bl_info["name"] == "Tessera"
@@ -85,12 +83,14 @@ class TestAddonInstallation:
 
         # When / Then — Blender enforces this natively via bl_info;
         # we verify the minimum version constraint is correct
-        assert minimum_version == (4, 2, 0), (
-            f"bl_info['blender'] should be (4, 2, 0), got {minimum_version}"
-        )
-        assert test_version < minimum_version, (
-            "Blender 4.1 must be below the minimum version"
-        )
+        assert minimum_version == (
+            4,
+            2,
+            0,
+        ), f"bl_info['blender'] should be (4, 2, 0), got {minimum_version}"
+        assert (
+            test_version < minimum_version
+        ), "Blender 4.1 must be below the minimum version"
 
     def test_TS008_clean_uninstall(self, mock_bpy):
         """TS-008 → AC-005: Disable and remove add-on, verify clean uninstall.
@@ -103,7 +103,7 @@ class TestAddonInstallation:
         Type: Integration | Priority: Must Pass
         """
         # Given — register the add-on
-        from tessera import register, unregister, _classes
+        from tessera import _classes, register, unregister
 
         register()
         register_call_count = mock_bpy.utils.register_class.call_count
@@ -125,7 +125,9 @@ class TestAddonInstallation:
 
         # Verify scene property cleanup
         # (del bpy.types.Scene.tessera was called)
-        assert not hasattr(mock_bpy.types.Scene, "tessera") or True  # MagicMock always has attrs
+        assert (
+            not hasattr(mock_bpy.types.Scene, "tessera") or True
+        )  # MagicMock always has attrs
 
     def test_TS009_cross_platform_installation(self, mock_bpy):
         """TS-009 → AC-006: Verify registration logic is platform-independent.
@@ -173,7 +175,9 @@ class TestImageOperations:
             resolved, error = _validate_image_path(str(img_path))
 
             # Then
-            assert resolved is not None, f"Image {img_path.name} should be valid: {error}"
+            assert (
+                resolved is not None
+            ), f"Image {img_path.name} should be valid: {error}"
             assert error == ""
             assert resolved == img_path.resolve()
 
@@ -416,7 +420,9 @@ class TestImageOperations:
             resolved, error = image_ops._validate_image_path(str(tmp_heic_file))
 
             # Then
-            assert resolved is not None, f"HEIC should be accepted when supported: {error}"
+            assert (
+                resolved is not None
+            ), f"HEIC should be accepted when supported: {error}"
             assert error == ""
         finally:
             image_ops._HEIC_SUPPORTED = original_heic
@@ -441,7 +447,7 @@ class TestGPUDetection:
         mock_device = MagicMock()
         mock_device.name = "NVIDIA GeForce RTX 3060"
         mock_device.type = "CUDA"
-        mock_device.total_memory = 12 * (1024 ** 3)  # 12 GB in bytes
+        mock_device.total_memory = 12 * (1024**3)  # 12 GB in bytes
 
         cycles_prefs = MagicMock()
         cycles_prefs.devices = [mock_device]
@@ -462,7 +468,8 @@ class TestGPUDetection:
         assert result["shared_memory"] is False
 
     def test_TS003_cuda_fallback_to_nvidia_smi(self, mock_bpy):
-        """TS-003 (extension): CUDA device without total_memory falls back to nvidia-smi.
+        """TS-003 (extension): CUDA device without total_memory falls back to nvidia-
+        smi.
 
         Given: A CUDA device without total_memory attribute
         When: GPU detection runs
@@ -482,9 +489,7 @@ class TestGPUDetection:
         }
 
         # When — Mock: external process execution — subprocess.run (nvidia-smi)
-        with patch(
-            "tessera.utils.gpu_utils.subprocess.run"
-        ) as mock_run:
+        with patch("tessera.utils.gpu_utils.subprocess.run") as mock_run:
             mock_run.return_value = MagicMock(
                 returncode=0,
                 stdout="12288\n",  # 12 GB in MiB
@@ -543,7 +548,8 @@ class TestGPUDetection:
         assert TESSERA_PT_Main.bl_category == "Tessera"
 
     def test_TS013_no_cycles_addon_graceful_fallback(self, mock_bpy):
-        """TS-013 (extension): Cycles add-on not available, detection degrades gracefully.
+        """TS-013 (extension): Cycles add-on not available, detection degrades
+        gracefully.
 
         Given: bpy.context.preferences.addons has no "cycles" key
         When: GPU detection runs
@@ -578,6 +584,7 @@ class TestGPUDetection:
 
         Type: Integration | Priority: Must Pass
         """
+
         # Given — mock Apple Silicon with 32 GB RAM
         def sysconf_side_effect(name):
             if name == "SC_PAGE_SIZE":
@@ -762,7 +769,10 @@ class TestPreferences:
         """
         from tessera.preferences import TesseraPreferences
 
-        assert hasattr(TesseraPreferences, "gpu_device") or "gpu_device" in TesseraPreferences.__annotations__
+        assert (
+            hasattr(TesseraPreferences, "gpu_device")
+            or "gpu_device" in TesseraPreferences.__annotations__
+        )
 
     def test_preferences_has_cache_dir_property(self, mock_bpy):
         """Verify TesseraPreferences declares cache_dir property.
@@ -773,7 +783,10 @@ class TestPreferences:
         """
         from tessera.preferences import TesseraPreferences
 
-        assert hasattr(TesseraPreferences, "cache_dir") or "cache_dir" in TesseraPreferences.__annotations__
+        assert (
+            hasattr(TesseraPreferences, "cache_dir")
+            or "cache_dir" in TesseraPreferences.__annotations__
+        )
 
     def test_preferences_has_download_on_first_use_property(self, mock_bpy):
         """Verify TesseraPreferences declares download_on_first_use property.
@@ -832,7 +845,9 @@ class TestPathSecurity:
         base_path = tmp_image_files[0]
 
         # Construct a traversal path that resolves to the same file
-        traversal_path = str(base_path.parent / ".." / base_path.parent.name / base_path.name)
+        traversal_path = str(
+            base_path.parent / ".." / base_path.parent.name / base_path.name
+        )
 
         # When
         resolved, error = _validate_image_path(traversal_path)
@@ -881,7 +896,8 @@ class TestStubOperators:
         assert TESSERA_OT_Generate.poll(None) is False
 
     def test_validate_operator_is_disabled(self, mock_bpy):
-        """FR-011: Validate operator is disabled without active mesh (poll returns False).
+        """FR-011: Validate operator is disabled without active mesh (poll returns
+        False).
 
         Given: The validate_print operator
         When: poll() is called with no active mesh object
@@ -927,19 +943,20 @@ class TestSubPanelConfig:
         Note: Validation and Export panels are standalone (poll-gated,
         no bl_parent_id) after SPEC-TS-0006 refactoring.
         """
-        from tessera.ui.image_panel import TESSERA_PT_ImageInput
         from tessera.ui.generation_panel import TESSERA_PT_Generation
+        from tessera.ui.image_panel import TESSERA_PT_ImageInput
 
         for panel_cls in [
             TESSERA_PT_ImageInput,
             TESSERA_PT_Generation,
         ]:
-            assert panel_cls.bl_parent_id == "TESSERA_PT_Main", (
-                f"{panel_cls.__name__} should be parented to TESSERA_PT_Main"
-            )
+            assert (
+                panel_cls.bl_parent_id == "TESSERA_PT_Main"
+            ), f"{panel_cls.__name__} should be parented to TESSERA_PT_Main"
 
     def test_sub_panels_ordered_correctly(self, mock_bpy):
-        """FR-004: Panels are ordered Image(1), Generation(2), Validation(40), Export(41).
+        """FR-004: Panels are ordered Image(1), Generation(2), Validation(40),
+        Export(41).
 
         Given: All Tessera panels
         When: Checking bl_order
@@ -948,10 +965,10 @@ class TestSubPanelConfig:
         Note: Validation/Export have higher bl_order values because they
         are standalone panels (SPEC-TS-0006) that appear after sub-panels.
         """
-        from tessera.ui.image_panel import TESSERA_PT_ImageInput
-        from tessera.ui.generation_panel import TESSERA_PT_Generation
-        from tessera.ui.validation_panel import TESSERA_PT_validation_panel
         from tessera.ui.export_panel import TESSERA_PT_export_panel
+        from tessera.ui.generation_panel import TESSERA_PT_Generation
+        from tessera.ui.image_panel import TESSERA_PT_ImageInput
+        from tessera.ui.validation_panel import TESSERA_PT_validation_panel
 
         assert TESSERA_PT_ImageInput.bl_order == 1
         assert TESSERA_PT_Generation.bl_order == 2
@@ -971,6 +988,6 @@ class TestSubPanelConfig:
         """
         from tessera.ui.generation_panel import TESSERA_PT_Generation
 
-        assert "DEFAULT_CLOSED" in TESSERA_PT_Generation.bl_options, (
-            "TESSERA_PT_Generation should be DEFAULT_CLOSED"
-        )
+        assert (
+            "DEFAULT_CLOSED" in TESSERA_PT_Generation.bl_options
+        ), "TESSERA_PT_Generation should be DEFAULT_CLOSED"

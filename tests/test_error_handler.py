@@ -29,8 +29,6 @@ from __future__ import annotations
 
 import re
 
-import pytest
-
 
 # -------------------------------------------------------------------
 # TS-001: ErrorHandler classifies OutOfMemoryError → BF-E001/BF-E002
@@ -355,9 +353,7 @@ class TestCascadingSuppression:
         handler.catch(
             RuntimeError("CUDA out of memory"), "vision", {"phase": "loading"}
         )
-        result = handler.catch(
-            FileNotFoundError("missing"), "reconstruction"
-        )
+        result = handler.catch(FileNotFoundError("missing"), "reconstruction")
         assert result.user_message == ""
 
     def test_reset_clears_suppression(self) -> None:
@@ -370,9 +366,7 @@ class TestCascadingSuppression:
             RuntimeError("CUDA out of memory"), "vision", {"phase": "loading"}
         )
         handler.reset()
-        result = handler.catch(
-            FileNotFoundError("missing"), "reconstruction"
-        )
+        result = handler.catch(FileNotFoundError("missing"), "reconstruction")
         assert result.user_message != ""
 
 

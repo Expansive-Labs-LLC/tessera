@@ -121,9 +121,7 @@ class HoleFillStep:
                     continue
 
                 try:
-                    bmesh.ops.triangle_fill(
-                        bm, edges=loop_edges, use_beauty=True
-                    )
+                    bmesh.ops.triangle_fill(bm, edges=loop_edges, use_beauty=True)
                     holes_filled += 1
                 except Exception:
                     # Individual hole fill failure is non-critical.
@@ -183,10 +181,7 @@ class HoleFillStep:
                 next_edge = None
                 for vert in current_edge.verts:
                     for linked_edge in vert.link_edges:
-                        if (
-                            linked_edge.is_boundary
-                            and linked_edge.index not in visited
-                        ):
+                        if linked_edge.is_boundary and linked_edge.index not in visited:
                             next_edge = linked_edge
                             break
                     if next_edge:

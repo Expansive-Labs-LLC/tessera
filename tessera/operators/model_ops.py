@@ -81,9 +81,7 @@ def _poll_download_progress():
         wm["tessera_dl_eta"] = latest_progress.get("eta_seconds", 0.0)
         wm["tessera_dl_status"] = latest_progress.get("status", "")
         wm["tessera_dl_error"] = latest_progress.get("error", "")
-        wm["tessera_dl_vram_warning"] = latest_progress.get(
-            "vram_warning", ""
-        ) or ""
+        wm["tessera_dl_vram_warning"] = latest_progress.get("vram_warning", "") or ""
 
         status = latest_progress.get("status", "")
         if status in ("completed", "error", "all_completed"):
@@ -173,8 +171,7 @@ class TESSERA_OT_DownloadModel(Operator):
         if dm.is_downloading:
             self.report(
                 {"WARNING"},
-                "A download is already in progress. "
-                "Please wait for it to complete.",
+                "A download is already in progress. " "Please wait for it to complete.",
             )
             return {"CANCELLED"}
 
@@ -264,7 +261,7 @@ class TESSERA_OT_ClearModelCache(Operator):
             return {"CANCELLED"}
 
         freed = cm.delete_model(self.model_id)
-        freed_mb = freed / (1024 ** 2)
+        freed_mb = freed / (1024**2)
         self.report({"INFO"}, f"Deleted {self.model_id} ({freed_mb:.1f} MB freed)")
 
         # Redraw preferences

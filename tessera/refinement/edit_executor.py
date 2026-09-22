@@ -26,7 +26,6 @@ Implements: FR-018, FR-019, FR-035, FR-044, SEC-004, CON-008.
 from __future__ import annotations
 
 import logging
-import time
 from typing import Any, Optional
 
 from .intent_schema import (
@@ -96,10 +95,13 @@ class EditExecutor:
             # Estimate affected vertices.
             if vertex_group_name in ("_bf_all", ""):
                 affected = total_verts
-            elif hasattr(obj, "vertex_groups") and vertex_group_name in obj.vertex_groups:
+            elif (
+                hasattr(obj, "vertex_groups") and vertex_group_name in obj.vertex_groups
+            ):
                 vg_index = obj.vertex_groups[vertex_group_name].index
                 affected = sum(
-                    1 for v in obj.data.vertices
+                    1
+                    for v in obj.data.vertices
                     for g in v.groups
                     if g.group == vg_index
                 )
@@ -150,9 +152,7 @@ class EditExecutor:
         )
 
         # FR-044, SEC-004: Validate and clamp parameters.
-        clamped_params, param_warnings = clamp_parameters(
-            operation, intent.parameters
-        )
+        clamped_params, param_warnings = clamp_parameters(operation, intent.parameters)
 
         if param_warnings:
             for warning in param_warnings:
@@ -168,21 +168,25 @@ class EditExecutor:
 
         # FR-032: Push pre-edit snapshot (except for undo/redo).
         if operation not in (OperationType.UNDO, OperationType.REDO):
-            description = (
-                f"{operation.value}: {intent.target_region}"
-            )
+            description = f"{operation.value}: {intent.target_region}"
             self._undo_manager.push(obj, description)
 
         # Execute the operation.
         try:
             if operation in (OperationType.UNDO, OperationType.REDO):
                 result = handler(
-                    context, obj, clamped_params, vertex_group_name,
+                    context,
+                    obj,
+                    clamped_params,
+                    vertex_group_name,
                     undo_manager=self._undo_manager,
                 )
             else:
                 result = handler(
-                    context, obj, clamped_params, vertex_group_name,
+                    context,
+                    obj,
+                    clamped_params,
+                    vertex_group_name,
                 )
         except Exception as exc:
             logger.error(
@@ -202,9 +206,7 @@ class EditExecutor:
             result.warning = "; ".join(param_warnings)
 
         # FR-035: Post-edit validation (non-blocking).
-        if result.success and operation not in (
-            OperationType.UNDO, OperationType.REDO
-        ):
+        if result.success and operation not in (OperationType.UNDO, OperationType.REDO):
             self._run_post_edit_validation(context, obj, result)
 
         logger.info(
@@ -241,14 +243,11 @@ class EditExecutor:
             from ..validator.print_validator import PrintValidator
 
             validator = PrintValidator()
-            report = validator.validate(
-                context, obj, auto_repair=False
-            )
+            report = validator.validate(context, obj, auto_repair=False)
 
             if report.failures > 0:
                 failure_names = [
-                    c.check_name for c in report.checks
-                    if c.status.value == "FAIL"
+                    c.check_name for c in report.checks if c.status.value == "FAIL"
                 ]
                 warning_msg = (
                     f"Post-edit validation: {report.failures} issue(s) "
@@ -261,8 +260,7 @@ class EditExecutor:
                     result.warning = warning_msg
 
                 logger.debug(
-                    "Post-edit validation warnings: failures=%d, "
-                    "checks=%s",
+                    "Post-edit validation warnings: failures=%d, " "checks=%s",
                     report.failures,
                     failure_names,
                 )

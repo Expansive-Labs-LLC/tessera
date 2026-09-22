@@ -127,8 +127,7 @@ class SketchSynthesizer:
         )
 
         logger.info(
-            "Sketch synthesis complete: inference_time_s=%.2f, "
-            "output_size=%s",
+            "Sketch synthesis complete: inference_time_s=%.2f, " "output_size=%s",
             inference_time,
             f"{rendered.shape[1]}x{rendered.shape[0]}",
         )
@@ -168,9 +167,7 @@ class SketchSynthesizer:
             )
             from PIL import Image as PILImage
         except ImportError as e:
-            logger.error(
-                "Required diffusion libraries not available: %s", e
-            )
+            logger.error("Required diffusion libraries not available: %s", e)
             raise RuntimeError(
                 "Sketch synthesis requires 'diffusers' and 'torch' "
                 "libraries. Please install them."
@@ -185,9 +182,7 @@ class SketchSynthesizer:
         for model_path in (controlnet_path, sd_path):
             resolved = model_path.resolve()
             if not str(resolved).startswith(str(resolved_cache)):
-                raise ValueError(
-                    f"Model path {resolved} is outside cache directory"
-                )
+                raise ValueError(f"Model path {resolved} is outside cache directory")
 
         # Load ControlNet model.
         load_start = time.monotonic()
@@ -207,14 +202,10 @@ class SketchSynthesizer:
         )
 
         # Use efficient scheduler.
-        pipe.scheduler = UniPCMultistepScheduler.from_config(
-            pipe.scheduler.config
-        )
+        pipe.scheduler = UniPCMultistepScheduler.from_config(pipe.scheduler.config)
 
         # Move to GPU.
-        device = torch.device(
-            "cuda" if torch.cuda.is_available() else "cpu"
-        )
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         pipe = pipe.to(device)
 
         # Enable memory optimisations.
@@ -226,7 +217,7 @@ class SketchSynthesizer:
         load_time = time.monotonic() - load_start
         vram_used = 0.0
         if torch.cuda.is_available():
-            vram_used = torch.cuda.memory_allocated() / (1024 ** 2)
+            vram_used = torch.cuda.memory_allocated() / (1024**2)
         logger.debug(
             "Diffusion model loaded: model_name=SD1.5+ControlNet, "
             "vram_used_mb=%.0f, load_time_s=%.2f",
@@ -248,9 +239,7 @@ class SketchSynthesizer:
         control_pil = PILImage.fromarray(control_rgb)
 
         # FR-020: Fixed random seed for deterministic output.
-        generator = torch.Generator(device=device).manual_seed(
-            config.synthesis_seed
-        )
+        generator = torch.Generator(device=device).manual_seed(config.synthesis_seed)
 
         # FR-021: Run inference.
         output = pipe(
@@ -263,9 +252,9 @@ class SketchSynthesizer:
 
         # FR-019: Extract 512×512 RGB uint8 output.
         rendered_pil = output.images[0]
-        rendered = np.array(rendered_pil.resize(
-            (SYNTHESIS_RESOLUTION, SYNTHESIS_RESOLUTION)
-        ))
+        rendered = np.array(
+            rendered_pil.resize((SYNTHESIS_RESOLUTION, SYNTHESIS_RESOLUTION))
+        )
 
         # Ensure uint8 RGB format.
         if rendered.dtype != np.uint8:
@@ -290,7 +279,7 @@ class SketchSynthesizer:
             import torch
 
             if torch.cuda.is_available():
-                vram_before = torch.cuda.memory_allocated() / (1024 ** 2)
+                vram_before = torch.cuda.memory_allocated() / (1024**2)
         except ImportError:
             pass
 
@@ -303,7 +292,7 @@ class SketchSynthesizer:
 
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-                vram_after = torch.cuda.memory_allocated() / (1024 ** 2)
+                vram_after = torch.cuda.memory_allocated() / (1024**2)
                 freed = vram_before - vram_after
                 logger.debug("Diffusion model unloaded: vram_freed_mb=%.0f", freed)
         except ImportError:

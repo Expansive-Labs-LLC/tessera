@@ -40,7 +40,6 @@ from .diagnostics import (
     build_diagnostics,
     check_manifold,
     check_topology,
-    check_watertight,
     collect_after_stats,
     collect_before_stats,
 )
@@ -280,8 +279,6 @@ class MeshCleanupPipeline:
                 error_msg,
                 traceback.format_exc(),
             )
-            step_errors.append(
-                {"step": step.name, "error": error_msg}
-            )
+            step_errors.append({"step": step.name, "error": error_msg})
 
         return merged_reports, step_errors

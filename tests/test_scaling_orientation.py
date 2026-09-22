@@ -21,21 +21,20 @@ Uses the shared ``conftest.py`` bpy mock infrastructure.
 
 from __future__ import annotations
 
-import json
 import math
-import os
 import time
-from types import SimpleNamespace
-from typing import Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Tuple
 from unittest.mock import MagicMock, patch
 
-import numpy as np
 import pytest
 
+if TYPE_CHECKING:
+    from tests.fakes import FakeBlenderObject, FakeContext
 
 # ---------------------------------------------------------------------------
 # Helper: Build a mock Blender mesh object
 # ---------------------------------------------------------------------------
+
 
 def _make_mock_obj(
     name: str = "TestObj",
@@ -74,12 +73,14 @@ def _make_mock_obj(
     fake_polys = []
     for p in polygons:
         if isinstance(p, dict):
-            fake_polys.append(FakePolygon(
-                vertices=tuple(p.get("vertices", [0])),
-                normal=p.get("normal", (0, 0, 1)),
-                area=p.get("area", 1.0),
-                center=p.get("center", (0, 0, 0)),
-            ))
+            fake_polys.append(
+                FakePolygon(
+                    vertices=tuple(p.get("vertices", [0])),
+                    normal=p.get("normal", (0, 0, 1)),
+                    area=p.get("area", 1.0),
+                    center=p.get("center", (0, 0, 0)),
+                )
+            )
         else:
             fake_polys.append(FakePolygon(vertices=tuple(p)))
 
@@ -108,6 +109,7 @@ def _make_mock_context() -> "FakeContext":
 # Helpers for specific test scenarios
 # ---------------------------------------------------------------------------
 
+
 def _make_sphere_polygons(n: int = 100) -> list:
     """Build mock polygons for a near-perfect sphere.
 
@@ -123,12 +125,14 @@ def _make_sphere_polygons(n: int = 100) -> list:
         nx = math.sin(phi) * math.cos(theta)
         ny = math.sin(phi) * math.sin(theta)
         nz = math.cos(phi)
-        polygons.append({
-            "normal": (nx, ny, nz),
-            "area": 1.0,
-            "center": (nx * 0.5, ny * 0.5, nz * 0.5),
-            "vertices": [i],
-        })
+        polygons.append(
+            {
+                "normal": (nx, ny, nz),
+                "area": 1.0,
+                "center": (nx * 0.5, ny * 0.5, nz * 0.5),
+                "vertices": [i],
+            }
+        )
     return polygons
 
 
@@ -164,13 +168,15 @@ def _make_inverted_cone_polygons(n: int = 200) -> list:
         # Normalize.
         length = math.sqrt(nx**2 + ny**2 + nz**2)
         if length > 0:
-            nx, ny, nz = nx/length, ny/length, nz/length
-        polygons.append({
-            "normal": (nx, ny, nz),
-            "area": area,
-            "center": (nx * 25, ny * 25, i / n * 100),
-            "vertices": [i],
-        })
+            nx, ny, nz = nx / length, ny / length, nz / length
+        polygons.append(
+            {
+                "normal": (nx, ny, nz),
+                "area": area,
+                "center": (nx * 25, ny * 25, i / n * 100),
+                "vertices": [i],
+            }
+        )
     return polygons
 
 
@@ -238,9 +244,7 @@ class TestMultiAxisScaling:
         assert abs(resolved[2] - 60.0) <= 0.01
 
         # Verify scale factors would be (80, 120, 60).
-        scale_factors = tuple(
-            resolved[i] / current_bbox[i] for i in range(3)
-        )
+        scale_factors = tuple(resolved[i] / current_bbox[i] for i in range(3))
         assert abs(scale_factors[0] - 80.0) <= 0.01
         assert abs(scale_factors[1] - 120.0) <= 0.01
         assert abs(scale_factors[2] - 60.0) <= 0.01
@@ -293,9 +297,7 @@ class TestBuildVolumeViolation:
 class TestSymmetricalSphere:
     """TS-004 → EC-001: Symmetrical object with no preferred orientation."""
 
-    def test_TS004_symmetrical_sphere_no_preferred_orientation(
-        self, mock_bpy
-    ):
+    def test_TS004_symmetrical_sphere_no_preferred_orientation(self, mock_bpy):
         """TS-004 → EC-001: Verifies that a near-perfect sphere triggers
         symmetry detection and skips orientation optimization.
 
@@ -306,8 +308,7 @@ class TestSymmetricalSphere:
 
         # Given — sphere with uniform normal distribution.
         polys = _make_sphere_polygons(200)
-        verts = [(p["normal"][0], p["normal"][1], p["normal"][2])
-                 for p in polys]
+        verts = [(p["normal"][0], p["normal"][1], p["normal"][2]) for p in polys]
         obj = _make_mock_obj(
             dimensions=(100.0, 100.0, 100.0),
             vertices=verts,
@@ -419,8 +420,10 @@ class TestExtremeAspectRatio:
 
         # When — we need bpy.ops.transform.resize to update dimensions.
         import bpy
+
         def _resize_side_effect(**kwargs):
             obj.dimensions = [200.0, 20.0, 200.0]
+
         bpy.ops.transform.resize = MagicMock(side_effect=_resize_side_effect)
 
         scaler = MeshScaler()
@@ -428,8 +431,10 @@ class TestExtremeAspectRatio:
 
         # Then — scale ratio = 200/1.0=200 versus 20/1.2≈16.7 → ratio≈12 > 5.0.
         assert len(result["warnings"]) > 0
-        assert any("extreme" in w.lower() or "distorted" in w.lower()
-                    for w in result["warnings"])
+        assert any(
+            "extreme" in w.lower() or "distorted" in w.lower()
+            for w in result["warnings"]
+        )
 
 
 # ============================================================
@@ -486,8 +491,7 @@ class TestOrientationOverhangReduction:
 
         # Given — inverted cone with mostly "bad" normals.
         polys = _make_inverted_cone_polygons(200)
-        verts = [(p["center"][0], p["center"][1], p["center"][2])
-                 for p in polys]
+        verts = [(p["center"][0], p["center"][1], p["center"][2]) for p in polys]
         obj = _make_mock_obj(
             dimensions=(100.0, 100.0, 100.0),
             vertices=verts,
@@ -498,7 +502,8 @@ class TestOrientationOverhangReduction:
         # When
         optimizer = OrientationOptimizer()
         result = optimizer.optimize(
-            ctx, obj,
+            ctx,
+            obj,
             overhang_threshold_deg=45.0,
             enable_fine_tuning=False,
         )
@@ -533,10 +538,18 @@ class TestBaseFlattening:
             (-5, -5, 10),
         ]
         polys = [
-            {"normal": (0, 0, -1), "area": 10.0,
-             "center": (5, 5, -7.65), "vertices": [0, 1]},
-            {"normal": (0, 0, 1), "area": 10.0,
-             "center": (5, 5, 10), "vertices": [2, 3]},
+            {
+                "normal": (0, 0, -1),
+                "area": 10.0,
+                "center": (5, 5, -7.65),
+                "vertices": [0, 1],
+            },
+            {
+                "normal": (0, 0, 1),
+                "area": 10.0,
+                "center": (5, 5, 10),
+                "vertices": [2, 3],
+            },
         ]
         obj = _make_mock_obj(
             dimensions=(15.0, 15.0, 35.3),
@@ -592,8 +605,8 @@ class TestUndoSupport:
         """TS-012 → AC-007: Verifies undo push is called before pipeline
         execution so Ctrl+Z reverts position, rotation, scale.
         """
-        from tessera.scaling.pipeline import ScalingOrientationPipeline
         from tessera.scaling.dimension_input import DimensionSpec
+        from tessera.scaling.pipeline import ScalingOrientationPipeline
 
         # Given
         obj = _make_mock_obj(dimensions=(1.0, 1.0, 1.0))
@@ -606,6 +619,7 @@ class TestUndoSupport:
 
         # Patch bpy.ops to track calls.
         import bpy
+
         bpy.ops.ed.undo_push = MagicMock()
 
         pipeline.execute(ctx, obj, spec, enable_orientation=False)
@@ -629,8 +643,8 @@ class TestDiagnosticsDict:
         """TS-013 → FR-033: Verifies the pipeline returns a diagnostics
         dict with all 17 required keys and correct types.
         """
-        from tessera.scaling.pipeline import ScalingOrientationPipeline
         from tessera.scaling.dimension_input import DimensionSpec
+        from tessera.scaling.pipeline import ScalingOrientationPipeline
 
         # Given
         obj = _make_mock_obj(dimensions=(1.0, 1.0, 1.0))
@@ -738,8 +752,7 @@ class TestOrientationLatency14:
 
         # Given — mock mesh with some polygons.
         polys = _make_inverted_cone_polygons(100)
-        verts = [(p["center"][0], p["center"][1], p["center"][2])
-                 for p in polys]
+        verts = [(p["center"][0], p["center"][1], p["center"][2]) for p in polys]
         obj = _make_mock_obj(
             dimensions=(100.0, 100.0, 100.0),
             vertices=verts,
@@ -751,7 +764,8 @@ class TestOrientationLatency14:
         optimizer = OrientationOptimizer()
         start = time.perf_counter()
         result = optimizer.optimize(
-            ctx, obj,
+            ctx,
+            obj,
             overhang_threshold_deg=45.0,
             enable_fine_tuning=False,
         )
@@ -785,8 +799,7 @@ class TestOrientationLatency30:
 
         # Given
         polys = _make_inverted_cone_polygons(100)
-        verts = [(p["center"][0], p["center"][1], p["center"][2])
-                 for p in polys]
+        verts = [(p["center"][0], p["center"][1], p["center"][2]) for p in polys]
         obj = _make_mock_obj(
             dimensions=(100.0, 100.0, 100.0),
             vertices=verts,
@@ -798,7 +811,8 @@ class TestOrientationLatency30:
         optimizer = OrientationOptimizer()
         start = time.perf_counter()
         result = optimizer.optimize(
-            ctx, obj,
+            ctx,
+            obj,
             overhang_threshold_deg=45.0,
             enable_fine_tuning=True,
         )
@@ -825,9 +839,7 @@ class TestDimensionalAccuracy:
 
         # Given — test that resolve produces exact dimensions
         # when all 3 axes are specified.
-        spec = DimensionSpec(
-            width_mm=80.0, height_mm=120.0, depth_mm=64.0
-        )
+        spec = DimensionSpec(width_mm=80.0, height_mm=120.0, depth_mm=64.0)
         current_bbox = (1.0, 1.5, 0.8)
 
         # When
@@ -884,15 +896,17 @@ class TestMalformedJsonFallback:
         without crashing.
         """
         from tessera.scaling.auto_infer import (
-            AutoDimensionInfer,
             _HARDCODED_DEFAULTS,
+            AutoDimensionInfer,
             _load_defaults,
         )
 
-        # Given — Mock: system-level I/O — filesystem (testing malformed config fallback)
+        # Given — Mock: system-level I/O — filesystem (testing malformed config
+        # fallback)
         malformed_json = "{ this is not valid json }"
-        with patch("builtins.open",
-                    return_value=__import__("io").StringIO(malformed_json)):
+        with patch(
+            "builtins.open", return_value=__import__("io").StringIO(malformed_json)
+        ):
             # When
             defaults = _load_defaults()
 
@@ -900,8 +914,9 @@ class TestMalformedJsonFallback:
         assert defaults == _HARDCODED_DEFAULTS
 
         # Mock: system-level I/O — filesystem (verify inference post-fallback)
-        with patch("builtins.open",
-                    return_value=__import__("io").StringIO(malformed_json)):
+        with patch(
+            "builtins.open", return_value=__import__("io").StringIO(malformed_json)
+        ):
             infer = AutoDimensionInfer()
 
         result = infer.infer("mug")
@@ -927,9 +942,8 @@ class TestPropertyGroupRegistration:
 
         # Verify it's based on PropertyGroup.
         import bpy
-        assert issubclass(
-            TesseraScalingSettings, bpy.types.PropertyGroup
-        )
+
+        assert issubclass(TesseraScalingSettings, bpy.types.PropertyGroup)
 
         # Verify it has annotations for expected properties.
         # (bpy.props calls are mocked, so we verify the class was defined.)
@@ -952,7 +966,6 @@ class TestSceneUnitSystem:
 
         # Given
         ctx = _make_mock_context()
-        obj = _make_mock_obj(dimensions=(1.0, 1.0, 1.0))
 
         # When — call the private configure method.
         scaler = MeshScaler()

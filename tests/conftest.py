@@ -19,18 +19,16 @@ Provides ``bpy`` mock scaffolding so modules can be imported and tested
 outside of a running Blender process.
 """
 
-import os
 import sys
 import types
-from pathlib import Path
-from unittest.mock import MagicMock, PropertyMock
+from unittest.mock import MagicMock
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # bpy mock infrastructure
 # ---------------------------------------------------------------------------
+
 
 def _build_bpy_mock():
     """Build a comprehensive mock for the ``bpy`` module.
@@ -132,9 +130,11 @@ def mock_bpy(monkeypatch):
 
     class _MockEuler:
         """Minimal Euler mock that computes real 3×3 rotation matrices."""
+
         def __init__(self, angles, order="XYZ"):
             self._angles = angles  # (rx, ry, rz) in radians
             self._order = order
+
         def to_matrix(self):
             rx, ry, rz = self._angles
             cx, sx = _math.cos(rx), _math.sin(rx)
@@ -142,10 +142,11 @@ def mock_bpy(monkeypatch):
             cz, sz = _math.cos(rz), _math.sin(rz)
             # XYZ Euler → rotation matrix.
             return [
-                [cy*cz,            -cy*sz,           sy],
-                [sx*sy*cz + cx*sz, -sx*sy*sz + cx*cz, -sx*cy],
-                [-cx*sy*cz + sx*sz, cx*sy*sz + sx*cz,  cx*cy],
+                [cy * cz, -cy * sz, sy],
+                [sx * sy * cz + cx * sz, -sx * sy * sz + cx * cz, -sx * cy],
+                [-cx * sy * cz + sx * sz, cx * sy * sz + sx * cz, cx * cy],
             ]
+
         def __iter__(self):
             return iter(self._angles)
 

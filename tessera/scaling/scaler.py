@@ -28,7 +28,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 import bpy
 
@@ -105,18 +105,11 @@ class MeshScaler:
 
         # Resolve target dimensions (fills unset axes proportionally).
         target_dims = dimension_spec.resolve(original_dims)
-        logger.debug(
-            "Target dimensions: (%.4f, %.4f, %.4f) mm", *target_dims
-        )
+        logger.debug("Target dimensions: (%.4f, %.4f, %.4f) mm", *target_dims)
 
         # Compute per-axis scale factors.
-        scale_factors = tuple(
-            target_dims[i] / original_dims[i]
-            for i in range(3)
-        )
-        logger.debug(
-            "Scale factors: (%.6f, %.6f, %.6f)", *scale_factors
-        )
+        scale_factors = tuple(target_dims[i] / original_dims[i] for i in range(3))
+        logger.debug("Scale factors: (%.6f, %.6f, %.6f)", *scale_factors)
 
         # EC-004: Extreme aspect ratio warning.
         warnings: List[str] = []
@@ -157,9 +150,7 @@ class MeshScaler:
             bpy.ops.transform.resize(value=scale_factors)
 
         # FR-004: Apply the scale transform to mesh data.
-        bpy.ops.object.transform_apply(
-            location=False, rotation=False, scale=True
-        )
+        bpy.ops.object.transform_apply(location=False, rotation=False, scale=True)
 
         # Get actual post-scaling dimensions.
         actual_dims = self._get_dimensions(obj)
@@ -262,9 +253,7 @@ class MeshScaler:
             scene.unit_settings.length_unit,
         )
 
-    def _get_dimensions(
-        self, obj: "bpy.types.Object"
-    ) -> Tuple[float, float, float]:
+    def _get_dimensions(self, obj: "bpy.types.Object") -> Tuple[float, float, float]:
         """Get the current bounding-box dimensions of an object.
 
         Args:

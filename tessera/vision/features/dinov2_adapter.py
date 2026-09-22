@@ -29,7 +29,7 @@ Implements: FR-013, FR-016, FR-017, CON-002, CON-005,
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -63,7 +63,7 @@ class DINOv2Adapter(FeatureAdapter):
             model_id: Model identifier for the weight manager (CON-005).
         """
         self._model_id = model_id
-        self._model: Optional[object] = None
+        self._model: Optional[Any] = None
         self._device: Optional[str] = None
 
     @property
@@ -147,9 +147,7 @@ class DINOv2Adapter(FeatureAdapter):
             np.ndarray: Feature vector ``(1, 768)`` float32 (FR-013).
         """
         if self._model is None:
-            raise RuntimeError(
-                "DINOv2 model not loaded. Call load() first."
-            )
+            raise RuntimeError("DINOv2 model not loaded. Call load() first.")
 
         import torch
         from PIL import Image as PILImage

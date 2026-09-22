@@ -178,18 +178,12 @@ def build_diagnostics(
 
     # Step reports
     diag["doubles_removed"] = step_reports.get("doubles_removed", 0)
-    diag["degenerate_faces_removed"] = step_reports.get(
-        "degenerate_faces_removed", 0
-    )
+    diag["degenerate_faces_removed"] = step_reports.get("degenerate_faces_removed", 0)
     diag["normals_flipped"] = step_reports.get("normals_flipped", 0)
     diag["holes_filled"] = step_reports.get("holes_filled", 0)
     diag["holes_skipped"] = step_reports.get("holes_skipped", 0)
-    diag["voxel_remesh_applied"] = step_reports.get(
-        "voxel_remesh_applied", False
-    )
-    diag["quad_remesh_applied"] = step_reports.get(
-        "quad_remesh_applied", False
-    )
+    diag["voxel_remesh_applied"] = step_reports.get("voxel_remesh_applied", False)
+    diag["quad_remesh_applied"] = step_reports.get("quad_remesh_applied", False)
     diag["decimate_applied"] = step_reports.get("decimate_applied", False)
 
     # Validation

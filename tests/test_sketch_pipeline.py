@@ -52,8 +52,6 @@ All test stubs are placeholders — implement via /test-suite.
 from __future__ import annotations
 
 import numpy as np
-import pytest
-
 
 # ---------------------------------------------------------------------------
 # Helpers

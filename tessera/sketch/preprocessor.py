@@ -147,8 +147,7 @@ class SketchPreprocessor:
         total_pixels = binary.shape[0] * binary.shape[1]
 
         logger.debug(
-            "Binarization complete: non_zero_pixel_count=%d, "
-            "total_pixel_count=%d",
+            "Binarization complete: non_zero_pixel_count=%d, " "total_pixel_count=%d",
             non_zero_count,
             total_pixels,
         )
@@ -185,20 +184,15 @@ class SketchPreprocessor:
             # Fallback if cv2.ximgproc is not available — use
             # morphological erosion as an approximation.
             logger.warning(
-                "cv2.ximgproc not available — using morphological "
-                "thinning fallback"
+                "cv2.ximgproc not available — using morphological " "thinning fallback"
             )
-            kernel_thin = cv2.getStructuringElement(
-                cv2.MORPH_CROSS, (3, 3)
-            )
+            kernel_thin = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))
             thinned = binary.copy()
             prev = np.zeros_like(thinned)
             while not np.array_equal(thinned, prev):
                 prev = thinned.copy()
                 eroded = cv2.erode(thinned, kernel_thin)
-                opened = cv2.morphologyEx(
-                    eroded, cv2.MORPH_OPEN, kernel_thin
-                )
+                opened = cv2.morphologyEx(eroded, cv2.MORPH_OPEN, kernel_thin)
                 subset = eroded - opened
                 thinned = cv2.bitwise_or(
                     cv2.bitwise_and(thinned, cv2.bitwise_not(subset)),

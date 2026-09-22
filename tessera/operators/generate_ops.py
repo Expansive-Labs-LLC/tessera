@@ -50,15 +50,13 @@ class TESSERA_OT_Generate(Operator):
 
     bl_idname = "tessera.generate"
     bl_label = "Generate 3D Model"
-    bl_description = (
-        "Generate a 3D model from reference images using AI reconstruction"
-    )
+    bl_description = "Generate a 3D model from reference images using AI reconstruction"
     bl_options = {"REGISTER", "UNDO"}
 
     @classmethod
     def poll(cls, context):
         """Enable when at least one image is loaded."""
-        if not hasattr(context.scene, "tessera"):
+        if context is None or not hasattr(context.scene, "tessera"):
             return False
         props = context.scene.tessera
         return len(props.images) > 0
@@ -98,9 +96,7 @@ class TESSERA_OT_Generate(Operator):
             if item.view_label != "UNLABELED":
                 view_label = item.view_label.lower().replace("_", "-")
 
-            image_inputs.append(
-                ImageInput(filepath=filepath, view_label=view_label)
-            )
+            image_inputs.append(ImageInput(filepath=filepath, view_label=view_label))
 
         if not image_inputs:
             self.report({"WARNING"}, "No valid image files found.")
@@ -120,9 +116,7 @@ class TESSERA_OT_Generate(Operator):
             pipeline = VisionPipeline()
             vision_results = pipeline.process(image_inputs)
 
-            logger.info(
-                "Vision pipeline complete: results=%d", len(vision_results)
-            )
+            logger.info("Vision pipeline complete: results=%d", len(vision_results))
         except Exception as exc:
             error_msg = f"Vision pipeline failed: {exc}"
             self.report({"ERROR"}, error_msg)
@@ -147,9 +141,12 @@ class TESSERA_OT_Generate(Operator):
             else:
                 # Fallback to default cache location
                 import os
+
                 cache_dir = os.path.join(
                     bpy.utils.user_resource("SCRIPTS"),
-                    "addons", "tessera", "cache",
+                    "addons",
+                    "tessera",
+                    "cache",
                 )
             engine = ReconstructionEngine(cache_dir=cache_dir)
             result = engine.reconstruct(vision_results)
@@ -241,7 +238,6 @@ class TESSERA_OT_Generate(Operator):
             obj: The Blender mesh object.
             vertex_colors: (N, 3) float32 array, values in [0.0, 1.0].
         """
-        import numpy as np
 
         mesh = obj.data
         if not mesh.vertex_colors:

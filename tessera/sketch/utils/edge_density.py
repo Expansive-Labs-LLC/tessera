@@ -125,8 +125,7 @@ def heuristic_classify(
     color_std = compute_color_std(image)
 
     is_sketch = (
-        edge_density >= EDGE_DENSITY_THRESHOLD
-        and color_std <= COLOR_STD_THRESHOLD
+        edge_density >= EDGE_DENSITY_THRESHOLD and color_std <= COLOR_STD_THRESHOLD
     )
 
     if is_sketch:

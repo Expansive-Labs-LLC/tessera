@@ -38,9 +38,7 @@ try:
 except ImportError:
     _tracemalloc_available = False
     _tracemalloc = None  # type: ignore[assignment]
-    logger.info(
-        "tracemalloc not available. CPU memory tracking disabled."
-    )
+    logger.info("tracemalloc not available. CPU memory tracking disabled.")
 
 
 class PerformanceProfiler:
@@ -185,9 +183,7 @@ class PerformanceProfiler:
 
         return perf_report
 
-    def _log_bottleneck_recommendations(
-        self, report: PerfReport
-    ) -> None:
+    def _log_bottleneck_recommendations(self, report: PerfReport) -> None:
         """Log recommendations for the top 3 slowest stages.
 
         Implements: FR-016.
@@ -197,14 +193,11 @@ class PerformanceProfiler:
 
         bottlenecks = report.get_bottleneck_stages(top_n=3)
         for stage in bottlenecks:
-            pct = (
-                stage.duration_seconds / report.total_duration_seconds * 100
-            )
+            pct = stage.duration_seconds / report.total_duration_seconds * 100
             if pct > 50:
                 recommendation = self._get_recommendation(stage.stage_name)
                 logger.info(
-                    "Bottleneck recommendation: %s took %.1fs (%.0f%% of "
-                    "total). %s",
+                    "Bottleneck recommendation: %s took %.1fs (%.0f%% of " "total). %s",
                     stage.stage_name,
                     stage.duration_seconds,
                     pct,
@@ -238,8 +231,7 @@ class PerformanceProfiler:
                 "for faster validation."
             ),
             "export": (
-                "Consider exporting to fewer formats to speed up the "
-                "export stage."
+                "Consider exporting to fewer formats to speed up the " "export stage."
             ),
         }
         return recommendations.get(

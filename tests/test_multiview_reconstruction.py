@@ -28,11 +28,10 @@ Spec: SPEC-TS-0007, §10 (Test Stubs)
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import numpy as np
 import pytest
-
 
 # -----------------------------------------------------------------------
 # Lazy imports — deferred so conftest's bpy mock is active first
@@ -146,7 +145,7 @@ class TestTS001StrategySingleImage:
 
         selector = m.StrategySelector(single, multi, estimator)
         vr = _make_vision_result()
-        result = selector.reconstruct([vr])
+        selector.reconstruct([vr])
 
         single.reconstruct.assert_called_once()
         multi.reconstruct.assert_not_called()
@@ -164,9 +163,11 @@ class TestTS001StrategySingleImage:
         estimator = MagicMock()
 
         selector = m.StrategySelector(single, multi, estimator)
-        vrs = [_make_vision_result(view_label="front"),
-               _make_vision_result(view_label="back")]
-        result = selector.reconstruct(vrs)
+        vrs = [
+            _make_vision_result(view_label="front"),
+            _make_vision_result(view_label="back"),
+        ]
+        selector.reconstruct(vrs)
 
         single.reconstruct.assert_called_once()
         multi.reconstruct.assert_not_called()
@@ -199,9 +200,11 @@ class TestTS002StrategyMultiView:
         )
 
         selector = m.StrategySelector(single, multi, estimator)
-        vrs = [_make_vision_result(view_label=label)
-               for label in ["front", "right", "back"]]
-        result = selector.reconstruct(vrs)
+        vrs = [
+            _make_vision_result(view_label=label)
+            for label in ["front", "right", "back"]
+        ]
+        selector.reconstruct(vrs)
 
         estimator.estimate_poses.assert_called_once()
         multi.reconstruct.assert_called_once()
@@ -230,7 +233,7 @@ class TestTS003StrategyMetadata:
 
         selector = m.StrategySelector(single, multi, estimator)
         vr = _make_vision_result()
-        result = selector.reconstruct([vr])
+        selector.reconstruct([vr])
 
         mesh = single.reconstruct.return_value.mesh
         assert "strategy" in mesh.metadata
@@ -515,7 +518,7 @@ class TestTS013FallbackOnPoseFailure:
 
         selector = m.StrategySelector(single, multi, estimator)
         vrs = [_make_vision_result() for _ in range(5)]
-        result = selector.reconstruct(vrs)
+        selector.reconstruct(vrs)
 
         single.reconstruct.assert_called_once()
         multi.reconstruct.assert_not_called()
@@ -540,7 +543,7 @@ class TestTS013FallbackOnPoseFailure:
 
         selector = m.StrategySelector(single, multi, estimator)
         vrs = [_make_vision_result() for _ in range(5)]
-        result = selector.reconstruct(vrs)
+        selector.reconstruct(vrs)
 
         single.reconstruct.assert_called_once()
 

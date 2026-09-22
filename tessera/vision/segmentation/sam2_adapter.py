@@ -29,7 +29,7 @@ Implements: FR-004, FR-005, FR-016, FR-017, CON-002, CON-005,
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -63,8 +63,8 @@ class SAM2Adapter(SegmentationAdapter):
             model_id: Model identifier for the weight manager (CON-005).
         """
         self._model_id = model_id
-        self._model: Optional[object] = None
-        self._mask_generator: Optional[object] = None
+        self._model: Optional[Any] = None
+        self._mask_generator: Optional[Any] = None
 
     @property
     def model_name(self) -> str:
@@ -102,8 +102,8 @@ class SAM2Adapter(SegmentationAdapter):
         self._validate_cache_boundary(model_path)
 
         try:
-            from sam2.build_sam import build_sam2
             from sam2.automatic_mask_generator import SamAutomaticMaskGenerator
+            from sam2.build_sam import build_sam2
 
             # SEC-002: Weights loaded via safe mechanism (build_sam2 uses
             # torch.load with weights_only=True internally).
@@ -254,8 +254,7 @@ class SAM2Adapter(SegmentationAdapter):
                 torch.cuda.empty_cache()
                 vram_mb = torch.cuda.memory_allocated() / (1024 * 1024)
                 logger.debug(
-                    "Model unloaded from GPU: model_name=%s, "
-                    "vram_freed_mb=~%.1f",
+                    "Model unloaded from GPU: model_name=%s, " "vram_freed_mb=~%.1f",
                     self.model_name,
                     vram_mb,
                 )

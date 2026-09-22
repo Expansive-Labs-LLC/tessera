@@ -25,17 +25,13 @@ All ``bpy`` dependencies are mocked via conftest.py fixtures.
 
 import hashlib
 import json
-import logging
-import os
 import shutil
-import tempfile
 import threading
 import time
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # Shared fixtures
@@ -203,7 +199,8 @@ class TestModelDownload:
     def test_TS001_download_single_model_verify_sha256(
         self, mock_bpy, cache_dir, registry, cache_manager
     ):
-        """TS-001 → AC-001: Download single model, verify file exists and SHA256 matches.
+        """TS-001 → AC-001: Download single model, verify file exists and SHA256
+        matches.
 
         Given: Tessera is installed with no models cached and the user
                has a working internet connection
@@ -216,7 +213,7 @@ class TestModelDownload:
         from tessera.models.download_manager import DownloadManager
 
         # Given — create a DownloadManager with mocked hf_hub_download
-        dm = DownloadManager(
+        DownloadManager(
             cache_dir=str(cache_dir),
             registry=registry,
             cache_manager=cache_manager,
@@ -233,7 +230,9 @@ class TestModelDownload:
 
         # Mock hf_hub_download to write the file and return its path
         snapshot_dir = _create_fake_cached_model(
-            cache_dir, "org/test-model-b", "def456",
+            cache_dir,
+            "org/test-model-b",
+            "def456",
             ["model.safetensors"],
             {"model.safetensors": file_content},
         )
@@ -261,7 +260,8 @@ class TestModelDownload:
     def test_TS002_get_model_path_cached_no_network(
         self, mock_bpy, cache_dir, registry, cache_manager
     ):
-        """TS-002 → AC-002: Call get_model_path() for cached model, verify < 10ms and no network.
+        """TS-002 → AC-002: Call get_model_path() for cached model, verify < 10ms and no
+        network.
 
         Given: The model 'test-model-b' has been previously downloaded and cached
         When: A downstream pipeline task calls get_model_path('test-model-b')
@@ -285,9 +285,9 @@ class TestModelDownload:
         assert result is not None, "get_model_path should return a valid Path"
         assert result.exists(), "Cached model directory should exist"
         assert (result / "model.safetensors").exists()
-        assert elapsed_ms < 10, (
-            f"get_model_path took {elapsed_ms:.2f}ms, expected < 10ms (NFR-006)"
-        )
+        assert (
+            elapsed_ms < 10
+        ), f"get_model_path took {elapsed_ms:.2f}ms, expected < 10ms (NFR-006)"
 
         # Verify no network calls were made (no imports of network libs)
         # The function uses only pathlib operations — confirmed by code review
@@ -295,7 +295,8 @@ class TestModelDownload:
     def test_TS003_interrupt_download_resume_verify(
         self, mock_bpy, mock_huggingface_hub, cache_dir, registry, cache_manager
     ):
-        """TS-003 → AC-003: Interrupt download at 50%, resume, verify completion and SHA256.
+        """TS-003 → AC-003: Interrupt download at 50%, resume, verify completion and
+        SHA256.
 
         Given: A model download is in progress
         When: The download is interrupted and restarted
@@ -320,9 +321,7 @@ class TestModelDownload:
         entry = registry.get_model("test-model-b")
         entry.sha256["model.safetensors"] = file_sha
 
-        snapshot_dir = (
-            cache_dir / "models--org--test-model-b" / "snapshots" / "def456"
-        )
+        snapshot_dir = cache_dir / "models--org--test-model-b" / "snapshots" / "def456"
 
         def mock_hf_download(**kwargs):
             nonlocal call_count
@@ -354,15 +353,14 @@ class TestModelDownload:
             assert call_count == 2, "Should have retried after first failure"
 
             # Verify resumed download is correct via SHA256
-            actual_sha = hashlib.sha256(
-                Path(result_path).read_bytes()
-            ).hexdigest()
+            actual_sha = hashlib.sha256(Path(result_path).read_bytes()).hexdigest()
             assert actual_sha == file_sha
 
     def test_TS010_corrupt_cached_file_sha256_failure(
         self, mock_bpy, cache_dir, registry, cache_manager
     ):
-        """TS-010 → AC-005: Corrupt cached file (flip 1 byte), verify SHA256 failure and deletion.
+        """TS-010 → AC-005: Corrupt cached file (flip 1 byte), verify SHA256 failure and
+        deletion.
 
         Given: A model file has been downloaded but the stored file's
                SHA256 does not match (simulated by modifying 1 byte)
@@ -383,7 +381,9 @@ class TestModelDownload:
         # Create cache with corrupted content (flip first byte)
         bad_content = b"\xff" + good_content[1:]
         snapshot = _create_fake_cached_model(
-            cache_dir, "org/test-model-b", "def456",
+            cache_dir,
+            "org/test-model-b",
+            "def456",
             ["model.safetensors"],
             {"model.safetensors": bad_content},
         )
@@ -402,9 +402,9 @@ class TestModelDownload:
         assert "deleted" in error_msg.lower(), "Error should mention file deletion"
 
         # Corrupted file should be deleted
-        assert not file_path.exists(), (
-            "Corrupted file should be deleted after SHA256 failure"
-        )
+        assert (
+            not file_path.exists()
+        ), "Corrupted file should be deleted after SHA256 failure"
 
         # Model status should now be "Not Downloaded"
         status = cache_manager.get_model_status("test-model-b")
@@ -456,12 +456,17 @@ class TestCacheManager:
 
             # Then — error contains disk space info
             error_msg = str(exc_info.value)
-            assert "disk space" in error_msg.lower() or "no space" in error_msg.lower() or "unable to reach" in error_msg.lower()
+            assert (
+                "disk space" in error_msg.lower()
+                or "no space" in error_msg.lower()
+                or "unable to reach" in error_msg.lower()
+            )
 
     def test_TS005_cache_directory_deleted_externally(
         self, mock_bpy, tmp_path, registry
     ):
-        """TS-005 → EC-002: Delete cache directory externally, verify re-detection and status reset.
+        """TS-005 → EC-002: Delete cache directory externally, verify re-detection and
+        status reset.
 
         Given: The cache directory has been deleted externally while
                Blender is open
@@ -506,7 +511,8 @@ class TestCacheManager:
     def test_TS011_cache_disk_usage_display_and_delete(
         self, mock_bpy, cache_dir, registry, cache_manager
     ):
-        """TS-011 → AC-006: Cache 3 models, verify disk usage display and per-model delete.
+        """TS-011 → AC-006: Cache 3 models, verify disk usage display and per-model
+        delete.
 
         Given: 3 models are cached with known file sizes
         When: The cache report is generated and a model is deleted
@@ -521,7 +527,9 @@ class TestCacheManager:
         size_c = 8192
 
         _create_fake_cached_model(
-            cache_dir, "org/test-model-a", "abc123",
+            cache_dir,
+            "org/test-model-a",
+            "abc123",
             ["model.safetensors", "config.json"],
             {
                 "model.safetensors": b"\x00" * (size_a - 512),
@@ -529,12 +537,16 @@ class TestCacheManager:
             },
         )
         _create_fake_cached_model(
-            cache_dir, "org/test-model-b", "def456",
+            cache_dir,
+            "org/test-model-b",
+            "def456",
             ["model.safetensors"],
             {"model.safetensors": b"\x00" * size_b},
         )
         _create_fake_cached_model(
-            cache_dir, "org/test-model-c", "ghi789",
+            cache_dir,
+            "org/test-model-c",
+            "ghi789",
             ["weights.safetensors", "config.json"],
             {
                 "weights.safetensors": b"\x00" * (size_c - 256),
@@ -551,18 +563,16 @@ class TestCacheManager:
 
         # Each model should show "Downloaded"
         for m in report["models"]:
-            assert m["status"] == "Downloaded", (
-                f"Model {m['model_id']} should be Downloaded"
-            )
+            assert (
+                m["status"] == "Downloaded"
+            ), f"Model {m['model_id']} should be Downloaded"
             assert m["size_bytes"] > 0
 
         # When — delete one model
         freed = cache_manager.delete_model("test-model-b")
 
         # Then — freed bytes matches model B size
-        assert freed == size_b, (
-            f"Expected to free {size_b} bytes, freed {freed}"
-        )
+        assert freed == size_b, f"Expected to free {size_b} bytes, freed {freed}"
 
         # Updated report should reflect the deletion
         report_after = cache_manager.get_cache_report()
@@ -584,7 +594,8 @@ class TestDownloadConcurrency:
     def test_TS006_concurrent_ensure_model_no_duplicate(
         self, mock_bpy, mock_huggingface_hub, cache_dir, registry, cache_manager
     ):
-        """TS-006 → EC-003: Concurrent ensure_model() calls for same model, verify no duplicate downloads.
+        """TS-006 → EC-003: Concurrent ensure_model() calls for same model, verify no
+        duplicate downloads.
 
         Given: Two concurrent ensure_model('test-model-b') calls
         When: Both calls execute simultaneously
@@ -620,8 +631,7 @@ class TestDownloadConcurrency:
 
             # Create the cached file
             snapshot_dir = (
-                cache_dir / "models--org--test-model-b"
-                / "snapshots" / "def456"
+                cache_dir / "models--org--test-model-b" / "snapshots" / "def456"
             )
             snapshot_dir.mkdir(parents=True, exist_ok=True)
             fname = kwargs.get("filename", "model.safetensors")
@@ -630,9 +640,7 @@ class TestDownloadConcurrency:
             return str(fpath)
 
         # Patch at module level so all threads see the same mock
-        mock_huggingface_hub.hf_hub_download = MagicMock(
-            side_effect=mock_hf_download
-        )
+        mock_huggingface_hub.hf_hub_download = MagicMock(side_effect=mock_hf_download)
 
         results = [None, None]
         errors = [None, None]
@@ -669,7 +677,9 @@ class TestDownloadConcurrency:
     def test_TS007_huggingface_unavailable_retry_backoff(
         self, mock_bpy, mock_huggingface_hub, cache_dir, registry, cache_manager
     ):
-        """TS-007 → EC-004: Simulate HuggingFace 500, verify 3 retries with backoff, then error.
+        """TS-007 → EC-004: Simulate HuggingFace 500, verify 3 retries with backoff,
+        then
+        error.
 
         Given: HuggingFace servers return HTTP 500 errors
         When: The download manager attempts to download a model
@@ -697,12 +707,13 @@ class TestDownloadConcurrency:
 
         # Mock: external service — HuggingFace Hub download API (server error)
         # Mock: expensive operation — time.sleep (avoid real retry delays)
-        with patch(
-            "huggingface_hub.hf_hub_download",
-            side_effect=mock_hf_download_fail,
-        ), patch(
-            "tessera.models.download_manager.time.sleep"
-        ) as mock_sleep:
+        with (
+            patch(
+                "huggingface_hub.hf_hub_download",
+                side_effect=mock_hf_download_fail,
+            ),
+            patch("tessera.models.download_manager.time.sleep") as mock_sleep,
+        ):
             # When — attempt download (should fail after 3 retries)
             with pytest.raises(ModelDownloadError) as exc_info:
                 dm._download_file(
@@ -712,17 +723,21 @@ class TestDownloadConcurrency:
                 )
 
             # Then — 3 retry attempts
-            assert len(call_timestamps) == 3, (
-                f"Expected 3 download attempts (EC-004), got {len(call_timestamps)}"
-            )
+            assert (
+                len(call_timestamps) == 3
+            ), f"Expected 3 download attempts (EC-004), got {len(call_timestamps)}"
 
             # Verify exponential backoff was applied (2s, 4s)
-            assert mock_sleep.call_count == 2, (
-                f"Expected 2 sleep calls (between retries), got {mock_sleep.call_count}"
-            )
+            assert (
+                mock_sleep.call_count == 2
+            ), f"Expected 2 sleep calls (between retries), got {mock_sleep.call_count}"
             backoff_calls = [c.args[0] for c in mock_sleep.call_args_list]
-            assert backoff_calls[0] == 2, f"First backoff should be 2s, got {backoff_calls[0]}"
-            assert backoff_calls[1] == 4, f"Second backoff should be 4s, got {backoff_calls[1]}"
+            assert (
+                backoff_calls[0] == 2
+            ), f"First backoff should be 2s, got {backoff_calls[0]}"
+            assert (
+                backoff_calls[1] == 4
+            ), f"Second backoff should be 4s, got {backoff_calls[1]}"
 
             # Verify error message
             error_msg = str(exc_info.value)
@@ -736,10 +751,10 @@ class TestDownloadConcurrency:
 class TestVariantSelector:
     """Tests for VRAM-aware variant selection (AC-004, EC-005, FR-012)."""
 
-    def test_TS008_vram_below_all_variants_warning(
-        self, mock_bpy, registry
-    ):
-        """TS-008 → EC-005: GPU VRAM below all variants minimum, verify warning + smallest variant.
+    def test_TS008_vram_below_all_variants_warning(self, mock_bpy, registry):
+        """TS-008 → EC-005: GPU VRAM below all variants minimum, verify warning +
+        smallest
+        variant.
 
         Given: User's GPU has 2 GB VRAM, smallest model variant requires 4 GB
         When: select_variant() is called
@@ -757,9 +772,9 @@ class TestVariantSelector:
         variant, warning = select_variant(entry, 2.0)
 
         # Then — selects smallest variant
-        assert variant.variant_id == "fp16", (
-            f"Should select smallest variant, got '{variant.variant_id}'"
-        )
+        assert (
+            variant.variant_id == "fp16"
+        ), f"Should select smallest variant, got '{variant.variant_id}'"
         assert variant.min_vram_gb == 4
 
         # Warning should be present and meaningful
@@ -768,10 +783,10 @@ class TestVariantSelector:
         assert "4" in warning, "Warning should mention minimum required VRAM"
         assert "test-model-a" in warning, "Warning should mention model name"
 
-    def test_TS009_select_variant_6gb_vram_fp16(
-        self, mock_bpy, registry
-    ):
-        """TS-009 → AC-004: Select variant with 6 GB VRAM, model has fp32 (8 GB) and fp16 (4 GB), verify fp16.
+    def test_TS009_select_variant_6gb_vram_fp16(self, mock_bpy, registry):
+        """TS-009 → AC-004: Select variant with 6 GB VRAM, model has fp32 (8 GB) and
+        fp16
+        (4 GB), verify fp16.
 
         Given: The manifest declares model with variants fp32 (min 8 GB VRAM)
                and fp16 (min 4 GB VRAM), and the user's GPU has 6 GB VRAM
@@ -790,9 +805,9 @@ class TestVariantSelector:
         variant, warning = select_variant(entry, 6.0)
 
         # Then — selects fp16 (highest quality that fits in 6GB)
-        assert variant.variant_id == "fp16", (
-            f"With 6 GB VRAM, should select fp16 (req 4 GB), got '{variant.variant_id}'"
-        )
+        assert (
+            variant.variant_id == "fp16"
+        ), f"With 6 GB VRAM, should select fp16 (req 4 GB), got '{variant.variant_id}'"
         assert variant.min_vram_gb == 4
         assert variant.size_bytes == 670000000
         assert "model_fp16.safetensors" in variant.files
@@ -800,9 +815,7 @@ class TestVariantSelector:
         # No warning — fp16 fits in 6GB
         assert warning is None, "No warning expected when variant fits in VRAM"
 
-    def test_TS009b_select_variant_12gb_vram_fp32(
-        self, mock_bpy, registry
-    ):
+    def test_TS009b_select_variant_12gb_vram_fp32(self, mock_bpy, registry):
         """Bonus: Select variant with 12 GB VRAM, verify fp32 is chosen.
 
         Given: Model has fp32 (8 GB) and fp16 (4 GB), GPU has 12 GB
@@ -820,10 +833,10 @@ class TestVariantSelector:
         assert variant.min_vram_gb == 8
         assert warning is None
 
-    def test_TS017_select_variant_empty_variants_list(
-        self, mock_bpy, registry
-    ):
-        """TS-017 → FR-012: Call select_variant() on model with empty variants list, verify default variant.
+    def test_TS017_select_variant_empty_variants_list(self, mock_bpy, registry):
+        """TS-017 → FR-012: Call select_variant() on model with empty variants list,
+        verify
+        default variant.
 
         Given: A model entry has no 'variants' array (or the array is empty)
         When: select_variant() is called
@@ -843,9 +856,9 @@ class TestVariantSelector:
         variant, warning = select_variant(entry, 8.0)
 
         # Then — default variant constructed from top-level fields
-        assert variant.variant_id == "default", (
-            f"Expected variant_id='default', got '{variant.variant_id}'"
-        )
+        assert (
+            variant.variant_id == "default"
+        ), f"Expected variant_id='default', got '{variant.variant_id}'"
         assert variant.min_vram_gb == entry.min_vram_gb
         assert variant.size_bytes == entry.size_bytes
         assert variant.files == entry.files
@@ -858,10 +871,10 @@ class TestVariantSelector:
 class TestModelRegistry:
     """Tests for manifest loading and validation (FR-001, EC-006)."""
 
-    def test_TS015_manifest_schema_validation(
-        self, mock_bpy, tmp_path
-    ):
-        """TS-015 → FR-001: Verify manifest.json schema validation on load (missing fields, invalid types).
+    def test_TS015_manifest_schema_validation(self, mock_bpy, tmp_path):
+        """TS-015 → FR-001: Verify manifest.json schema validation on load (missing
+        fields,
+        invalid types).
 
         Given: A manifest.json with entries that have missing or invalid fields
         When: The ModelRegistry is initialized
@@ -905,7 +918,8 @@ class TestModelRegistry:
         manifest_path.write_text(json.dumps(manifest))
 
         # When — load registry (should log errors for bad entries)
-        # Mock: infrastructure — logger (verifying error-reporting for malformed entries)
+        # Mock: infrastructure — logger (verifying error-reporting for malformed
+        # entries)
         with patch("tessera.models.registry.logger") as mock_logger:
             reg = ModelRegistry(manifest_path=manifest_path)
 
@@ -916,20 +930,20 @@ class TestModelRegistry:
 
         # Verify error logging for invalid entries
         error_calls = mock_logger.error.call_args_list
-        assert len(error_calls) >= 2, (
-            "Expected at least 2 error logs for invalid entries"
-        )
+        assert (
+            len(error_calls) >= 2
+        ), "Expected at least 2 error logs for invalid entries"
 
         # Check that logged messages include model_id and missing fields
         error_messages = [str(c) for c in error_calls]
-        assert any("bad-model" in msg for msg in error_messages), (
-            "Error log should reference 'bad-model'"
-        )
+        assert any(
+            "bad-model" in msg for msg in error_messages
+        ), "Error log should reference 'bad-model'"
 
-    def test_TS016_manifest_missing_or_corrupt(
-        self, mock_bpy, tmp_path
-    ):
-        """TS-016 → EC-006: Delete or corrupt manifest.json, verify ManifestLoadError and disabled UI.
+    def test_TS016_manifest_missing_or_corrupt(self, mock_bpy, tmp_path):
+        """TS-016 → EC-006: Delete or corrupt manifest.json, verify ManifestLoadError
+        and
+        disabled UI.
 
         Given: The embedded manifest.json is missing or contains invalid JSON
         When: The ModelRegistry is initialized
@@ -977,7 +991,9 @@ class TestDownloadUI:
     def test_TS012_missing_models_notification_banner(
         self, mock_bpy, cache_dir, registry, cache_manager
     ):
-        """TS-012 → AC-007: Open panel with models missing, verify notification banner text and button.
+        """TS-012 → AC-007: Open panel with models missing, verify notification banner
+        text
+        and button.
 
         Given: 2 of 3 registered models are not yet downloaded
         When: The missing models summary is computed
@@ -998,10 +1014,10 @@ class TestDownloadUI:
 
         # Total size should be sum of test-model-a (1.34 GB) + test-model-c (2.0 GB)
         expected_bytes = 1340000000 + 2000000000
-        expected_gb = expected_bytes / (1024 ** 3)
-        assert abs(total_gb - expected_gb) < 0.1, (
-            f"Expected ~{expected_gb:.1f} GB total, got {total_gb:.1f} GB"
-        )
+        expected_gb = expected_bytes / (1024**3)
+        assert (
+            abs(total_gb - expected_gb) < 0.1
+        ), f"Expected ~{expected_gb:.1f} GB total, got {total_gb:.1f} GB"
 
     def test_TS013_cross_platform_download_and_cache(
         self, mock_bpy, cache_dir, registry, cache_manager
@@ -1075,9 +1091,7 @@ class TestDownloadUI:
         entry.sha256["model.safetensors"] = "TODO"
 
         # Patch at module level for background thread visibility
-        mock_huggingface_hub.hf_hub_download = MagicMock(
-            side_effect=mock_slow_download
-        )
+        mock_huggingface_hub.hf_hub_download = MagicMock(side_effect=mock_slow_download)
         if True:  # block to maintain indentation
             # Start background download (non-blocking)
             dm.start_background_download("test-model-b")
@@ -1097,9 +1111,7 @@ class TestDownloadUI:
 
         # Then — main thread operations should be fast (< 10ms each)
         for i, t in enumerate(main_thread_times):
-            assert t < 10, (
-                f"Main thread operation {i} took {t:.2f}ms, expected < 10ms"
-            )
+            assert t < 10, f"Main thread operation {i} took {t:.2f}ms, expected < 10ms"
 
 
 # ---------------------------------------------------------------------------
@@ -1129,9 +1141,9 @@ class TestFileExtensionValidation:
         from tessera.models.download_manager import _validate_file_extension
 
         result = _validate_file_extension(filename)
-        assert result == expected, (
-            f"Extension check for '{filename}': expected {expected}, got {result}"
-        )
+        assert (
+            result == expected
+        ), f"Extension check for '{filename}': expected {expected}, got {result}"
 
 
 # ---------------------------------------------------------------------------

@@ -29,10 +29,14 @@ Implements: FR-024, FR-025, FR-026, FR-027, FR-028, FR-029.
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from tessera.sketch.types import SymmetryConfig
+
+if TYPE_CHECKING:
+    from tessera.reconstruction.mesh_output import StandardMesh
 
 logger = logging.getLogger("tessera.sketch")
 
@@ -104,8 +108,7 @@ class SymmetryEnforcer:
         symmetry_normal = symmetry_normal / np.linalg.norm(symmetry_normal)
 
         logger.debug(
-            "Symmetry detection result: symmetry_axis=%s, "
-            "eigenvalues=%s",
+            "Symmetry detection result: symmetry_axis=%s, " "eigenvalues=%s",
             symmetry_normal,
             eigenvalues,
         )
@@ -140,9 +143,6 @@ class SymmetryEnforcer:
         scale = bbox_diagonal if bbox_diagonal > 0 else 1.0
 
         # Mirror positive-side vertices to negative side.
-        mirrored_vertices = centered.copy()
-        mirrored_projections = mirrored_vertices @ symmetry_normal
-
         # Replace negative-side vertex positions with mirrored
         # positions from their closest positive-side counterparts.
         positive_verts = centered[positive_mask]
@@ -150,17 +150,14 @@ class SymmetryEnforcer:
 
         if len(positive_verts) == 0 or np.sum(negative_mask) == 0:
             logger.warning(
-                "Symmetry enforcement skipped: could not split mesh "
-                "into two halves"
+                "Symmetry enforcement skipped: could not split mesh " "into two halves"
             )
             return mesh
 
         # Mirror positive vertices across symmetry plane.
         mirrored_positive = positive_verts.copy()
         proj_pos = mirrored_positive @ symmetry_normal
-        mirrored_positive -= 2.0 * np.outer(
-            proj_pos, symmetry_normal
-        )
+        mirrored_positive -= 2.0 * np.outer(proj_pos, symmetry_normal)
 
         # Build symmetric mesh by combining original positive half
         # with mirrored half.
@@ -181,9 +178,7 @@ class SymmetryEnforcer:
             # Find closest mirrored positive vertex for each negative.
             for i, neg_idx in enumerate(negative_indices):
                 neg_v = neg_verts[i]
-                distances = np.linalg.norm(
-                    mirrored_positive - neg_v, axis=1
-                )
+                distances = np.linalg.norm(mirrored_positive - neg_v, axis=1)
                 closest = int(np.argmin(distances))
                 # Map to corresponding mirrored index.
                 old_to_new[neg_idx] = len(positive_indices) + closest
@@ -221,9 +216,7 @@ class SymmetryEnforcer:
 
         # --- FR-029: Verify vertex count change ---
         new_count = len(new_vertices)
-        delta_percent = abs(new_count - original_count) / max(
-            original_count, 1
-        ) * 100
+        delta_percent = abs(new_count - original_count) / max(original_count, 1) * 100
 
         if delta_percent > 10.0:
             logger.warning(

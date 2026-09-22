@@ -80,8 +80,7 @@ class VolumeCheck(BaseCheck):
                 check_name=self.name,
                 status=CheckStatus.PASS,
                 message=(
-                    f"Mesh volume is {volume_mm3} mm³ "
-                    f"(closed surface confirmed)."
+                    f"Mesh volume is {volume_mm3} mm³ " f"(closed surface confirmed)."
                 ),
                 details={"volume_mm3": volume_mm3},
             )

@@ -175,9 +175,7 @@ class TESSERA_PT_Refinement(Panel):
                     img = bpy.data.images.get(msg.image_name)
                     if img is not None:
                         row.template_icon(
-                            icon_value=img.preview.icon_id
-                            if img.preview
-                            else 0,
+                            icon_value=img.preview.icon_id if img.preview else 0,
                             scale=2.0,
                         )
 

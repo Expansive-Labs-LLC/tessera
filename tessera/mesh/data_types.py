@@ -26,7 +26,7 @@ Implements: §3.4 Input Specifications, FR-007.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np

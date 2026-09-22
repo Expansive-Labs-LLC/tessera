@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import bpy
 
-
 # Module-level variable to store the latest performance report.
 _latest_report = None
 
@@ -88,9 +87,7 @@ class TESSERA_PT_performance(bpy.types.Panel):
         )
 
         if report.peak_gpu_memory_mb > 0:
-            header.label(
-                text=f"GPU Peak: {report.peak_gpu_memory_mb:.0f} MB"
-            )
+            header.label(text=f"GPU Peak: {report.peak_gpu_memory_mb:.0f} MB")
 
         layout.separator()
 
@@ -105,15 +102,11 @@ class TESSERA_PT_performance(bpy.types.Panel):
                 text=f"{stage.stage_name}",
                 icon="RIGHTARROW_THIN",
             )
-            row.label(
-                text=f"{stage.duration_seconds:.2f}s ({pct:.0f}%)"
-            )
+            row.label(text=f"{stage.duration_seconds:.2f}s ({pct:.0f}%)")
 
             # Memory info if available.
             if stage.peak_memory_mb >= 0:
-                box.label(
-                    text=f"  CPU Peak: {stage.peak_memory_mb:.1f} MB"
-                )
+                box.label(text=f"  CPU Peak: {stage.peak_memory_mb:.1f} MB")
 
         # Bottleneck recommendations.
         bottlenecks = report.get_bottleneck_stages(top_n=1)
@@ -124,8 +117,7 @@ class TESSERA_PT_performance(bpy.types.Panel):
                 layout.separator()
                 box = layout.box()
                 box.label(
-                    text=f"⚡ Bottleneck: {top.stage_name} "
-                    f"({pct:.0f}% of total)",
+                    text=f"⚡ Bottleneck: {top.stage_name} " f"({pct:.0f}% of total)",
                     icon="ERROR",
                 )
 

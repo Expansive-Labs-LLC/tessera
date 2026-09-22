@@ -153,8 +153,7 @@ class ModelCache:
 
         # Load the model.
         logger.info(
-            "Model loading (lazy): model_name=%s, "
-            "estimated_gpu_memory_mb=%.0f",
+            "Model loading (lazy): model_name=%s, " "estimated_gpu_memory_mb=%.0f",
             name,
             estimated_gpu_mb,
         )
@@ -215,9 +214,7 @@ class ModelCache:
         if entry is None:
             return False
         if entry.active:
-            logger.warning(
-                "Cannot evict active model: model_name=%s", name
-            )
+            logger.warning("Cannot evict active model: model_name=%s", name)
             return False
 
         del self._cache[name]
