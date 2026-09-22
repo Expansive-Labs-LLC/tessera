@@ -11,9 +11,9 @@
 | **Spec ID** | SPEC-TS-0007 |
 | **Task ID** | TASK-TS-0007 |
 | **Status** | Submitted |
-| **Version** | 1.1 |
+| **Version** | 1.2 |
 | **Created** | 2026-04-10 |
-| **Last Updated** | 2026-04-14 |
+| **Last Updated** | 2026-09-22 |
 | **Author** | Orchestrator (AI) |
 | **Pod** | Tessera |
 | **CSO Approver** | Derek |
@@ -329,7 +329,7 @@ All multi-view metadata keys are stored in `StandardMesh.metadata` (i.e., `resul
 | CON-006 | SHALL NOT modify existing `ReconstructionAdapter`, `StandardMesh`, `ReconstructionResult`, or `AdapterRegistry` interfaces from SPEC-TS-0004. The multi-view adapter SHALL extend these existing interfaces without breaking changes. |
 | CON-007 | SHALL NOT modify or depend on Blender scene state (`bpy.context`, `bpy.data`) during pose estimation or reconstruction inference. Blender interaction is limited to the preview render pipeline (§3.5) and occurs only after mesh extraction. |
 | CON-008 | All source code SHALL be licensed under GPL v2+. Each source file SHALL include a GPL license header comment. |
-| CON-009 | SHALL NOT use `subprocess` or shell commands to invoke SfM or reconstruction. All processing SHALL run in-process via Python/PyTorch. |
+| CON-009 | SHALL NOT invoke inference by shelling out to an arbitrary binary or constructing a command line. Inference SHALL run either in-process, or in the sanctioned local engine process over its defined local API (ADR-0001, SPEC-TS-0023). No other out-of-process mechanism is permitted. |
 | CON-010 | The preview renderer SHALL NOT leave orphan cameras, lights, or render-related objects in the Blender scene after rendering completes. |
 
 ---
@@ -764,6 +764,7 @@ Exact SHA-256 checksums SHALL be recorded in the manifest file (`model_manifest.
 |---------|------|--------|-------------------|
 | 1.0 | 2026-04-10 | Orchestrator (AI) | Initial draft |
 | 1.1 | 2026-04-14 | AI (spec-review remediation) | Remediation of 11 review findings. **C-001:** Fixed MultiViewAdapter to pass camera poses via enriched `VisionPipelineOutput` instead of breaking SPEC-TS-0004 ABC signature. **M-001:** Added FR-036 input count validation (1–12) with EC-006. **M-002:** Added §12.3 model weight manifest entries. **M-003:** Documented batch ceiling interaction with SPEC-TS-0003. **M-004:** Committed to NeuS2 as sole backend; Instant-NGP moved to out-of-scope. **m-001:** Aligned AC-001 timing with NFR-003 (< 6 min). **m-002:** Added constructor signature to FR-001. **m-003:** Clarified 20° minimum viable vs. 45° recommended angular separation. **m-004:** Fixed all metadata references to `mesh.metadata` per SPEC-TS-0004. **m-005:** Added FR-037 + EC-007 for preview renderer invalid object handling. **m-006:** Added `label_needs_confirmation` to §3.6 input spec table. |
+| 1.2 | 2026-09-22 | Derek | Amended CON-009 for ADR-0001. The constraint required all SfM and reconstruction processing to run in-process, which the accepted local-engine decision contradicts. The intent (no shelling out to arbitrary binaries) is preserved; the sanctioned engine boundary defined by SPEC-TS-0023 is now permitted, and nothing else is. |
 
 ---
 

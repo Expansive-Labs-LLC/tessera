@@ -11,9 +11,9 @@
 | **Spec ID** | SPEC-TS-0010 |
 | **Task ID** | TASK-TS-0010 |
 | **Status** | Draft |
-| **Version** | 1.1 |
+| **Version** | 1.2 |
 | **Created** | 2026-04-10 |
-| **Last Updated** | 2026-04-14 |
+| **Last Updated** | 2026-09-22 |
 | **Author** | Orchestrator (AI) |
 | **Pod** | Tessera |
 | **CSO Approver** | Derek |
@@ -346,7 +346,7 @@ class SketchPipelineResult:
 | CON-005 | SHALL NOT assume a specific GPU VRAM size. Check available VRAM before loading each model stage. |
 | CON-006 | SHALL NOT bypass the existing `ReconstructionAdapter` interface (SPEC-TS-0004). The sketch pathway routes synthesized images through the standard reconstruction engine. |
 | CON-007 | All source code SHALL be licensed under GPL v2+. Each source file SHALL include a GPL license header comment. |
-| CON-008 | SHALL NOT use `subprocess` or shell commands for inference. All inference SHALL run in-process via Python/PyTorch. |
+| CON-008 | SHALL NOT invoke inference by shelling out to an arbitrary binary or constructing a command line. Inference SHALL run either in-process, or in the sanctioned local engine process over its defined local API (ADR-0001, SPEC-TS-0023). No other out-of-process mechanism is permitted. |
 | CON-009 | SHALL NOT support SVG or vector sketch input in this version. Input is raster images only (photos of sketches or rasterized digital drawings). |
 
 ---
@@ -804,6 +804,7 @@ N/A — local add-on, no telemetry collected per decision D3 (local/self-hosted 
 |---------|------|--------|-------------------|
 | 1.0 | 2026-04-10 | Orchestrator (AI) | Initial draft |
 | 1.1 | 2026-04-14 | AI (spec-review remediation) | Resolved C-001: documented `force_sketch` as canonical `ImageInput` extension (SPEC-TS-0003 updated); M-001: added FR-038 `VisionPipelineOutput` construction from `SynthesizedImage`; M-002: added FR-040 `sketch_type` determination heuristic; M-003: added FR-039 VRAM pre-check with error message; M-004: added `detection_method` to FR-002 and FR-006; m-001: simplified FR-015 inversion convention; m-002: added EC-006 insufficient VRAM edge case; m-003: added FR-041 CNN classifier input preprocessing; m-004: added model weight manifest identifiers; m-005: reworded EC-005. Added TS-023–TS-027. Updated self-score to 100. |
+| 1.2 | 2026-09-22 | Derek | Amended CON-008 for ADR-0001. The constraint required all inference to run in-process, which the accepted local-engine decision contradicts. The intent (no shelling out to arbitrary binaries) is preserved; the sanctioned engine boundary defined by SPEC-TS-0023 is now permitted, and nothing else is. |
 
 ---
 
