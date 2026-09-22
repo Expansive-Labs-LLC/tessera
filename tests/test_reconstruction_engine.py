@@ -26,7 +26,6 @@ Tests are designed to run in CI without a GPU or the Trellis wheel.
 
 from __future__ import annotations
 
-import hashlib
 import signal
 import time
 from unittest.mock import MagicMock, patch
