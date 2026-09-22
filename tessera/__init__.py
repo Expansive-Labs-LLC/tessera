@@ -48,7 +48,7 @@ bl_info = {
     "location": "View3D > Sidebar > Tessera",
     "description": "AI-powered 3D-printable model generation from reference images",
     "warning": "",
-    "doc_url": "https://expansive-labs-llc.github.io/tessera/",
+    "doc_url": "https://expansivelabs.io/tessera/",
     "category": "3D View",
 }
 

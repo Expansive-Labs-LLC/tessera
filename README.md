@@ -72,14 +72,14 @@ Give the agent a couple of images and receive a watertight, manifold mesh ready 
 
 ## Documentation
 
-Full documentation is available at [https://expansive-labs-llc.github.io/tessera/](https://expansive-labs-llc.github.io/tessera/).
+Full documentation is available at [https://expansivelabs.io/tessera/](https://expansivelabs.io/tessera/).
 
 Key pages:
 
-- [Installation Guide](https://expansive-labs-llc.github.io/tessera/installation/)
-- [User Guide: Image Input](https://expansive-labs-llc.github.io/tessera/user-guide/image-input/)
-- [API Reference: Pipeline](https://expansive-labs-llc.github.io/tessera/api/pipeline/)
-- [Troubleshooting](https://expansive-labs-llc.github.io/tessera/troubleshooting/)
+- [Installation Guide](https://expansivelabs.io/tessera/installation/)
+- [User Guide: Image Input](https://expansivelabs.io/tessera/user-guide/image-input/)
+- [API Reference: Pipeline](https://expansivelabs.io/tessera/api/pipeline/)
+- [Troubleshooting](https://expansivelabs.io/tessera/troubleshooting/)
 
 ## Contributing
 
