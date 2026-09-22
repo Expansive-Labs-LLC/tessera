@@ -43,7 +43,11 @@ TRELLIS additionally requires compiled CUDA extensions (sparse-voxel rasterisati
 - The add-on is GPL-2.0-or-later. Vendoring a large third-party binary stack into the archive widens the distribution surface materially.
 - The Extensions Platform is a curated channel with review and size expectations that a multi-gigabyte binary payload does not fit.
 
-> **To verify before accepting:** the current Extensions Platform archive size limit, and whether prebuilt CUDA-extension wheels exist for the target GPU generation. Both are external facts that change, and neither has been confirmed here.
+> **Verified 2026-09-22 — both confirmed.** The Extensions Platform rejects
+> uploads above 200 MB, and the target GPU's compute capability (`sm_120`)
+> is one the installed CUDA toolkit cannot target at all, so TRELLIS's
+> extensions build from source as this ADR assumed. Neither premise
+> contradicts the decision. See `ADR-0001-premise-verification.md`.
 
 ### Why it is urgent rather than merely open
 

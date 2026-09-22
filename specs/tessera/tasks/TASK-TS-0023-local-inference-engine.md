@@ -164,7 +164,7 @@ A user installs the add-on, is prompted once to install the engine, accepts, and
 | Item | Status |
 |------|--------|
 | Task reviewed and understood | ☐ |
-| Premises verified and reported | ☐ |
+| Premises verified and reported | ☑ 2026-09-22 — `specs/tessera/adr/ADR-0001-premise-verification.md` |
 | Questions resolved with CSO | ☐ |
 | Ready to begin Spec | ☐ |
 
