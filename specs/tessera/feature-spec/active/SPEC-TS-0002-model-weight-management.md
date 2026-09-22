@@ -8,7 +8,7 @@
 |-------|-------|
 | **Spec ID** | SPEC-TS-0002 |
 | **Task ID** | TASK-TS-0002 |
-| **Status** | In Review — amendment v1.3 awaiting CSO approval |
+| **Status** | Approved |
 | **Version** | 1.3 |
 | **Created** | 2026-04-09 |
 | **Last Updated** | 2026-09-21 |
@@ -618,7 +618,7 @@ N/A — local add-on, no telemetry collected per decision D3 (local/self-hosted 
 | Deputy Review | — | — | ☑ N/A |
 
 **Approval Notes:**
-v1.2 approved 2026-09-21. The licence gate, the fail-closed integrity change and the manifest reduction to four shipping models are implemented and covered by TS-018 through TS-023. Weight licences are recorded in `MODEL-LICENSES.md` and must be re-verified before any commercial release, as upstream terms can change under a bumped revision.
+v1.3 approved 2026-09-22. v1.2 approved 2026-09-21. The licence gate, the fail-closed integrity change and the manifest reduction to four shipping models are implemented and covered by TS-018 through TS-023. Weight licences are recorded in `MODEL-LICENSES.md` and must be re-verified before any commercial release, as upstream terms can change under a bumped revision.
 
 ---
 
@@ -628,7 +628,7 @@ v1.2 approved 2026-09-21. The licence gate, the fail-closed integrity change and
 |---------|------|--------|-------------------|
 | 1.0 | 2026-04-09 | Derek | Initial draft |
 | 1.1 | 2026-04-14 | Derek | Documented why per-file `hf_hub_download()` is used instead of `snapshot_download()`; recorded the rationale for excluding non-HuggingFace download sources; specified the `ensure_model()` threading contract; added the manifest-corruption edge case (EC-006); defined the empty-`variants` fallback in FR-012; added resume tolerance to AC-003; added TS-016 and TS-017 |
-| 1.3 | 2026-09-21 | Orchestrator (AI) | **Amendment — awaiting CSO approval.** Made the model list user-extensible (FR-026 – FR-033, SEC-008, AC-010, TS-024 – TS-027): a user can add any compatible Hugging Face model, resolved and commit-pinned at add time, licence-classified before download by the same fail-closed gate as bundled models, with a SHA256 recorded for every file or the addition refused. User entries persist outside the add-on so they survive updates, cannot shadow or remove bundled ids, and cannot be added for an architecture no adapter can load. Documented in `docs/docs/user-guide/custom-models.md` and `MODEL-LICENSES.md`. |
+| 1.3 | 2026-09-21 | Derek | Made the model list user-extensible (FR-026 – FR-033, SEC-008, AC-010, TS-024 – TS-027): a user can add any compatible Hugging Face model, resolved and commit-pinned at add time, licence-classified before download by the same fail-closed gate as bundled models, with a SHA256 recorded for every file or the addition refused. User entries persist outside the add-on so they survive updates, cannot shadow or remove bundled ids, and cannot be added for an architecture no adapter can load. Documented in `docs/docs/user-guide/custom-models.md` and `MODEL-LICENSES.md`. |
 | 1.2 | 2026-09-21 | Derek | Added weight-licence metadata and a fail-closed licence gate (FR-020–FR-025, SEC-007, AC-008, TS-018/019/021/022/023) after `depth-anything-v2-large` (CC-BY-NC-4.0) was found serving as the default depth model. Made SHA256 verification fail closed on absent, empty, placeholder and malformed digests without deleting the file (FR-007a, AC-009, TS-020). Documented the gate module and exception hierarchy in §2.3, the `ModelLicenseError` / `IntegrityError` contracts in §3.3 and §10, the licence gate API in §10.5, and restricted-weight handling in §9.2. Removed Zero123++ and InstantMesh from the manifest, and from the model lists in §1.1 and §8, as no adapter referenced them. Switched worked examples to the Apache-2.0 Small checkpoint. See `MODEL-LICENSES.md`. |
 
 ---

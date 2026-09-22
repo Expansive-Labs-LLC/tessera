@@ -10,7 +10,7 @@
 |-------|-------|
 | **Spec ID** | SPEC-TS-0005 |
 | **Task ID** | TASK-TS-0005 |
-| **Status** | Ap |
+| **Status** | Approved |
 | **Version** | 1.1 |
 | **Created** | 2026-04-09 |
 | **Last Updated** | 2026-04-14 |

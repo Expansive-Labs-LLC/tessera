@@ -9,7 +9,7 @@
 | **Assigned To** | TBD |
 | **Assigned By** | Derek |
 | **Assigned Date** | 2026-09-21 |
-| **Assignment Method** | CSO decision D8 (GTM analysis) / PRD-001 D7 |
+| **Assignment Method** | CSO decision D7 (GTM analysis) / PRD-001 D7 |
 | **Sprint/Iteration** | Phase 5 — Pre-Launch |
 
 ---
