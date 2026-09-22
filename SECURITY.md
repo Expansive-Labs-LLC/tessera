@@ -5,7 +5,7 @@
 Tessera is designed with a **local-first, privacy-preserving architecture**:
 
 - **All AI inference runs locally** on your GPU — no data ever leaves your machine.
-- The **only network activity** is optional model weight downloads from configured URLs during initial setup (see [Model Weight Management](https://expansive-labs-llc.github.io/tessera/)).
+- The **only network activity** is optional model weight downloads from configured URLs during initial setup (see [Model Weight Management](https://expansivelabs.io/tessera/)).
 - **No telemetry, analytics, or crash reporting** is collected — your data stays on your hardware.
 
 ## Reporting a Vulnerability

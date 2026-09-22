@@ -244,7 +244,7 @@ class TestMkDocsConfig:
 
         Given: The mkdocs.yml configuration
         When:  ``site_url`` is read
-        Then:  It matches ``https://expansive-labs-llc.github.io/tessera/``.
+        Then:  It matches ``https://expansivelabs.io/tessera/``.
 
         Type: Script | Priority: Must Pass
         """
@@ -252,7 +252,7 @@ class TestMkDocsConfig:
         content = _read(_MKDOCS_YML)
 
         # Then
-        assert "site_url: https://expansive-labs-llc.github.io/tessera/" in content
+        assert "site_url: https://expansivelabs.io/tessera/" in content
 
     def test_FR004_plugins_present(self):
         """FR-004: Required plugins are configured.
@@ -803,7 +803,7 @@ class TestBlInfoDocUrl:
 
         Given: The tessera __init__.py module
         When:  bl_info['doc_url'] is inspected
-        Then:  It equals 'https://expansive-labs-llc.github.io/tessera/'.
+        Then:  It equals 'https://expansivelabs.io/tessera/'.
 
         Type: Script | Priority: Must Pass
         """
@@ -811,9 +811,9 @@ class TestBlInfoDocUrl:
         from tessera import bl_info
 
         # Then
-        assert bl_info["doc_url"] == "https://expansive-labs-llc.github.io/tessera/", (
+        assert bl_info["doc_url"] == "https://expansivelabs.io/tessera/", (
             f"bl_info['doc_url'] = '{bl_info['doc_url']}' — expected "
-            "'https://expansive-labs-llc.github.io/tessera/'"
+            "'https://expansivelabs.io/tessera/'"
         )
 
 
@@ -828,7 +828,7 @@ class TestHelpPanel:
 
         Given: The help_panel.py module
         When:  _DOCS_URL is inspected
-        Then:  It uses the 'expansive-labs-llc.github.io' domain.
+        Then:  It uses the 'expansivelabs.io' domain.
 
         Type: Script | Priority: Must Pass
         """
@@ -837,7 +837,7 @@ class TestHelpPanel:
 
         # Then
         assert (
-            _DOCS_URL == "https://expansive-labs-llc.github.io/tessera/"
+            _DOCS_URL == "https://expansivelabs.io/tessera/"
         ), f"_DOCS_URL = '{_DOCS_URL}' — wrong domain"
 
     def test_TS012_quickstart_url_constant(self, mock_bpy):
@@ -845,7 +845,7 @@ class TestHelpPanel:
 
         Given: The help_panel.py module
         When:  _QUICKSTART_URL is inspected
-        Then:  It uses the 'expansive-labs-llc.github.io' domain.
+        Then:  It uses the 'expansivelabs.io' domain.
 
         Type: Script | Priority: Must Pass
         """
@@ -853,9 +853,7 @@ class TestHelpPanel:
         from tessera.ui.help_panel import _QUICKSTART_URL
 
         # Then
-        assert _QUICKSTART_URL == (
-            "https://expansive-labs-llc.github.io/tessera/quickstart/"
-        )
+        assert _QUICKSTART_URL == ("https://expansivelabs.io/tessera/quickstart/")
 
     def test_SEC003_docs_url_is_hardcoded_https(self, mock_bpy):
         """SEC-003: _DOCS_URL is hardcoded HTTPS, not from user input.

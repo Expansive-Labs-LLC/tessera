@@ -28,9 +28,9 @@ from __future__ import annotations
 import bpy
 
 # Documentation URLs.
-_DOCS_URL = "https://expansive-labs-llc.github.io/tessera/"
+_DOCS_URL = "https://expansivelabs.io/tessera/"
 _ISSUES_URL = "https://github.com/Expansive-Labs-LLC/tessera/issues"
-_QUICKSTART_URL = "https://expansive-labs-llc.github.io/tessera/quickstart/"
+_QUICKSTART_URL = "https://expansivelabs.io/tessera/quickstart/"
 
 
 class TESSERA_PT_help(bpy.types.Panel):
