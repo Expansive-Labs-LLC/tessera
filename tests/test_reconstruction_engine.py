@@ -73,14 +73,38 @@ def _make_vision_result(
 # ---------------------------------------------------------------------------
 
 
+class _FakeCache:
+    """Stands in for ``CacheManager`` at the adapter's weight boundary.
+
+    The adapter no longer owns weight discovery or digests — it asks the
+    model layer (SPEC-TS-0002). These tests therefore drive the adapter
+    through that contract rather than by planting files on disk.
+    """
+
+    def __init__(self, path=None, integrity=(True, None)):
+        self._path = path
+        self._integrity = integrity
+
+    def get_model_path(self, model_id):
+        return self._path
+
+    def verify_integrity(self, model_id):
+        return self._integrity
+
+
+def _cached_weights(tmp_path):
+    """Create a snapshot dir shaped like the TRELLIS manifest entry."""
+    snap = tmp_path / "snapshot"
+    (snap / "ckpts").mkdir(parents=True)
+    (snap / "pipeline.json").write_text("{}")
+    return snap
+
+
 @pytest.fixture
 def reconstruction_imports():
     """Import reconstruction modules after bpy mock is installed."""
     from tessera.reconstruction.adapters.stub_adapter import StubAdapter
-    from tessera.reconstruction.adapters.trellis_adapter import (
-        TrellisAdapter,
-        _compute_sha256,
-    )
+    from tessera.reconstruction.adapters.trellis_adapter import TrellisAdapter
     from tessera.reconstruction.engine import (
         ReconstructionEngine,
         _TimeoutError,
@@ -111,7 +135,6 @@ def reconstruction_imports():
     m.VRAMGuard = VRAMGuard
     m.normalize_to_standard_mesh = normalize_to_standard_mesh
     m.validate_mesh = validate_mesh
-    m._compute_sha256 = _compute_sha256
     m._TimeoutError = _TimeoutError
     return m
 
@@ -252,11 +275,11 @@ class TestInsufficientVRAM:
         before loading weights."""
         m = reconstruction_imports
 
-        # Given — create weight file so weights_available() passes
-        weight_dir = tmp_path / "trellis"
-        weight_dir.mkdir()
-        (weight_dir / "trellis_pipeline.safetensors").write_bytes(b"\x00" * 100)
-        adapter = m.TrellisAdapter(cache_dir=str(tmp_path))
+        # Given — weights resolved and verified by the model layer
+        adapter = m.TrellisAdapter(
+            cache_dir=str(tmp_path),
+            cache_manager=_FakeCache(path=_cached_weights(tmp_path)),
+        )
         assert adapter.weights_available() is True
 
         # Mock: system-level non-determinism — GPU VRAM detection
@@ -574,48 +597,52 @@ class TestSecurityValidation:
         error with expected/actual hashes."""
         m = reconstruction_imports
 
-        # Given — create weight file with known content
-        weight_dir = tmp_path / "trellis"
-        weight_dir.mkdir()
-        weight_file = weight_dir / "trellis_pipeline.safetensors"
-        weight_file.write_bytes(b"fake model weights for testing")
-
-        adapter = m.TrellisAdapter(cache_dir=str(tmp_path))
-
-        # Compute actual hash for the fake file
-        actual_hash = m._compute_sha256(str(weight_file))
-        fake_expected = "a" * 64  # Deliberately wrong
-
-        # Mock: external dependency — model weight checksums (testing mismatch error
-        # path)
-        with patch(
-            "tessera.reconstruction.adapters.trellis_adapter._EXPECTED_CHECKSUMS",
-            {"trellis_pipeline.safetensors": fake_expected},
-        ):
-            inp = _make_vision_result()
-            result = adapter.reconstruct([inp])
-
-        # Then
-        assert result.success is False
-        assert "checksum" in result.error_message.lower()
-        assert fake_expected in result.error_message  # Expected hash shown
-        assert actual_hash in result.error_message  # Actual hash shown
-
-    def test_sha256_computation_correct(self, reconstruction_imports, tmp_path):
-        """Additional: Verify _compute_sha256 produces correct digest."""
-        m = reconstruction_imports
-
-        # Given
-        test_file = tmp_path / "test_hash.bin"
-        content = b"hello world"
-        test_file.write_bytes(content)
-        expected = hashlib.sha256(content).hexdigest()
+        # Given — the model layer reports an integrity failure
+        detail = (
+            "Integrity check failed for ckpts/slat_dec_gs.safetensors. "
+            "Expected SHA256: " + "a" * 64 + "."
+        )
+        adapter = m.TrellisAdapter(
+            cache_dir=str(tmp_path),
+            cache_manager=_FakeCache(
+                path=_cached_weights(tmp_path), integrity=(False, detail)
+            ),
+        )
 
         # When
-        actual = m._compute_sha256(str(test_file))
+        inp = _make_vision_result()
+        result = adapter.reconstruct([inp])
 
-        # Then
-        assert actual == expected
+        # Then — the adapter surfaces the model layer's detail verbatim
+        # and does not proceed to load anything.
+        assert result.success is False
+        assert result.mesh is None
+        assert detail in result.error_message
+        assert "download" in result.error_message.lower()
+
+    def test_unverifiable_weights_fail_closed(self, reconstruction_imports, tmp_path):
+        """SEC-004 → SPEC-TS-0002 FR-007a: the adapter keeps no digest
+        table of its own, so an unverifiable weight cannot be skipped
+        here the way it once was."""
+        m = reconstruction_imports
+        import tessera.reconstruction.adapters.trellis_adapter as ta
+
+        # The adapter must not carry a parallel checksum map — that
+        # duplicate is what allowed verification to be silently skipped.
+        assert not hasattr(ta, "_EXPECTED_CHECKSUMS")
+        assert not hasattr(ta, "_compute_sha256")
+
+        adapter = m.TrellisAdapter(
+            cache_dir=str(tmp_path),
+            cache_manager=_FakeCache(
+                path=_cached_weights(tmp_path),
+                integrity=(False, "No SHA256 digest declared for ckpts/x.safetensors."),
+            ),
+        )
+        result = adapter.reconstruct([_make_vision_result()])
+
+        assert result.success is False
+        assert "no sha256 digest" in result.error_message.lower()
 
 
 class TestTimeout:
@@ -667,11 +694,10 @@ class TestAdapterRegistry:
         registry = m.AdapterRegistry()
         registry.register(m.StubAdapter())
 
-        trellis = m.TrellisAdapter(cache_dir=str(tmp_path))
-        # Create weight files so weights_available() returns True
-        weight_dir = tmp_path / "trellis"
-        weight_dir.mkdir()
-        (weight_dir / "trellis_pipeline.safetensors").write_bytes(b"\x00" * 100)
+        trellis = m.TrellisAdapter(
+            cache_dir=str(tmp_path),
+            cache_manager=_FakeCache(path=_cached_weights(tmp_path)),
+        )
         registry.register(trellis)
 
         # When

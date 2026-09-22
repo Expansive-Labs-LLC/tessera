@@ -28,7 +28,6 @@ Public API:
 
 from __future__ import annotations
 
-import hashlib
 import logging
 import os
 import time
@@ -48,40 +47,18 @@ from ...reconstruction.utils.vram_guard import VRAMGuard
 
 logger = logging.getLogger("tessera.reconstruction")
 
-# Model metadata — mirrors the manifest entry for Trellis.
+# Display name for this adapter, reported as ``source_adapter``.
 _MODEL_NAME = "trellis-v1.0"
 _MIN_VRAM_GB = 6.0
-_WEIGHT_FILES = ["trellis_pipeline.safetensors"]
 
-# Expected SHA-256 checksums keyed by filename.
-# These SHALL match the checksums in the manifest maintained by
-# SPEC-TS-0002 (SEC-004).
-_EXPECTED_CHECKSUMS: dict[str, str] = {
-    # Populated from the model weight manifest.
-    # Placeholder — actual hash set after model spike.
-    "trellis_pipeline.safetensors": "",
-}
+# Manifest entry that owns this adapter's weights (SPEC-TS-0002).
+# The manifest is the single source of truth for the file list, the
+# pinned revision and the SHA-256 digests — this adapter does not keep
+# its own copy of any of them.
+_MODEL_ID = "trellis-image-large"
 
-
-def _compute_sha256(filepath: str) -> str:
-    """Compute SHA-256 hex digest of a file.
-
-    Reads in 8 KB chunks to limit peak memory usage.
-
-    Args:
-        filepath: Absolute path to the file.
-
-    Returns:
-        Lowercase hex digest string.
-    """
-    sha = hashlib.sha256()
-    with open(filepath, "rb") as f:
-        while True:
-            chunk = f.read(8192)
-            if not chunk:
-                break
-            sha.update(chunk)
-    return sha.hexdigest()
+# Pipeline configuration file at the root of the upstream repository.
+_PIPELINE_CONFIG = "pipeline.json"
 
 
 class TrellisAdapter(ReconstructionAdapter):
@@ -100,115 +77,120 @@ class TrellisAdapter(ReconstructionAdapter):
         FR-016, FR-018, SEC-002, SEC-004, SEC-005.
     """
 
-    def __init__(self, cache_dir: str) -> None:
+    def __init__(self, cache_dir: str, cache_manager: object | None = None) -> None:
         """Initialise the Trellis adapter.
 
         Args:
             cache_dir: Absolute path to the model weight cache
-                directory.  Weight files are expected at
-                ``<cache_dir>/trellis/<filename>``.
+                directory — the same directory the download manager
+                writes to (SPEC-TS-0002 FR-002).
+            cache_manager: Optional pre-built ``CacheManager``. When
+                omitted, one is constructed lazily over ``cache_dir``.
         """
         self._cache_dir = cache_dir
+        self._cache_manager = cache_manager
         self._model = None  # Lazy-loaded on first reconstruct()
+        self._model_dir: str | None = None
 
     # ------------------------------------------------------------------
     # Weight management
     # ------------------------------------------------------------------
 
-    def _weight_dir(self) -> str:
-        """Return the directory containing Trellis weight files."""
-        return os.path.join(self._cache_dir, "trellis")
+    def _cache(self):
+        """Return the ``CacheManager`` used to resolve and verify weights.
 
-    def weights_available(self) -> bool:
-        """Check whether all required weight files exist on disk.
+        Built lazily so that constructing the adapter — which the
+        registry does eagerly for capability queries — does not read
+        the manifest from disk.
+        """
+        if self._cache_manager is None:
+            from ...models.cache_manager import CacheManager
+            from ...models.registry import ModelRegistry
+
+            self._cache_manager = CacheManager(
+                cache_dir=self._cache_dir, registry=ModelRegistry()
+            )
+        return self._cache_manager
+
+    def _weight_dir(self) -> str | None:
+        """Return the resolved snapshot directory for the Trellis weights.
 
         Returns:
-            ``True`` if every file in ``_WEIGHT_FILES`` exists.
+            Absolute path to the cached snapshot, or ``None`` when the
+            weights have not been downloaded.
+        """
+        try:
+            path = self._cache().get_model_path(_MODEL_ID)
+        except Exception as exc:  # manifest unreadable, entry absent
+            logger.error("Could not resolve weights for %s: %s", _MODEL_ID, exc)
+            return None
+        return str(path) if path is not None else None
+
+    def weights_available(self) -> bool:
+        """Check whether the Trellis weights are present in the cache.
+
+        Delegates to the model cache, which checks every file the
+        manifest declares for this entry — not a single filename.
 
         Implements: FR-014 (existence check).
         """
-        for fname in _WEIGHT_FILES:
-            if not os.path.isfile(os.path.join(self._weight_dir(), fname)):
-                return False
-        return True
+        return self._weight_dir() is not None
 
     def _verify_checksums(self) -> tuple[bool, str]:
-        """Verify SHA-256 checksums of all weight files.
+        """Verify the SHA-256 digest of every cached Trellis weight file.
 
-        Skips verification for files whose expected checksum is
-        empty (placeholder during development).
+        Delegates to ``CacheManager.verify_integrity()``, which holds
+        the manifest digests and fails closed on an absent, empty,
+        placeholder or malformed digest (SPEC-TS-0002 FR-007a). This
+        adapter deliberately keeps no digest table of its own — a
+        second copy is a second thing to go stale.
 
         Returns:
             ``(ok, error_message)`` — error_message is empty on success.
 
         Implements: SEC-004.
         """
-        for fname, expected in _EXPECTED_CHECKSUMS.items():
-            if not expected:
-                # Placeholder checksum — skip during development.
-                logger.debug(
-                    "Skipping checksum verification for %s (placeholder)",
-                    fname,
-                )
-                continue
+        try:
+            ok, err = self._cache().verify_integrity(_MODEL_ID)
+        except Exception as exc:
+            msg = f"Could not verify weights for {_MODEL_ID}: {exc}"
+            logger.error(msg)
+            return False, msg
 
-            filepath = os.path.join(self._weight_dir(), fname)
-            if not os.path.isfile(filepath):
-                return False, (
-                    f"Model weight file not found: {fname}. "
-                    "Run weight download from Add-on Preferences → "
-                    "Tessera → Download Models."
-                )
+        if not ok:
+            msg = (
+                f"{err or 'Weight verification failed.'} "
+                "Re-download weights from Add-on Preferences → "
+                "Tessera → Download Models."
+            )
+            logger.error(msg)
+            return False, msg
 
-            actual = _compute_sha256(filepath)
-            if actual != expected:
-                msg = (
-                    f"Model weight checksum mismatch for {fname}. "
-                    f"Expected: {expected}, Got: {actual}. "
-                    "Re-download weights from Add-on Preferences."
-                )
-                logger.error(msg)
-                return False, msg
-
-            logger.debug("Checksum verified for %s: %s", fname, actual[:16] + "...")
-
+        logger.debug("Weight integrity verified for %s", _MODEL_ID)
         return True, ""
 
     def _load_model(self) -> tuple[bool, str]:
-        """Load the Trellis model into GPU memory.
+        """Resolve the verified weight directory for inference.
 
-        Uses ``torch.load(weights_only=True)`` per SEC-002 to
-        prevent pickle deserialization attacks.
+        TRELLIS is a multi-file pipeline — ``pipeline.json`` plus a
+        ``ckpts/`` tree of ``.safetensors`` — loaded by the upstream
+        pipeline loader, not by a single deserialisation call. This
+        method therefore resolves and validates the snapshot directory;
+        the pipeline itself is constructed at the inference boundary.
+
+        No ``torch.load()`` or ``pickle`` is used on any downloaded file
+        (SEC-002, CON-008).
 
         Returns:
             ``(ok, error_message)`` — error_message is empty on success.
 
         Implements: FR-013, SEC-002.
         """
-        if self._model is not None:
+        if self._model_dir is not None:
             return True, ""
 
-        try:
-            import torch
-
-            weight_path = os.path.join(self._weight_dir(), _WEIGHT_FILES[0])
-            logger.info(
-                "Loading model weights: %s from %s",
-                _MODEL_NAME,
-                os.path.basename(self._weight_dir()),
-            )
-
-            # SEC-002: weights_only=True prevents arbitrary code execution
-            self._model = torch.load(
-                weight_path,
-                map_location="cuda",
-                weights_only=True,
-            )
-
-            logger.info("Model weights loaded: %s", _MODEL_NAME)
-            return True, ""
-
-        except FileNotFoundError:
+        model_dir = self._weight_dir()
+        if model_dir is None:
             msg = (
                 f"Model weights not found for {_MODEL_NAME}. "
                 "Run weight download from Add-on Preferences → "
@@ -216,10 +198,20 @@ class TrellisAdapter(ReconstructionAdapter):
             )
             logger.error(msg)
             return False, msg
-        except Exception as exc:
-            msg = f"Failed to load model weights for {_MODEL_NAME}: {exc}"
+
+        config = os.path.join(model_dir, _PIPELINE_CONFIG)
+        if not os.path.isfile(config):
+            msg = (
+                f"Weight cache for {_MODEL_NAME} is missing "
+                f"{_PIPELINE_CONFIG}. Re-download weights from Add-on "
+                "Preferences → Tessera → Download Models."
+            )
             logger.error(msg)
             return False, msg
+
+        self._model_dir = model_dir
+        logger.info("Weight directory resolved for %s", _MODEL_NAME)
+        return True, ""
 
     # ------------------------------------------------------------------
     # Preprocessing
@@ -274,42 +266,40 @@ class TrellisAdapter(ReconstructionAdapter):
             masked_images.append(masked)
 
         # ---- Model-specific inference boundary ----
-        # In production, this calls into the Trellis pipeline:
-        #   from trellis.pipeline import TrellisPipeline
-        #   pipeline = TrellisPipeline(self._model)
-        #   result = pipeline(masked_images, depth_maps, view_labels)
-        #
-        # For development without the Trellis wheel, generate a
-        # synthetic mesh from the input structure so downstream
-        # stages can be tested.
-
+        # The weights are downloaded, verified and resolved by this
+        # point; what is missing is the *runtime*. TRELLIS needs torch
+        # built for the host CUDA version plus compiled CUDA extensions
+        # (sparse-voxel rasterisation and attention kernels). How that
+        # runtime is delivered is an open architectural decision —
+        # see TASK-TS-0017. Until it resolves, the registry falls back
+        # to StubAdapter rather than this adapter returning a fake mesh.
         try:
-            # Attempt to import the real Trellis pipeline
             from trellis.pipeline import (
                 TrellisPipeline,  # type: ignore[import-not-found]
             )
-
-            pipeline = TrellisPipeline(self._model)
-            depth_maps = [inp.depth_map for inp in inputs]
-            view_labels = [inp.view_label for inp in inputs]
-            result = pipeline(
-                images=masked_images,
-                depth_maps=depth_maps,
-                view_labels=view_labels,
-            )
-            return (
-                result.vertices,
-                result.faces,
-                getattr(result, "vertex_colors", None),
-                getattr(result, "confidence", 0.5),
-            )
-
         except ImportError:
             raise RuntimeError(
-                "Trellis model package is not installed. "
-                "Bundle the trellis wheel or use the StubAdapter "
-                "for development."
+                "The TRELLIS inference runtime is not available. Weights "
+                f"for {_MODEL_ID} are downloaded and verified, but the "
+                "runtime (torch built for this machine's CUDA version, "
+                "plus TRELLIS's compiled CUDA extensions) is not "
+                "installed. See TASK-TS-0017."
             )
+
+        pipeline = TrellisPipeline.from_pretrained(self._model_dir)
+        depth_maps = [inp.depth_map for inp in inputs]
+        view_labels = [inp.view_label for inp in inputs]
+        result = pipeline(
+            images=masked_images,
+            depth_maps=depth_maps,
+            view_labels=view_labels,
+        )
+        return (
+            result.vertices,
+            result.faces,
+            getattr(result, "vertex_colors", None),
+            getattr(result, "confidence", 0.5),
+        )
 
     # ------------------------------------------------------------------
     # Public interface

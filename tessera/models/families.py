@@ -157,8 +157,11 @@ FAMILIES: dict[str, ModelFamily] = {
         adapter_ready=False,
         pending_task="TASK-TS-0017",
         notes=(
-            "Downloadable and verified today; the adapter's weight loading is "
-            "still a placeholder and does not match the upstream layout."
+            "Downloadable and verified today, and the adapter now resolves "
+            "and verifies weights through the model cache, so the layout "
+            "matches. What remains is the inference runtime: torch built "
+            "for the host CUDA version plus TRELLIS's compiled CUDA "
+            "extensions (TASK-TS-0017)."
         ),
     ),
 }
