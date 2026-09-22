@@ -1,14 +1,14 @@
 # Installation
 
-Tessera requires **Blender 4.2 LTS** or newer and a CUDA or MPS-compatible GPU with at least **4 GB VRAM**.
+Tessera requires **Blender 4.2 LTS** or newer and an **NVIDIA GPU with CUDA** and at least **6 GB VRAM** (8 GB recommended).
 
 ---
 
 ## Prerequisites
 
 - **Blender 4.2+** — Download from [blender.org](https://www.blender.org/download/)
-- **GPU** — NVIDIA (CUDA 11.8+), AMD (ROCm 5.6+), or Apple Silicon (MPS)
-- **Disk Space** — At least 2 GB free for AI model weights
+- **GPU** — NVIDIA with CUDA 11.8+
+- **Disk Space** — About 5.5 GB free for the default model weights (up to ~9 GB if you download every model)
 - **Internet** — Required for initial model weight downloads only
 
 ---
@@ -81,32 +81,33 @@ Different features require different amounts of GPU VRAM:
 
 | Feature Tier | Minimum VRAM |
 |-------------|-------------|
-| Basic reconstruction (single-image) | 4 GB |
+| Basic reconstruction (single-image) | 6 GB |
 | Multi-view reconstruction | 8 GB |
 | Sketch-to-3D | 8 GB |
 | NL refinement (local LLM) | 8 GB |
 | All features simultaneously | 12 GB recommended |
 
-!!! info "Shared Memory on Apple Silicon"
-    On Apple Silicon Macs, GPU memory is shared with system RAM. A Mac with 16 GB unified memory provides approximately 10–12 GB usable for GPU tasks.
+The pipeline runs its stages sequentially rather than concurrently, so peak VRAM
+is set by the largest single stage — currently the reconstruction model at 6 GB.
 
 ---
 
-## Apple Silicon (MPS)
+## Apple Silicon and AMD
 
-!!! note "Apple Silicon Support"
-    Tessera uses **Metal Performance Shaders (MPS)** on Apple Silicon Macs (M1, M2, M3, M4).
+!!! warning "Not supported in v1"
+    Tessera detects Apple Silicon (Metal) and AMD (ROCm) GPUs, but its inference
+    adapters currently run on **CUDA only**. On an Apple Silicon Mac or an AMD
+    card, model loading will fail.
 
-    - **macOS 13 (Ventura) or newer** is required for MPS support in PyTorch.
-    - VRAM is **shared system memory** — a 16 GB Mac allocates GPU memory from the unified pool.
-    - Performance characteristics differ from CUDA: some operations may be faster, others slower.
-    - MPS support is continually improving in PyTorch — use the latest Blender release for best results.
+    Support for both is planned, not shipped. If you are on either platform,
+    please wait for a release that lists it explicitly rather than purchasing or
+    installing now.
 
 ---
 
 ## Model Weight Download
 
-After installation, Tessera needs to download AI model weights (~2 GB total):
+After installation, Tessera needs to download AI model weights (about 5.5 GB for the default pipeline):
 
 1. Open the **Tessera → Model Manager** panel in the 3D Viewport sidebar.
 2. Click **Download All Models** to fetch required weights.

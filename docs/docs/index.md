@@ -31,10 +31,13 @@ Tessera is a Blender add-on that combines AI-powered vision analysis with multi-
 | Component | Minimum | Recommended |
 |-----------|---------|-------------|
 | Blender | 4.2 LTS | 4.3+ |
-| GPU | NVIDIA CUDA or Apple Silicon MPS, 4 GB VRAM | 8+ GB VRAM |
-| RAM | 8 GB | 16+ GB |
-| Disk | 2 GB (model weights) | 5+ GB |
-| OS | Windows 10+, macOS 13+ (Apple Silicon), Linux | — |
+| GPU | NVIDIA CUDA, 6 GB VRAM | NVIDIA CUDA, 12 GB VRAM |
+| RAM | 16 GB | 32 GB |
+| Disk | 5.5 GB (model weights) | 10 GB |
+| OS | Windows 10+ or Linux | — |
+
+!!! warning "NVIDIA only in v1"
+    AMD (ROCm) and Apple Silicon (Metal) GPUs are detected but not supported — every inference adapter runs on CUDA. Support for both is planned, not shipped.
 
 ## 📖 Documentation
 

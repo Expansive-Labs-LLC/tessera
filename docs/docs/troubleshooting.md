@@ -63,9 +63,9 @@ Blender becomes unresponsive or crashes while generating a 3D model.
 
 1. Close other GPU-intensive applications to free VRAM.
 2. Check that your GPU drivers are up to date.
-3. Try a smaller reconstruction adapter (TripoSR uses less VRAM than CRM).
+3. Try a smaller reconstruction adapter — the single-image path needs less VRAM than multi-view.
 4. Reduce input image resolution before processing.
-5. On macOS, ensure you're running macOS 13+ for stable MPS support.
+5. Note that macOS and AMD GPUs are not supported in v1 — Tessera's adapters require CUDA.
 
 **Related:** [Installation — GPU VRAM Requirements](installation.md#gpu-vram-requirements)
 
@@ -265,12 +265,12 @@ Tessera requires Blender 4.2 or newer.
 #### BF-E013 — No GPU Detected
 **Severity:** CRITICAL
 
-No CUDA or ROCm GPU was detected.
+No supported GPU was detected. Tessera requires an NVIDIA GPU with CUDA; AMD and Apple Silicon GPUs are detected but not supported in v1.
 
 **Solutions:**
-1. Install the latest GPU drivers from NVIDIA or AMD.
-2. Verify GPU is recognized in **Blender Preferences → System → GPU Backend**.
-3. On macOS with Apple Silicon, ensure MPS backend is available.
+1. Install the latest NVIDIA drivers.
+2. Verify the GPU is recognized in **Blender Preferences → System → GPU Backend**.
+3. If you are on an AMD card or an Apple Silicon Mac, Tessera cannot run inference yet — support is planned, not shipped.
 
 **Related:** [Installation — GPU VRAM Requirements](installation.md#gpu-vram-requirements)
 

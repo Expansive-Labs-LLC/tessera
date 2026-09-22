@@ -21,18 +21,21 @@ Give the agent a couple of images and receive a watertight, manifold mesh ready 
 - **Natural-language refinement** — say "make the handle thicker" and the model updates
 - **Real-world scaling** — set exact dimensions or let the agent infer from object type
 - **Print orientation optimizer** — automatically orient models to minimize supports
-- **Local GPU inference** — all AI runs on your hardware with no data leaving your machine
+- **Local GPU inference** — all AI runs on your NVIDIA GPU with no data leaving your machine
+- **Bring your own models** — add any compatible checkpoint from Hugging Face; Tessera licence-checks it, pins the commit and verifies every file
 
 ## System Requirements
 
 | Requirement | Minimum | Recommended |
 |-------------|---------|-------------|
 | **Blender** | 4.2 LTS | 4.3+ |
-| **GPU** | NVIDIA with CUDA support _or_ Apple Silicon with MPS backend | NVIDIA RTX 3060+ |
+| **GPU** | NVIDIA with CUDA support | NVIDIA RTX 3060+ |
 | **VRAM** | 8 GB | 12 GB |
 | **System RAM** | 16 GB | 32 GB |
-| **Disk Space** | 5 GB (for model weights) | 10 GB |
+| **Disk Space** | 5.5 GB (for model weights) | 10 GB |
 | **Python** | 3.11+ (bundled with Blender) | — |
+
+> ⚠️ **NVIDIA CUDA only in v1.** Tessera detects AMD (ROCm) and Apple Silicon (Metal) GPUs, but every inference adapter currently runs on CUDA — model loading fails on those platforms. Support for both is planned, not shipped. Single-image reconstruction needs 6 GB VRAM; 8 GB is the practical minimum once multi-view, sketch-to-3D and refinement are in play.
 
 ## Installation
 
@@ -92,6 +95,8 @@ Please read our [Contributing Guide](CONTRIBUTING.md) for details on the develop
 This project is licensed under the **GNU General Public License v2.0 or later** — see the [LICENSE](LICENSE) file for details.
 
 Documentation content is licensed under [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/).
+
+**AI model weights are not covered by this licence.** They are downloaded from third-party repositories on first use and each carries its own terms — see [MODEL-LICENSES.md](MODEL-LICENSES.md). Tessera downloads only weights whose terms permit commercial use; anything restricted, non-commercial, or undeclared (such as Depth Anything V2 Large, CC-BY-NC-4.0) is blocked unless you explicitly enable it in Preferences → Add-ons → Tessera. The same check applies to models you add yourself — see [Custom Models](https://expansivelabs.io/tessera/user-guide/custom-models/).
 
 ## Security
 

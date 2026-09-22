@@ -8,15 +8,15 @@ Answers to common questions about Tessera, organized by category.
 
 ### What GPU do I need?
 
-Tessera requires a GPU with **at least 4 GB VRAM** for basic reconstruction. NVIDIA GPUs with CUDA are recommended, but AMD ROCm (Linux) and Apple Silicon MPS are also supported. For all features simultaneously, 12 GB VRAM is recommended. See the [Installation guide](installation.md#gpu-vram-requirements) for the full VRAM table.
+Tessera requires an **NVIDIA GPU with CUDA** and at least **6 GB VRAM** for basic reconstruction; 8 GB is the practical minimum for multi-view, sketch-to-3D and refinement, and 12 GB is recommended for everything at once. AMD (ROCm) and Apple Silicon (Metal) GPUs are detected but **not supported in v1** — the inference adapters run on CUDA only. See the [Installation guide](installation.md#gpu-vram-requirements) for the full VRAM table.
 
 ### Can I use Tessera without a GPU?
 
-**No.** Tessera relies on GPU-accelerated AI inference for 3D reconstruction and cannot run on CPU alone. A compatible GPU with at least 4 GB VRAM is required. If you have an integrated GPU only, it will not meet the minimum requirements.
+**No.** Tessera relies on GPU-accelerated AI inference for 3D reconstruction and cannot run on CPU alone. An NVIDIA CUDA GPU with at least 6 GB VRAM is required. Integrated graphics will not meet the minimum requirements.
 
 ### Does Tessera work on macOS?
 
-Yes. Tessera supports **Apple Silicon (M1, M2, M3, M4)** Macs using the MPS (Metal Performance Shaders) backend. macOS 13 (Ventura) or newer is required. Intel Macs are **not** supported because they lack a compatible GPU backend. See the [Installation guide](installation.md#apple-silicon-mps).
+**Not in v1.** Tessera detects Apple Silicon GPUs, but its inference adapters currently run on CUDA only, so model loading fails on macOS. Apple Silicon support is planned; please wait for a release that lists macOS explicitly. See the [Installation guide](installation.md#apple-silicon-and-amd).
 
 ### How do I update Tessera?
 
@@ -24,11 +24,25 @@ To update Tessera, download the latest release ZIP from the [Tessera GitHub rele
 
 ### Does Tessera require an internet connection?
 
-Only for the **initial download of AI model weights** (~2 GB). After model weights are cached locally, Tessera operates **fully offline**. No data is sent to external servers during image processing, reconstruction, or export.
+Only for the **initial download of AI model weights** (about 5.5 GB for the default pipeline). After model weights are cached locally, Tessera operates **fully offline**. No data is sent to external servers during image processing, reconstruction, or export.
+
+### What licence are the AI model weights under?
+
+Tessera's own code is **GPL-2.0-or-later**, but the AI model weights are third-party and are **not** covered by it. Each carries its own terms, listed in `MODEL-LICENSES.md` in the repository.
+
+Tessera downloads only weights whose terms permit commercial use. Weights that restrict or prohibit it — such as **Depth Anything V2 Large (CC-BY-NC-4.0)** — are blocked, and appear in the model list as "Blocked by licence". Tessera uses the Apache-2.0 **Depth Anything V2 Small** checkpoint by default instead.
+
+If your work is non-commercial and you want the larger checkpoint, enable **Allow Restricted-Licence Models** in Preferences → Add-ons → Tessera. You are responsible for complying with each model's terms.
+
+### Can I use my own models?
+
+Yes. Tessera's model list is user-extensible: **Preferences → Add-ons → Tessera → Models → Add from Hugging Face** adds any compatible checkpoint, and Tessera licence-checks it, pins its commit and records a checksum for every file before anything downloads. Your additions live beside the model cache, so they survive add-on updates.
+
+Tessera can only *load* architectures it has an adapter for — Depth Anything V2 works end to end today; SAM 2, DINOv2 and TRELLIS can be added and verified but their loaders are still pinned to one checkpoint. See [Custom Models](user-guide/custom-models.md).
 
 ### What are the minimum system requirements?
 
-Tessera requires **Blender 4.2+**, a GPU with **4 GB VRAM** (NVIDIA CUDA, AMD ROCm, or Apple Silicon MPS), **8 GB system RAM**, and **2 GB free disk space** for AI model weights. See the [Installation guide](installation.md) for full details.
+Tessera requires **Blender 4.2+**, an **NVIDIA CUDA GPU with 6 GB VRAM** (8 GB recommended), **16 GB system RAM**, and about **5.5 GB free disk space** for AI model weights. See the [Installation guide](installation.md) for full details.
 
 ---
 

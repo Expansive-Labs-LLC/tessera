@@ -58,7 +58,7 @@ A mesh property where every edge is shared by exactly two faces — no holes, no
 
 ## MPS
 
-Metal Performance Shaders — Apple's GPU compute framework for Apple Silicon (M1/M2/M3/M4) chips. Tessera uses MPS as the compute backend on macOS, sharing GPU memory with system RAM.
+Metal Performance Shaders — Apple's GPU compute framework for Apple Silicon (M1/M2/M3/M4) chips. Tessera detects Metal GPUs but does **not** use MPS for inference in v1; its adapters require CUDA.
 
 ## Overhang Angle
 
@@ -70,7 +70,7 @@ A mesh processing technique that converts triangulated topology to quad-dominant
 
 ## ROCm
 
-AMD's open-source GPU computing platform, analogous to NVIDIA's CUDA. Supported by Tessera for running AI models on AMD GPUs. Requires ROCm 5.6 or newer.
+AMD's open-source GPU computing platform, analogous to NVIDIA's CUDA. Tessera detects ROCm GPUs but does **not** run inference on them in v1 — support is planned, not shipped.
 
 ## SAM 2
 

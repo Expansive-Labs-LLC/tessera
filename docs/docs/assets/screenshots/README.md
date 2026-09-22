@@ -32,6 +32,13 @@ This directory stores screenshots used throughout the Tessera documentation. Scr
 
 ## Screenshot Manifest
 
+### Custom Models
+
+| Filename | Page | Description | Capture Area |
+|----------|------|-------------|-------------|
+| `custom-models-add-dialog.png` | user-guide/custom-models.md | The "Add Model from Hugging Face" dialog with Repository, Architecture, Variant and Name filled in, and the third-party licence notice visible below | The dialog only |
+| `custom-models-list.png` | user-guide/custom-models.md | The Models list in preferences showing one user-added model with its licence, source repository, and the Download and Remove buttons | The Models section of the preferences panel |
+
 ### Landing Page & Quick Start
 
 | Filename | Page | Description | Capture Area |
