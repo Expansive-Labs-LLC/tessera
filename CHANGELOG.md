@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.1.0](https://github.com/Expansive-Labs-LLC/tessera/compare/1.0.0...1.1.0) (2026-09-22)
+
+
+### Features
+
+* allow CI to be triggered manually ([49ea12c](https://github.com/Expansive-Labs-LLC/tessera/commit/49ea12c6fea24c1717b056e2318aaec7e624a561))
+
 # 1.0.0 (2026-09-22)
 
 
