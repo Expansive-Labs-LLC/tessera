@@ -153,3 +153,76 @@ jobs:
           name: tessera-ci-build
           path: tessera-v0.0.0-ci.zip
           retention-days: 1
+
+  # ---------------------------------------------------------------------------
+  # Smoke — load the built add-on in Blender and assert it works.
+  #
+  # The unit suite mocks `bpy`, so defects that only appear once Blender
+  # imports the package pass it untouched: a nested archive root, an
+  # AddonPreferences bl_idname that does not match the package name, a
+  # hard-coded preferences key, a positionally-called extension_path_user().
+  # Every one of those shipped. This job is the gate that would have caught
+  # them, and `scripts/smoke_test_addon.py` documents which check maps to
+  # which defect.
+  # ---------------------------------------------------------------------------
+  smoke:
+    name: Smoke (Blender)
+    runs-on: ubuntu-latest
+    # FR-008: every CI job is capped at 10 minutes. A cold Blender download
+    # is ~300 MB and the run itself is seconds, so this fits comfortably;
+    # the cache makes the common case trivial.
+    timeout-minutes: 10
+    needs: build
+    env:
+      # Pin the runtime: an unpinned Blender turns an add-on regression into
+      # an indistinguishable "the runner changed" failure.
+      BLENDER_VERSION: "4.2.13"
+      BLENDER_SERIES: "4.2"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Cache Blender
+        id: cache-blender
+        uses: actions/cache@v4
+        with:
+          path: ~/blender
+          key: blender-${{ env.BLENDER_VERSION }}-linux-x64
+
+      - name: Install Blender
+        if: steps.cache-blender.outputs.cache-hit != 'true'
+        run: |
+          set -euo pipefail
+          ARCHIVE="blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+          URL="https://download.blender.org/release/Blender${BLENDER_SERIES}/${ARCHIVE}"
+          curl -fsSL --retry 3 -o "$ARCHIVE" "$URL"
+          mkdir -p ~/blender
+          tar -xJf "$ARCHIVE" -C ~/blender --strip-components=1
+          ~/blender/blender --version
+
+      - name: Build the add-on
+        # A non-zero version on purpose: the smoke test asserts that the
+        # build injected one, and 0.0.0-ci strips to the (0, 0, 0)
+        # placeholder, which is indistinguishable from no injection.
+        run: bash scripts/build_addon.sh 9.9.9-ci
+
+      - name: Install the built archive as an extension
+        run: |
+          set -euo pipefail
+          # Install by extracting the archive, so the job validates the shape
+          # of the artifact users actually download rather than the source
+          # tree. A nested root fails here exactly as it does for a user.
+          DEST="$HOME/.config/blender/${BLENDER_SERIES}/extensions/user_default/tessera"
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          unzip -q tessera-v9.9.9-ci.zip -d "$DEST"
+          test -f "$DEST/__init__.py" \
+            || { echo "::error::__init__.py is not at the archive root"; exit 1; }
+          test -f "$DEST/blender_manifest.toml" \
+            || { echo "::error::blender_manifest.toml is not at the archive root"; exit 1; }
+
+      - name: Smoke test in Blender
+        run: |
+          set -euo pipefail
+          ~/blender/blender --background --factory-startup \
+            --python scripts/smoke_test_addon.py
