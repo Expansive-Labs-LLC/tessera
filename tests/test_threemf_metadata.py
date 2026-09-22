@@ -28,8 +28,6 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 import zipfile
 
-import pytest
-
 
 def _make_3mf(tmp_path, name="test.3mf"):
     """Create a minimal valid 3MF file for testing."""

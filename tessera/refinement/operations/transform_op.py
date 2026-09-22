@@ -22,8 +22,8 @@ Implements: FR-021, FR-022.
 
 from __future__ import annotations
 
-import math
 import logging
+import math
 import time
 from typing import Any
 
@@ -62,7 +62,8 @@ def execute_move(
         ``EditResult``.
     """
     import bpy
-    from .scale_op import _select_vertex_group, _count_selected
+
+    from .scale_op import _count_selected, _select_vertex_group
 
     start = time.perf_counter()
 
@@ -122,7 +123,8 @@ def execute_rotate(
         ``EditResult``.
     """
     import bpy
-    from .scale_op import _select_vertex_group, _count_selected
+
+    from .scale_op import _count_selected, _select_vertex_group
 
     start = time.perf_counter()
 

@@ -52,7 +52,8 @@ def execute_smooth(
         ``EditResult``.
     """
     import bpy
-    from .scale_op import _select_vertex_group, _count_selected
+
+    from .scale_op import _count_selected, _select_vertex_group
 
     start = time.perf_counter()
 
@@ -75,8 +76,7 @@ def execute_smooth(
     return EditResult(
         success=True,
         description=(
-            f"Smoothed with {iterations} iterations "
-            f"(factor {factor:.1f})"
+            f"Smoothed with {iterations} iterations " f"(factor {factor:.1f})"
         ),
         vertices_modified=vertex_count,
         execution_time_seconds=elapsed,
@@ -102,9 +102,11 @@ def execute_sharpen(
     Returns:
         ``EditResult``.
     """
-    import bpy
     import math
-    from .scale_op import _select_vertex_group, _count_selected
+
+    import bpy
+
+    from .scale_op import _count_selected, _select_vertex_group
 
     start = time.perf_counter()
 
@@ -157,7 +159,8 @@ def execute_bevel(
         ``EditResult``.
     """
     import bpy
-    from .scale_op import _select_vertex_group, _count_selected
+
+    from .scale_op import _count_selected, _select_vertex_group
 
     start = time.perf_counter()
 
@@ -182,8 +185,7 @@ def execute_bevel(
     return EditResult(
         success=True,
         description=(
-            f"Beveled edges: {width_mm:.1f} mm width, "
-            f"{segments} segments"
+            f"Beveled edges: {width_mm:.1f} mm width, " f"{segments} segments"
         ),
         vertices_modified=vertex_count,
         execution_time_seconds=elapsed,

@@ -105,6 +105,7 @@ class ScalingOrientationPipeline:
             if printer_profile is None:
                 # Should never happen, but defensive fallback.
                 from .printer_profiles import get_builtin_profiles
+
                 printer_profile = get_builtin_profiles()[0]
 
         logger.info(
@@ -185,12 +186,11 @@ class ScalingOrientationPipeline:
             raise
         except Exception as exc:
             logger.error(
-                "Unexpected error during scaling pipeline: %s", exc,
+                "Unexpected error during scaling pipeline: %s",
+                exc,
                 exc_info=True,
             )
-            raise ScalingError(
-                f"Scaling pipeline failed unexpectedly: {exc}"
-            ) from exc
+            raise ScalingError(f"Scaling pipeline failed unexpectedly: {exc}") from exc
 
         # Mark the object as having been processed by this pipeline.
         # Cross-spec delegation: SPEC-TS-0006 checks this property
@@ -217,18 +217,10 @@ class ScalingOrientationPipeline:
             "build_volume_violations": bv_result["build_volume_violations"],
             # Orientation diagnostics.
             "orientation_applied": orientation_result["orientation_applied"],
-            "orientation_euler_deg": orientation_result[
-                "orientation_euler_deg"
-            ],
-            "overhang_area_before_mm2": orientation_result[
-                "overhang_area_before_mm2"
-            ],
-            "overhang_area_after_mm2": orientation_result[
-                "overhang_area_after_mm2"
-            ],
-            "overhang_reduction_pct": orientation_result[
-                "overhang_reduction_pct"
-            ],
+            "orientation_euler_deg": orientation_result["orientation_euler_deg"],
+            "overhang_area_before_mm2": orientation_result["overhang_area_before_mm2"],
+            "overhang_area_after_mm2": orientation_result["overhang_area_after_mm2"],
+            "overhang_reduction_pct": orientation_result["overhang_reduction_pct"],
             # Base flattening diagnostics.
             "bottom_flatness_variance_mm2": flatten_result[
                 "bottom_flatness_variance_mm2"

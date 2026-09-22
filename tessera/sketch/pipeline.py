@@ -45,7 +45,6 @@ from tessera.sketch.types import (
     DEFAULT_SYNTHESIS_PROMPT,
     MAX_FILE_SIZE_BYTES,
     MAX_SKETCH_INPUTS,
-    MIN_LINE_CONTENT_PIXELS,
     MIN_VRAM_SYNTHESIS_GB,
     SYNTHESIS_RESOLUTION,
     SketchConfig,
@@ -162,8 +161,10 @@ class SketchPipeline:
                 mesh=None,
                 success=True,
                 detection_results=detection_results,
-                warnings=["All inputs classified as photos — use the "
-                          "standard vision pipeline."],
+                warnings=[
+                    "All inputs classified as photos — use the "
+                    "standard vision pipeline."
+                ],
                 total_time_s=time.monotonic() - pipeline_start,
             )
 
@@ -199,21 +200,15 @@ class SketchPipeline:
         # Low-confidence warnings.
         for det in detection_results:
             if det.is_sketch and det.confidence < 0.7:
-                warnings.append(
-                    f"Low sketch confidence: {det.confidence:.2f}"
-                )
+                warnings.append(f"Low sketch confidence: {det.confidence:.2f}")
 
         # --- Stage 2: Preprocessing (FR-007–FR-015) ---
         preprocessed_sketches = []
         for idx, (i, img_input, image) in enumerate(sketch_inputs):
-            self._update_progress(
-                "Preprocessing", idx + 1, sketch_count
-            )
+            self._update_progress("Preprocessing", idx + 1, sketch_count)
             try:
                 preprocessed = self._preprocessor.preprocess(image, config)
-                preprocessed_sketches.append(
-                    (i, img_input, preprocessed)
-                )
+                preprocessed_sketches.append((i, img_input, preprocessed))
             except ValueError as e:
                 return SketchPipelineResult(
                     mesh=None,
@@ -240,12 +235,9 @@ class SketchPipeline:
                     )
 
             # EC-005: Warn about minimal line content.
-            stroke_pixels = int(
-                np.count_nonzero(preprocessed.binary_image)
-            )
+            stroke_pixels = int(np.count_nonzero(preprocessed.binary_image))
             total_pixels = (
-                preprocessed.binary_image.shape[0]
-                * preprocessed.binary_image.shape[1]
+                preprocessed.binary_image.shape[0] * preprocessed.binary_image.shape[1]
             )
             stroke_percent = stroke_pixels / max(total_pixels, 1) * 100
 
@@ -275,23 +267,15 @@ class SketchPipeline:
         # --- Stage 3: Synthesis (FR-016–FR-023) ---
         prompt = config.synthesis_prompt or DEFAULT_SYNTHESIS_PROMPT
 
-        for idx, (i, img_input, preprocessed) in enumerate(
-            preprocessed_sketches
-        ):
-            self._update_progress(
-                "Synthesizing", idx + 1, sketch_count
-            )
-            synth_result = self._synthesizer.synthesize(
-                preprocessed, prompt, config
-            )
+        for idx, (i, img_input, preprocessed) in enumerate(preprocessed_sketches):
+            self._update_progress("Synthesizing", idx + 1, sketch_count)
+            synth_result = self._synthesizer.synthesize(preprocessed, prompt, config)
             synthesized_images.append(synth_result)
 
         # --- Stage 4: Reconstruction (FR-033, FR-038) ---
         self._update_progress("Reconstructing", 1, 1)
 
-        vision_outputs = self._build_vision_outputs(
-            sketch_inputs, synthesized_images
-        )
+        vision_outputs = self._build_vision_outputs(sketch_inputs, synthesized_images)
 
         # CON-006: Route through standard ReconstructionEngine.
         try:
@@ -418,7 +402,7 @@ class SketchPipeline:
         from PIL import Image as PILImage
 
         try:
-            img = PILImage.open(str(resolved))
+            img: PILImage.Image = PILImage.open(str(resolved))
             img.load()
         except Exception as e:
             raise ValueError(
@@ -451,7 +435,7 @@ class SketchPipeline:
                 )
 
             free, total = torch.cuda.mem_get_info()
-            available_gb = free / (1024 ** 3)
+            available_gb = free / (1024**3)
 
             if available_gb < MIN_VRAM_SYNTHESIS_GB:
                 return (
@@ -532,9 +516,7 @@ class SketchPipeline:
 
         return vision_outputs
 
-    def _update_progress(
-        self, stage_name: str, current: int, total: int
-    ) -> None:
+    def _update_progress(self, stage_name: str, current: int, total: int) -> None:
         """Update Blender UI progress properties.
 
         FR-036 (SHOULD): Displays current stage name, sketch index,
@@ -552,12 +534,8 @@ class SketchPipeline:
             scene = bpy.context.scene
             if hasattr(scene, "tessera"):
                 props = scene.tessera
-                props.pipeline_status = (
-                    f"Sketch: {stage_name} — {current}/{total}"
-                )
-                props.pipeline_progress = min(
-                    1.0, current / max(total, 1)
-                )
+                props.pipeline_status = f"Sketch: {stage_name} — {current}/{total}"
+                props.pipeline_progress = min(1.0, current / max(total, 1))
         except Exception:
             # Running outside Blender (tests) — silently skip.
             pass

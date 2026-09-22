@@ -24,7 +24,6 @@ Spec: SPEC-TS-0001, SPEC-TS-0005, SPEC-TS-0006, SPEC-TS-0008, SPEC-TS-0009.
 
 import logging
 
-import bpy
 from bpy.props import (
     BoolProperty,
     CollectionProperty,
@@ -35,7 +34,6 @@ from bpy.props import (
     StringProperty,
 )
 from bpy.types import PropertyGroup
-
 
 # FR-006: View label canonical vocabulary.
 # Identifiers are UPPER_SNAKE_CASE (stored values).
@@ -129,8 +127,7 @@ class TesseraCleanupSettings(PropertyGroup):
     enable_quad_remesh: BoolProperty(
         name="Enable Quad Remesh",
         description=(
-            "Convert to quad-dominant topology using QuadriFlow "
-            "(Phase 2, opt-in)"
+            "Convert to quad-dominant topology using QuadriFlow " "(Phase 2, opt-in)"
         ),
         default=False,
     )  # type: ignore[assignment]
@@ -146,8 +143,7 @@ class TesseraCleanupSettings(PropertyGroup):
     enable_decimate: BoolProperty(
         name="Enable Decimate",
         description=(
-            "Reduce polygon count while preserving sharp edges "
-            "(Phase 2, opt-in)"
+            "Reduce polygon count while preserving sharp edges " "(Phase 2, opt-in)"
         ),
         default=False,
     )  # type: ignore[assignment]
@@ -159,6 +155,7 @@ class TesseraCleanupSettings(PropertyGroup):
         min=1000,
         max=1000000,
     )  # type: ignore[assignment]
+
 
 logger = logging.getLogger("tessera")
 
@@ -365,7 +362,9 @@ class TesseraScalingSettings(PropertyGroup):
 
     target_height_mm: FloatProperty(
         name="Target Height (mm)",
-        description="Target height in millimeters (0.0 = unset, compute proportionally)",
+        description=(
+            "Target height in millimeters " "(0.0 = unset, compute proportionally)"
+        ),
         default=0.0,
         min=0.0,
         max=1000000.0,
@@ -586,4 +585,3 @@ classes = [
     TesseraRefinementSettings,
     TesseraProperties,
 ]
-

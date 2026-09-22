@@ -161,10 +161,7 @@ class ManifoldCheck(BaseCheck):
 
                     next_edge = None
                     for linked in current_vert.link_edges:
-                        if (
-                            linked.is_boundary
-                            and linked.index not in visited
-                        ):
+                        if linked.is_boundary and linked.index not in visited:
                             next_edge = linked
                             break
 
@@ -179,9 +176,7 @@ class ManifoldCheck(BaseCheck):
                     and current_vert == start_vert
                 ):
                     try:
-                        bmesh.ops.triangle_fill(
-                            bm, use_beauty=True, edges=loop_edges
-                        )
+                        bmesh.ops.triangle_fill(bm, use_beauty=True, edges=loop_edges)
                         filled_holes += 1
                     except Exception:
                         logger.debug(

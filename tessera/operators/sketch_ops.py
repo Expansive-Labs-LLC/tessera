@@ -73,7 +73,9 @@ class TESSERA_OT_SketchGenerate(Operator):
 
     guidance_scale: FloatProperty(
         name="Guidance Scale",
-        description="ControlNet conditioning strength (higher = more faithful to sketch)",
+        description=(
+            "ControlNet conditioning strength " "(higher = more faithful to sketch)"
+        ),
         default=7.5,
         min=1.0,
         max=20.0,
@@ -133,9 +135,7 @@ class TESSERA_OT_SketchGenerate(Operator):
             {"INFO"},
             f"Starting sketch-to-3D with {min(image_count, 2)} image(s)...",
         )
-        logger.info(
-            "Sketch generation started: image_count=%d", image_count
-        )
+        logger.info("Sketch generation started: image_count=%d", image_count)
 
         props.pipeline_status = "Initializing sketch pipeline..."
         props.pipeline_progress = 0.0
@@ -155,9 +155,7 @@ class TESSERA_OT_SketchGenerate(Operator):
             if item.view_label != "UNLABELED":
                 view_label = item.view_label.lower().replace("_", "-")
 
-            image_inputs.append(
-                ImageInput(filepath=filepath, view_label=view_label)
-            )
+            image_inputs.append(ImageInput(filepath=filepath, view_label=view_label))
 
         if not image_inputs:
             self.report({"WARNING"}, "No valid image files found.")
@@ -182,7 +180,9 @@ class TESSERA_OT_SketchGenerate(Operator):
             else:
                 cache_dir = os.path.join(
                     bpy.utils.user_resource("SCRIPTS"),
-                    "addons", "tessera", "cache",
+                    "addons",
+                    "tessera",
+                    "cache",
                 )
 
             config = SketchConfig(
@@ -199,9 +199,7 @@ class TESSERA_OT_SketchGenerate(Operator):
             result = pipeline.process(inputs=image_inputs, config=config)
 
             if not result.success:
-                error_msg = (
-                    f"Sketch pipeline failed: {result.error_message}"
-                )
+                error_msg = f"Sketch pipeline failed: {result.error_message}"
                 self.report({"ERROR"}, error_msg)
                 logger.error(error_msg)
                 props.pipeline_status = "Sketch pipeline failed"
@@ -225,8 +223,7 @@ class TESSERA_OT_SketchGenerate(Operator):
                 return {"CANCELLED"}
 
             logger.info(
-                "Sketch pipeline complete: symmetry_applied=%s, "
-                "total_time_s=%.2f",
+                "Sketch pipeline complete: symmetry_applied=%s, " "total_time_s=%.2f",
                 result.symmetry_applied,
                 result.total_time_s,
             )
@@ -359,7 +356,9 @@ class TESSERA_OT_SketchDetect(Operator):
             else:
                 cache_dir = os.path.join(
                     bpy.utils.user_resource("SCRIPTS"),
-                    "addons", "tessera", "cache",
+                    "addons",
+                    "tessera",
+                    "cache",
                 )
 
             detector = SketchDetector(cache_dir=cache_dir)
@@ -369,9 +368,7 @@ class TESSERA_OT_SketchDetect(Operator):
             for i, item in enumerate(props.images):
                 filepath = bpy.path.abspath(item.filepath)
                 if not os.path.isfile(filepath):
-                    self.report(
-                        {"WARNING"}, f"Image not found: {item.name}"
-                    )
+                    self.report({"WARNING"}, f"Image not found: {item.name}")
                     continue
 
                 props.pipeline_progress = (i + 1) / total

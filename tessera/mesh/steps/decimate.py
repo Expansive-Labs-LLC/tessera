@@ -106,9 +106,7 @@ class DecimateStep:
         obj.select_set(True)
 
         # Apply Decimate modifier.
-        modifier = obj.modifiers.new(
-            name="TesseraDecimate", type="DECIMATE"
-        )
+        modifier = obj.modifiers.new(name="TesseraDecimate", type="DECIMATE")
         modifier.decimate_type = "COLLAPSE"
         modifier.ratio = ratio
         modifier.use_collapse_triangulate = False

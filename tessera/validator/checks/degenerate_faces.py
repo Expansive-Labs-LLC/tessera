@@ -69,8 +69,7 @@ class DegenerateFacesCheck(BaseCheck):
             bm.faces.ensure_lookup_table()
 
             degenerate = [
-                f for f in bm.faces
-                if f.calc_area() < _DEGENERATE_AREA_THRESHOLD
+                f for f in bm.faces if f.calc_area() < _DEGENERATE_AREA_THRESHOLD
             ]
             count = len(degenerate)
         finally:

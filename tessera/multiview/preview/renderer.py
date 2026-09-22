@@ -31,15 +31,12 @@ Public API:
 from __future__ import annotations
 
 import logging
-import math
-import os
 import re
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from tessera.multiview.preview.camera_setup import (
-    CAMERA_PADDING_FACTOR,
     PREVIEW_RESOLUTION,
     PREVIEW_VIEWS,
     PreviewImage,
@@ -122,9 +119,7 @@ class PreviewRenderer:
 
                 # SEC-006: Sanitise view label for filename
                 if not _VIEW_LABEL_PATTERN.match(label):
-                    logger.warning(
-                        "Skipping view with invalid label: %s", label
-                    )
+                    logger.warning("Skipping view with invalid label: %s", label)
                     continue
 
                 logger.info(
@@ -203,16 +198,14 @@ class PreviewRenderer:
             _ = obj.name
         except (ReferenceError, AttributeError):
             raise ValueError(
-                f"Object '{obj_name}' not found in the active "
-                "Blender scene."
+                f"Object '{obj_name}' not found in the active " "Blender scene."
             )
 
         # Check if the object is in the active scene
         scene_objects = bpy.context.scene.objects
         if obj.name not in scene_objects:
             raise ValueError(
-                f"Object '{obj.name}' not found in the active "
-                "Blender scene."
+                f"Object '{obj.name}' not found in the active " "Blender scene."
             )
 
     def _validate_output_dir(self, output_dir: str) -> Path:
@@ -235,9 +228,7 @@ class PreviewRenderer:
         try:
             resolved.relative_to(resolved.parent)
         except ValueError:
-            raise ValueError(
-                f"Invalid output directory path: {output_dir}"
-            )
+            raise ValueError(f"Invalid output directory path: {output_dir}")
 
         resolved.mkdir(parents=True, exist_ok=True)
         return resolved
@@ -306,9 +297,7 @@ class PreviewRenderer:
         shading.color_type = "SINGLE"
         shading.single_color = (0.6, 0.6, 0.6)  # Neutral gray
 
-    def _get_bbox_dimensions(
-        self, obj: bpy.types.Object
-    ) -> tuple[float, float, float]:
+    def _get_bbox_dimensions(self, obj: bpy.types.Object) -> tuple[float, float, float]:
         """Get the bounding box dimensions of an object.
 
         Args:
@@ -319,8 +308,9 @@ class PreviewRenderer:
         """
         import bpy  # Lazy import
 
-        bbox = [obj.matrix_world @ bpy.mathutils.Vector(corner)
-                for corner in obj.bound_box]
+        bbox = [
+            obj.matrix_world @ bpy.mathutils.Vector(corner) for corner in obj.bound_box
+        ]
 
         xs = [v.x for v in bbox]
         ys = [v.y for v in bbox]
@@ -411,15 +401,14 @@ class PreviewRenderer:
 
         # Position light slightly above and to the side of the camera
         distance = compute_framing_distance(bbox_dims) * 1.5
-        pos = compute_camera_position(
-            azimuth + 30.0, elevation + 20.0, distance
-        )
+        pos = compute_camera_position(azimuth + 30.0, elevation + 20.0, distance)
         light_obj.location = pos
 
         return light_obj
 
     def _cleanup_temp_objects(
-        self, temp_objects: list,
+        self,
+        temp_objects: list,
     ) -> None:
         """Remove temporary cameras and lights from the scene.
 
@@ -442,9 +431,7 @@ class PreviewRenderer:
                     elif isinstance(data, bpy.types.Light):
                         bpy.data.lights.remove(data)
             except (ReferenceError, RuntimeError) as exc:
-                logger.debug(
-                    "Failed to clean up temp object: %s", exc
-                )
+                logger.debug("Failed to clean up temp object: %s", exc)
 
         logger.debug(
             "Preview cleanup: removed %d temporary objects",

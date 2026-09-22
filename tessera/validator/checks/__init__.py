@@ -21,6 +21,7 @@ Each check class implements ``BaseCheck`` with ``check()`` and
 Spec: SPEC-TS-0006 (Print-Readiness Validator & Export Pipeline)
 """
 
+from .base import BaseCheck
 from .degenerate_faces import DegenerateFacesCheck
 from .manifold import ManifoldCheck
 from .overhang import OverhangCheck
@@ -30,7 +31,7 @@ from .volume import VolumeCheck
 from .wall_thickness import WallThicknessCheck
 
 # Ordered list of all checks, executed in this sequence.
-ALL_CHECKS = [
+ALL_CHECKS: list[type[BaseCheck]] = [
     ManifoldCheck,
     SelfIntersectionCheck,
     DegenerateFacesCheck,

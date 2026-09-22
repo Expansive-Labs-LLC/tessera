@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from .cache_manager import ALLOWED_EXTENSIONS, CacheManager
-from .registry import ModelEntry, ModelRegistry
+from .registry import ModelRegistry
 from .variant_selector import select_variant
 
 logger = logging.getLogger("tessera.models")
@@ -340,17 +340,15 @@ class DownloadManager:
                 if "no space" in error_str or "disk full" in error_str:
                     # EC-001: Disk space exhausted
                     disk_usage = shutil.disk_usage(str(self._cache_dir))
-                    available_gb = disk_usage.free / (1024 ** 3)
-                    required_gb = total_size / (1024 ** 3)
+                    available_gb = disk_usage.free / (1024**3)
+                    required_gb = total_size / (1024**3)
                     raise ModelDownloadError(
                         f"Download failed: insufficient disk space. "
                         f"{required_gb:.1f} GB required, "
                         f"{available_gb:.1f} GB available. "
                         f"Free up disk space and retry."
                     ) from e
-                raise ModelDownloadError(
-                    f"Download failed for {model_id}: {e}"
-                ) from e
+                raise ModelDownloadError(f"Download failed for {model_id}: {e}") from e
 
             # Update progress
             # Estimate bytes based on file proportion
@@ -392,9 +390,7 @@ class DownloadManager:
                 raise IntegrityError(error_msg)
             elif is_valid:
                 # All hashes are "TODO" placeholders — verification was skipped
-                all_todo = all(
-                    h == "TODO" for h in entry.sha256.values()
-                )
+                all_todo = all(h == "TODO" for h in entry.sha256.values())
                 if all_todo:
                     logger.info(
                         "SHA256 verification skipped: model=%s — all hashes "
@@ -404,8 +400,7 @@ class DownloadManager:
 
         elapsed_total = time.monotonic() - start_time
         logger.info(
-            "Download completed: model=%s, duration_seconds=%.1f, "
-            "size_bytes=%d",
+            "Download completed: model=%s, duration_seconds=%.1f, " "size_bytes=%d",
             model_id,
             elapsed_total,
             total_size,
@@ -490,9 +485,7 @@ class DownloadManager:
         Implements: FR-003, CON-003.
         """
         if self._download_thread is not None and self._download_thread.is_alive():
-            logger.warning(
-                "Download already in progress. Wait for it to complete."
-            )
+            logger.warning("Download already in progress. Wait for it to complete.")
             return
 
         self._cancel_event.clear()
@@ -531,9 +524,7 @@ class DownloadManager:
         Implements: FR-009.
         """
         if self._download_thread is not None and self._download_thread.is_alive():
-            logger.warning(
-                "Download already in progress. Wait for it to complete."
-            )
+            logger.warning("Download already in progress. Wait for it to complete.")
             return
 
         self._cancel_event.clear()
@@ -603,10 +594,7 @@ class DownloadManager:
     @property
     def is_downloading(self) -> bool:
         """Whether a download is currently active."""
-        return (
-            self._download_thread is not None
-            and self._download_thread.is_alive()
-        )
+        return self._download_thread is not None and self._download_thread.is_alive()
 
     @property
     def active_download_id(self) -> Optional[str]:

@@ -27,7 +27,6 @@ Implements: FR-025, FR-026, FR-027, FR-028, SEC-005, EC-002, EC-005.
 from __future__ import annotations
 
 import logging
-import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional, Union
@@ -138,8 +137,7 @@ class GoldenMeshRegistry:
         )
 
         logger.info(
-            "Golden-mesh reference created: name=%s, vertices=%d, "
-            "faces=%d, file=%s",
+            "Golden-mesh reference created: name=%s, vertices=%d, " "faces=%d, file=%s",
             name,
             len(vertices),
             len(faces),
@@ -250,13 +248,9 @@ class GoldenMeshRegistry:
 
         detail_parts = [f"Hash mismatch for '{name}'."]
         if vc != ref.vertex_count:
-            detail_parts.append(
-                f"Vertex count: expected {ref.vertex_count}, got {vc}."
-            )
+            detail_parts.append(f"Vertex count: expected {ref.vertex_count}, got {vc}.")
         if fc != ref.face_count:
-            detail_parts.append(
-                f"Face count: expected {ref.face_count}, got {fc}."
-            )
+            detail_parts.append(f"Face count: expected {ref.face_count}, got {fc}.")
         if vc == ref.vertex_count and fc == ref.face_count:
             detail_parts.append(
                 "Counts match but vertex positions or face winding differ."
@@ -272,6 +266,4 @@ class GoldenMeshRegistry:
         """
         if not self._dir.exists():
             return []
-        return sorted(
-            p.stem for p in self._dir.glob("*.npz")
-        )
+        return sorted(p.stem for p in self._dir.glob("*.npz"))

@@ -101,9 +101,7 @@ class TESSERA_OT_MultiViewGenerate(Operator):
             {"INFO"},
             f"Starting multi-view generation with {image_count} image(s)...",
         )
-        logger.info(
-            "Multi-view generation started: image_count=%d", image_count
-        )
+        logger.info("Multi-view generation started: image_count=%d", image_count)
 
         props.pipeline_status = "Initializing multi-view pipeline..."
         props.pipeline_progress = 0.0
@@ -123,9 +121,7 @@ class TESSERA_OT_MultiViewGenerate(Operator):
             if item.view_label != "UNLABELED":
                 view_label = item.view_label.lower().replace("_", "-")
 
-            image_inputs.append(
-                ImageInput(filepath=filepath, view_label=view_label)
-            )
+            image_inputs.append(ImageInput(filepath=filepath, view_label=view_label))
 
         if len(image_inputs) < 3:
             self.report(
@@ -182,7 +178,9 @@ class TESSERA_OT_MultiViewGenerate(Operator):
             else:
                 cache_dir = os.path.join(
                     bpy.utils.user_resource("SCRIPTS"),
-                    "addons", "tessera", "cache",
+                    "addons",
+                    "tessera",
+                    "cache",
                 )
 
             # Build the strategy selector with both adapters
@@ -201,8 +199,7 @@ class TESSERA_OT_MultiViewGenerate(Operator):
 
             if not result.success:
                 error_msg = (
-                    f"Multi-view reconstruction failed: "
-                    f"{result.error_message}"
+                    f"Multi-view reconstruction failed: " f"{result.error_message}"
                 )
                 self.report({"ERROR"}, error_msg)
                 logger.error(error_msg)
@@ -217,8 +214,7 @@ class TESSERA_OT_MultiViewGenerate(Operator):
 
             strategy = result.mesh.metadata.get("strategy", "unknown")
             logger.info(
-                "Reconstruction complete: strategy=%s, "
-                "vertices=%d, faces=%d",
+                "Reconstruction complete: strategy=%s, " "vertices=%d, faces=%d",
                 strategy,
                 result.mesh.metadata.get("vertex_count", 0),
                 result.mesh.metadata.get("face_count", 0),
@@ -253,8 +249,7 @@ class TESSERA_OT_MultiViewGenerate(Operator):
                 self._apply_vertex_colors(obj, result.mesh.vertex_colors)
 
             logger.info(
-                "Mesh imported: object_name=%s, vertex_count=%d, "
-                "face_count=%d",
+                "Mesh imported: object_name=%s, vertex_count=%d, " "face_count=%d",
                 obj.name,
                 len(result.mesh.vertices),
                 len(result.mesh.faces),

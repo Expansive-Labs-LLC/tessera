@@ -88,11 +88,7 @@ class ScaleSanityCheck(BaseCheck):
         }
 
         # Check if object fits.
-        fits = (
-            dim_x_mm <= build_x
-            and dim_y_mm <= build_y
-            and dim_z_mm <= build_z
-        )
+        fits = dim_x_mm <= build_x and dim_y_mm <= build_y and dim_z_mm <= build_z
 
         if fits:
             return CheckResult(

@@ -20,7 +20,8 @@ Tests are split into three groups:
 
 1. ConfigFileValidation — Manual-type tests that verify file contents (YAML/TOML/JS)
 2. BuildScriptExecution — Script-type tests that run build_addon.sh and verify outputs
-3. SecurityCompliance — Tests that verify no secrets are hardcoded and actions are pinned
+3. SecurityCompliance — Tests that verify no secrets are hardcoded and
+   actions are pinned
 
 Tests can be run standalone with:
     pytest tests/test_ci_release_pipeline.py -v
@@ -31,9 +32,7 @@ No ``bpy`` dependencies — these tests validate CI/CD infrastructure files only
 import os
 import re
 import shutil
-import stat
 import subprocess
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -91,25 +90,27 @@ class TestCIWorkflow:
             assert required_job in jobs, f"Missing required job: {required_job}"
 
     def test_TS001_ci_job_dependencies(self):
-        """TS-001 → AC-001, FR-005: lint → test → build (sequential), commitlint parallel.
+        """TS-001 → AC-001, FR-005: lint → test → build (sequential), commitlint
+        parallel.
 
         Given the CI workflow jobs,
         When their 'needs' dependencies are inspected,
-        Then test depends on lint, build depends on test, commitlint has no dependencies.
+        Then test depends on lint, build depends on test, and commitlint
+        has no dependencies.
 
         Type: Manual | Priority: Must Pass
         """
         jobs = self.ci["jobs"]
 
         # commitlint runs in parallel (no needs)
-        assert "needs" not in jobs["commitlint"], (
-            "commitlint should run in parallel (no 'needs')"
-        )
+        assert (
+            "needs" not in jobs["commitlint"]
+        ), "commitlint should run in parallel (no 'needs')"
 
         # lint has no dependency (first in chain)
-        assert "needs" not in jobs.get("lint", {}), (
-            "lint should have no 'needs' dependency"
-        )
+        assert "needs" not in jobs.get(
+            "lint", {}
+        ), "lint should have no 'needs' dependency"
 
         # test depends on lint
         test_needs = jobs["test"].get("needs")
@@ -177,9 +178,9 @@ class TestCIWorkflow:
         """
         for job_name, job_config in self.ci["jobs"].items():
             timeout = job_config.get("timeout-minutes")
-            assert timeout == 10, (
-                f"Job '{job_name}' has timeout-minutes={timeout}, expected 10"
-            )
+            assert (
+                timeout == 10
+            ), f"Job '{job_name}' has timeout-minutes={timeout}, expected 10"
 
 
 # ===========================================================================
@@ -191,7 +192,9 @@ class TestReleaseWorkflow:
     @pytest.fixture(autouse=True)
     def _load_release(self):
         self.release_path = REPO_ROOT / ".github" / "workflows" / "release.yml"
-        assert self.release_path.exists(), f"release.yml not found at {self.release_path}"
+        assert (
+            self.release_path.exists()
+        ), f"release.yml not found at {self.release_path}"
         self.release = _load_yaml(self.release_path)
 
     def test_TS002_release_permissions(self):
@@ -222,8 +225,7 @@ class TestReleaseWorkflow:
         steps = release_job.get("steps", [])
 
         checkout_steps = [
-            s for s in steps
-            if s.get("uses", "").startswith("actions/checkout")
+            s for s in steps if s.get("uses", "").startswith("actions/checkout")
         ]
         assert len(checkout_steps) >= 1, "No checkout step found"
 
@@ -267,18 +269,16 @@ class TestReleaseConfig:
         Type: Manual | Priority: Must Pass
         """
         branches = self.rc.get("branches", [])
-        assert branches == ["main"], (
-            f"branches should be ['main'], got {branches}"
-        )
+        assert branches == ["main"], f"branches should be ['main'], got {branches}"
 
         tag_format = self.rc.get("tagFormat", "")
-        assert tag_format == "${version}", (
-            f"tagFormat should be '${{version}}' (bare, no v prefix), got: {tag_format}"
-        )
+        assert (
+            tag_format == "${version}"
+        ), f"tagFormat should be '${{version}}' (bare, no v prefix), got: {tag_format}"
         # Should NOT contain github/template
-        assert "github/template" not in branches, (
-            "github/template should not be in branches (FR-023)"
-        )
+        assert (
+            "github/template" not in branches
+        ), "github/template should not be in branches (FR-023)"
 
     def test_TS008_exec_plugin_with_prepare_cmd(self):
         """TS-008 → AC-002, FR-019, FR-020: .releaserc.yml includes exec plugin.
@@ -302,14 +302,12 @@ class TestReleaseConfig:
                 exec_plugin = {}
                 break
 
-        assert exec_plugin is not None, (
-            "@semantic-release/exec not found in plugins"
-        )
+        assert exec_plugin is not None, "@semantic-release/exec not found in plugins"
 
         prepare_cmd = exec_plugin.get("prepareCmd", "")
-        assert "scripts/build_addon.sh" in prepare_cmd, (
-            f"prepareCmd should invoke build_addon.sh, got: {prepare_cmd}"
-        )
+        assert (
+            "scripts/build_addon.sh" in prepare_cmd
+        ), f"prepareCmd should invoke build_addon.sh, got: {prepare_cmd}"
 
     def test_TS009_git_plugin_assets(self):
         """TS-009 → FR-021: @semantic-release/git commits back patched files.
@@ -329,24 +327,20 @@ class TestReleaseConfig:
                     git_plugin = plugin[1]
                     break
 
-        assert git_plugin is not None, (
-            "@semantic-release/git not found in plugins"
-        )
+        assert git_plugin is not None, "@semantic-release/git not found in plugins"
 
         assets = git_plugin.get("assets", [])
-        assert "tessera/__init__.py" in assets, (
-            "tessera/__init__.py not in git assets"
-        )
-        assert "blender_manifest.toml" in assets, (
-            "blender_manifest.toml not in git assets"
-        )
+        assert "tessera/__init__.py" in assets, "tessera/__init__.py not in git assets"
+        assert (
+            "blender_manifest.toml" in assets
+        ), "blender_manifest.toml not in git assets"
         assert "CHANGELOG.md" in assets, "CHANGELOG.md not in git assets"
 
         # Verify [skip ci] in commit message
         message = git_plugin.get("message", "")
-        assert "[skip ci]" in message, (
-            f"Git commit message must include [skip ci]: {message}"
-        )
+        assert (
+            "[skip ci]" in message
+        ), f"Git commit message must include [skip ci]: {message}"
 
 
 # ===========================================================================
@@ -425,9 +419,7 @@ class TestDependabot:
         ga_entries = [
             u for u in updates if u.get("package-ecosystem") == "github-actions"
         ]
-        assert len(ga_entries) >= 1, (
-            "No github-actions ecosystem in dependabot config"
-        )
+        assert len(ga_entries) >= 1, "No github-actions ecosystem in dependabot config"
 
         ga_entry = ga_entries[0]
         assert ga_entry.get("directory") == "/"
@@ -454,9 +446,9 @@ class TestCommitlintConfig:
         assert config_path.exists(), "commitlint.config.js not found"
 
         content = config_path.read_text()
-        assert "@commitlint/config-conventional" in content, (
-            "commitlint config must extend @commitlint/config-conventional"
-        )
+        assert (
+            "@commitlint/config-conventional" in content
+        ), "commitlint config must extend @commitlint/config-conventional"
 
 
 # ===========================================================================
@@ -474,9 +466,7 @@ class TestBuildScript:
     def _check_prerequisites(self):
         """Verify build script and required project files exist."""
         assert BUILD_SCRIPT.exists(), f"build_addon.sh not found at {BUILD_SCRIPT}"
-        assert os.access(str(BUILD_SCRIPT), os.X_OK), (
-            "build_addon.sh is not executable"
-        )
+        assert os.access(str(BUILD_SCRIPT), os.X_OK), "build_addon.sh is not executable"
 
     @pytest.fixture
     def build_env(self, tmp_path):
@@ -497,7 +487,10 @@ class TestBuildScript:
             str(REPO_ROOT / "tessera"),
             str(work_dir / "tessera"),
             ignore=shutil.ignore_patterns(
-                "__pycache__", ".git", "tests", "testing",
+                "__pycache__",
+                ".git",
+                "tests",
+                "testing",
             ),
         )
 
@@ -518,9 +511,7 @@ class TestBuildScript:
         # Ensure the manifest has a valid version field
         manifest_copy = work_dir / "blender_manifest.toml"
         mc = manifest_copy.read_text()
-        mc = re.sub(
-            r'^version = ".*"', 'version = "0.1.0"', mc, flags=re.MULTILINE
-        )
+        mc = re.sub(r'^version = ".*"', 'version = "0.1.0"', mc, flags=re.MULTILINE)
         manifest_copy.write_text(mc)
 
         # Copy the build script
@@ -572,7 +563,8 @@ class TestBuildScript:
         # Check zip contents
         list_result = subprocess.run(
             ["unzip", "-l", str(zip_path)],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         listing = list_result.stdout
 
@@ -583,8 +575,14 @@ class TestBuildScript:
 
         # Excluded directories absent
         for excluded in (
-            "tests/", "__pycache__", ".agent/", "specs/", "tasks/",
-            "scripts/", "docs/", ".github/",
+            "tests/",
+            "__pycache__",
+            ".agent/",
+            "specs/",
+            "tasks/",
+            "scripts/",
+            "docs/",
+            ".github/",
         ):
             assert excluded not in listing or (
                 f"   {excluded}" not in listing
@@ -593,13 +591,15 @@ class TestBuildScript:
         # Verify patched version in zip
         extract_result = subprocess.run(
             ["unzip", "-p", str(zip_path), "tessera/__init__.py"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert '"version": (1, 2, 3),' in extract_result.stdout
 
         manifest_result = subprocess.run(
             ["unzip", "-p", str(zip_path), "blender_manifest.toml"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         assert 'version = "1.2.3"' in manifest_result.stdout
 
@@ -620,12 +620,8 @@ class TestBuildScript:
             text=True,
             timeout=30,
         )
-        assert result.returncode == 1, (
-            f"Expected exit code 1, got {result.returncode}"
-        )
-        assert "Usage:" in result.stderr, (
-            "Expected usage message in stderr"
-        )
+        assert result.returncode == 1, f"Expected exit code 1, got {result.returncode}"
+        assert "Usage:" in result.stderr, "Expected usage message in stderr"
 
     def test_TS006_prerelease_suffix_stripped(self, build_env):
         """TS-006 → EC-002, FR-026–FR-027: prerelease suffix stripped for bl_info.
@@ -639,9 +635,9 @@ class TestBuildScript:
         """
         work_dir, script = build_env
         result = self._run_isolated(script, "0.0.0-ci")
-        assert result.returncode == 0, (
-            f"Build failed:\n{result.stderr}\n{result.stdout}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"Build failed:\n{result.stderr}\n{result.stdout}"
 
         # Zip uses full version string (including suffix) in filename
         zip_path = work_dir / "tessera-v0.0.0-ci.zip"
@@ -650,19 +646,21 @@ class TestBuildScript:
         # Verify patched version (suffix stripped for tuple)
         extract_result = subprocess.run(
             ["unzip", "-p", str(zip_path), "tessera/__init__.py"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
-        assert '"version": (0, 0, 0),' in extract_result.stdout, (
-            "Pre-release suffix not stripped from bl_info tuple"
-        )
+        assert (
+            '"version": (0, 0, 0),' in extract_result.stdout
+        ), "Pre-release suffix not stripped from bl_info tuple"
 
         manifest_result = subprocess.run(
             ["unzip", "-p", str(zip_path), "blender_manifest.toml"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
-        assert 'version = "0.0.0"' in manifest_result.stdout, (
-            "Pre-release suffix not stripped from manifest version"
-        )
+        assert (
+            'version = "0.0.0"' in manifest_result.stdout
+        ), "Pre-release suffix not stripped from manifest version"
 
     def test_TS007_handles_spaces_in_path(self, tmp_path):
         """TS-007 → EC-003, FR-025: build_addon.sh works in paths with spaces.
@@ -721,9 +719,9 @@ class TestBuildScript:
             text=True,
             timeout=30,
         )
-        assert result.returncode == 0, (
-            f"Build failed in path with spaces:\n{result.stderr}\n{result.stdout}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"Build failed in path with spaces:\n{result.stderr}\n{result.stdout}"
 
         zip_path = space_dir / "tessera-v1.0.0.zip"
         assert zip_path.exists(), "Zip not created in space-containing path"
@@ -738,9 +736,9 @@ class TestBuildScript:
         Type: Script | Priority: Must Pass
         """
         content = BUILD_SCRIPT.read_text()
-        assert "set -euo pipefail" in content, (
-            "build_addon.sh must use 'set -euo pipefail'"
-        )
+        assert (
+            "set -euo pipefail" in content
+        ), "build_addon.sh must use 'set -euo pipefail'"
 
     def test_TS019_no_non_posix_tools(self):
         """TS-019 → CON-007: build script uses only POSIX utilities.
@@ -755,15 +753,14 @@ class TestBuildScript:
 
         # Exclude comments and strings that reference tools theoretically
         lines = [
-            line for line in content.splitlines()
-            if not line.strip().startswith("#")
+            line for line in content.splitlines() if not line.strip().startswith("#")
         ]
         code = "\n".join(lines)
 
         for tool in ("python", "python3", "node ", "npm ", "pip ", "curl ", "wget "):
-            assert tool not in code, (
-                f"Non-POSIX tool '{tool.strip()}' found in build script"
-            )
+            assert (
+                tool not in code
+            ), f"Non-POSIX tool '{tool.strip()}' found in build script"
 
     def test_TS022_build_fails_on_missing_version_tuple(self, tmp_path):
         """TS-022 → FR-027: build exits 1 if __init__.py lacks version tuple regex.
@@ -782,9 +779,7 @@ class TestBuildScript:
         tessera_dir.mkdir()
 
         # Write __init__.py WITHOUT a version tuple
-        (tessera_dir / "__init__.py").write_text(
-            'bl_info = {"name": "Tessera"}\n'
-        )
+        (tessera_dir / "__init__.py").write_text('bl_info = {"name": "Tessera"}\n')
 
         # Copy other required files
         shutil.copy2(str(REPO_ROOT / "blender_manifest.toml"), str(test_dir))
@@ -803,12 +798,13 @@ class TestBuildScript:
             text=True,
             timeout=30,
         )
-        assert result.returncode == 1, (
-            f"Expected exit code 1 for missing version tuple, got {result.returncode}"
-        )
-        assert "version tuple" in result.stderr.lower() or "could not find" in result.stderr.lower(), (
-            f"Expected error about missing version tuple in stderr:\n{result.stderr}"
-        )
+        assert (
+            result.returncode == 1
+        ), f"Expected exit code 1 for missing version tuple, got {result.returncode}"
+        assert (
+            "version tuple" in result.stderr.lower()
+            or "could not find" in result.stderr.lower()
+        ), f"Expected error about missing version tuple in stderr:\n{result.stderr}"
 
     def test_TS023_no_test_dirs_in_zip(self, build_env):
         """TS-023 → FR-030: zip does NOT contain tessera/tests/ or tessera/testing/.
@@ -821,23 +817,24 @@ class TestBuildScript:
         """
         work_dir, script = build_env
         result = self._run_isolated(script, "1.0.0")
-        assert result.returncode == 0, (
-            f"Build failed:\n{result.stderr}\n{result.stdout}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"Build failed:\n{result.stderr}\n{result.stdout}"
 
         zip_path = work_dir / "tessera-v1.0.0.zip"
         list_result = subprocess.run(
             ["unzip", "-l", str(zip_path)],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
         listing = list_result.stdout
 
-        assert "tessera/tests/" not in listing, (
-            "tessera/tests/ found in zip — should be excluded"
-        )
-        assert "tessera/testing/" not in listing, (
-            "tessera/testing/ found in zip — should be excluded"
-        )
+        assert (
+            "tessera/tests/" not in listing
+        ), "tessera/tests/ found in zip — should be excluded"
+        assert (
+            "tessera/testing/" not in listing
+        ), "tessera/testing/ found in zip — should be excluded"
 
 
 # ===========================================================================
@@ -878,9 +875,9 @@ class TestSecurityCompliance:
             content = file_path.read_text()
             for pattern in secret_patterns:
                 matches = re.findall(pattern, content)
-                assert len(matches) == 0, (
-                    f"Potential secret found in {file_path.name}: {matches}"
-                )
+                assert (
+                    len(matches) == 0
+                ), f"Potential secret found in {file_path.name}: {matches}"
 
     def test_TS021_actions_pinned_to_major_version(self):
         """TS-021 → SEC-002: all third-party actions pinned to major version tags.

@@ -39,7 +39,16 @@ logger = logging.getLogger("tessera.models")
 _global_cache_manager: Optional["CacheManager"] = None
 
 # Allowed file extensions for downloaded model files (CON-006, SEC-004)
-ALLOWED_EXTENSIONS = {".safetensors", ".bin", ".pt", ".pth", ".onnx", ".json", ".ckpt", ".yaml"}
+ALLOWED_EXTENSIONS = {
+    ".safetensors",
+    ".bin",
+    ".pt",
+    ".pth",
+    ".onnx",
+    ".json",
+    ".ckpt",
+    ".yaml",
+}
 
 # Buffer size for SHA256 hashing (64 KB chunks)
 _HASH_BUFFER_SIZE = 65536
@@ -154,8 +163,7 @@ class CacheManager:
             if snapshot.is_dir():
                 # Check if all expected files exist in this snapshot
                 all_files_exist = all(
-                    (snapshot / fname).exists()
-                    for fname in entry.files
+                    (snapshot / fname).exists() for fname in entry.files
                 )
                 if all_files_exist:
                     return snapshot
@@ -332,9 +340,7 @@ class CacheManager:
                 return False, error_msg
 
             if not file_path.exists():
-                error_msg = (
-                    f"File {filename} missing for model {model_id}."
-                )
+                error_msg = f"File {filename} missing for model {model_id}."
                 logger.error(error_msg)
                 return False, error_msg
 
@@ -397,4 +403,4 @@ class CacheManager:
             if status != "Downloaded":
                 count += 1
                 total_bytes += entry.size_bytes
-        return count, total_bytes / (1024 ** 3)
+        return count, total_bytes / (1024**3)

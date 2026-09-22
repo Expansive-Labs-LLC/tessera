@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import logging
 
-import bpy
 from bpy.types import Operator
 
 from ..validator.print_validator import PrintValidator
@@ -48,8 +47,7 @@ class TESSERA_OT_validate_print(Operator):
     bl_idname = "tessera.validate_print"
     bl_label = "Validate for Printing"
     bl_description = (
-        "Run 7 print-readiness checks on the active mesh "
-        "without modifying it"
+        "Run 7 print-readiness checks on the active mesh " "without modifying it"
     )
     bl_options = {"REGISTER", "UNDO"}
 
@@ -84,10 +82,7 @@ class TESSERA_OT_validate_print(Operator):
             return {"CANCELLED"}
 
         # Verify minimum geometry.
-        if (
-            len(obj.data.vertices) < 4
-            or len(obj.data.polygons) < 4
-        ):
+        if len(obj.data.vertices) < 4 or len(obj.data.polygons) < 4:
             self.report(
                 {"ERROR"},
                 "Mesh must have at least 4 vertices and 4 faces.",

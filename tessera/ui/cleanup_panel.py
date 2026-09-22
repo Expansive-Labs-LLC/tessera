@@ -24,7 +24,6 @@ Spec: SPEC-TS-0005 (Mesh Import, Cleanup & Topology Optimization)
 Implements: FR-017 (UI exposure of cleanup settings).
 """
 
-import bpy
 from bpy.types import Panel
 
 
@@ -63,9 +62,7 @@ class TESSERA_PT_Cleanup(Panel):
         col = box.column(align=True)
         col.prop(cleanup, "merge_distance", text="Merge Distance")
         col.prop(cleanup, "voxel_size", text="Voxel Size")
-        col.prop(
-            cleanup, "auto_voxel_fallback", text="Auto Voxel Fallback"
-        )
+        col.prop(cleanup, "auto_voxel_fallback", text="Auto Voxel Fallback")
 
         layout.separator()
 
@@ -86,9 +83,7 @@ class TESSERA_PT_Cleanup(Panel):
         row.prop(cleanup, "enable_decimate", text="Decimate")
         sub = col.column(align=True)
         sub.enabled = cleanup.enable_decimate
-        sub.prop(
-            cleanup, "decimate_target_faces", text="Target Faces"
-        )
+        sub.prop(cleanup, "decimate_target_faces", text="Target Faces")
 
         layout.separator()
 

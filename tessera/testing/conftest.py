@@ -71,12 +71,18 @@ def sample_cube_faces() -> np.ndarray:
     """
     return np.array(
         [
-            [0, 1, 2], [0, 2, 3],  # bottom
-            [4, 6, 5], [4, 7, 6],  # top
-            [0, 4, 5], [0, 5, 1],  # front
-            [2, 6, 7], [2, 7, 3],  # back
-            [0, 3, 7], [0, 7, 4],  # left
-            [1, 5, 6], [1, 6, 2],  # right
+            [0, 1, 2],
+            [0, 2, 3],  # bottom
+            [4, 6, 5],
+            [4, 7, 6],  # top
+            [0, 4, 5],
+            [0, 5, 1],  # front
+            [2, 6, 7],
+            [2, 7, 3],  # back
+            [0, 3, 7],
+            [0, 7, 4],  # left
+            [1, 5, 6],
+            [1, 6, 2],  # right
         ],
         dtype=np.int64,
     )
@@ -141,6 +147,8 @@ def sample_sphere_faces() -> np.ndarray:
     bottom = 1 + 4 * n_segments
     last_ring_start = 1 + 3 * n_segments
     for j in range(n_segments):
-        faces.append([bottom, last_ring_start + (j + 1) % n_segments, last_ring_start + j])
+        faces.append(
+            [bottom, last_ring_start + (j + 1) % n_segments, last_ring_start + j]
+        )
 
     return np.array(faces, dtype=np.int64)

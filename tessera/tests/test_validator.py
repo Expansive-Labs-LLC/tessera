@@ -41,7 +41,6 @@ from tessera.validator.data_types import (
 )
 from tessera.validator.report import ValidationReport
 
-
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # CheckStatus enum
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -119,9 +118,7 @@ class TestCheckResult:
         """AC-001: to_dict() includes repair fields when set."""
         d = fail_result.to_dict()
         assert d["repaired"] is True
-        assert d["repair_message"] == (
-            "Applied Solidify modifier with 0.5 mm offset."
-        )
+        assert d["repair_message"] == ("Applied Solidify modifier with 0.5 mm offset.")
 
     def test_to_dict_status_is_string_not_enum(self, pass_result):
         """FR-028: Status is serialized as string value, not enum."""
@@ -227,12 +224,8 @@ class TestValidationReport:
     def mixed_report(self) -> ValidationReport:
         """Create a report with PASS, WARN, and FAIL checks."""
         report = ValidationReport(object_name="Bust", printer_type="SLA")
-        report.add_check(
-            CheckResult("Manifold", CheckStatus.PASS, "OK")
-        )
-        report.add_check(
-            CheckResult("Overhang", CheckStatus.WARN, "Some overhangs")
-        )
+        report.add_check(CheckResult("Manifold", CheckStatus.PASS, "OK"))
+        report.add_check(CheckResult("Overhang", CheckStatus.WARN, "Some overhangs"))
         report.add_check(
             CheckResult(
                 "Wall Thickness",
@@ -242,9 +235,7 @@ class TestValidationReport:
                 repair_message="Solidified",
             )
         )
-        report.add_check(
-            CheckResult("Volume", CheckStatus.PASS, "Positive volume")
-        )
+        report.add_check(CheckResult("Volume", CheckStatus.PASS, "Positive volume"))
         report.validation_time_seconds = 2.345
         return report
 
@@ -303,12 +294,8 @@ class TestValidationReport:
     def test_has_failures_false_when_all_pass(self):
         """has_failures is False when no FAIL checks."""
         report = ValidationReport("Cube")
-        report.add_check(
-            CheckResult("A", CheckStatus.PASS, "ok")
-        )
-        report.add_check(
-            CheckResult("B", CheckStatus.WARN, "warn")
-        )
+        report.add_check(CheckResult("A", CheckStatus.PASS, "ok"))
+        report.add_check(CheckResult("B", CheckStatus.WARN, "warn"))
         assert report.has_failures is False
 
     def test_empty_report_counts_zero(self, empty_report):
@@ -373,7 +360,7 @@ class TestValidationReport:
         json_str = mixed_report.to_json(indent=4)
         # 4-space indent means lines start with "    ".
         lines = json_str.split("\n")
-        indented = [l for l in lines if l.startswith("    ")]
+        indented = [ln for ln in lines if ln.startswith("    ")]
         assert len(indented) > 0
 
     # ── save_json (FR-029) ─────────────────────────────────────────

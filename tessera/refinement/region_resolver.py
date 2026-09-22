@@ -92,10 +92,13 @@ class RegionResolver:
         region_lower = target_region.strip().lower()
 
         logger.debug(
-            "Region resolution started: region_name=%s, "
-            "vertex_group_count=%d",
+            "Region resolution started: region_name=%s, " "vertex_group_count=%d",
             region_lower,
-            len(obj.vertex_groups) if hasattr(obj, "vertex_groups") and obj.vertex_groups else 0,
+            (
+                len(obj.vertex_groups)
+                if hasattr(obj, "vertex_groups") and obj.vertex_groups
+                else 0
+            ),
         )
 
         # FR-014: Whole-mesh aliases.
@@ -184,9 +187,7 @@ class RegionResolver:
         best_ratio = 0.0
 
         for name in vgroup_names:
-            ratio = difflib.SequenceMatcher(
-                None, region_lower, name.lower()
-            ).ratio()
+            ratio = difflib.SequenceMatcher(None, region_lower, name.lower()).ratio()
             if ratio > best_ratio:
                 best_ratio = ratio
                 best_match = name
@@ -233,9 +234,7 @@ class RegionResolver:
         axis, range_start, range_end = heuristic
 
         # Count vertices in the spatial range.
-        vertex_count = self._count_spatial_vertices(
-            obj, axis, range_start, range_end
-        )
+        vertex_count = self._count_spatial_vertices(obj, axis, range_start, range_end)
 
         # EC-006: Check minimum vertex count.
         if vertex_count < MIN_VERTEX_COUNT:
@@ -343,10 +342,7 @@ class RegionResolver:
             threshold_min = min_val + extent * range_start
             threshold_max = min_val + extent * range_end
 
-            count = sum(
-                1 for c in coords
-                if threshold_min <= c <= threshold_max
-            )
+            count = sum(1 for c in coords if threshold_min <= c <= threshold_max)
             return count
         except (AttributeError, TypeError, KeyError):
             return 0
@@ -368,7 +364,6 @@ class RegionResolver:
         Returns:
             Vertex group name if created, ``None`` if no heuristic matches.
         """
-        import bpy
 
         heuristic = SPATIAL_HEURISTICS.get(region_name.lower())
         if heuristic is None and region_name.lower() in _WHOLE_MESH_ALIASES:
@@ -404,7 +399,8 @@ class RegionResolver:
             threshold_min = min_val + extent * range_start
             threshold_max = min_val + extent * range_end
             indices = [
-                v.index for v, c in zip(verts, coords)
+                v.index
+                for v, c in zip(verts, coords)
                 if threshold_min <= c <= threshold_max
             ]
             if indices:
@@ -424,7 +420,6 @@ class RegionResolver:
         Returns:
             Vertex group name.
         """
-        import bpy
 
         vg_name = "_bf_user_selection"
 

@@ -46,8 +46,6 @@ from tessera.sketch.types import (
     SketchDetectionResult,
 )
 from tessera.sketch.utils.edge_density import (
-    compute_color_std,
-    compute_edge_density,
     heuristic_classify,
 )
 
@@ -132,9 +130,7 @@ class SketchDetector:
             return result
 
         # FR-003(a): Edge-density heuristic.
-        is_sketch, confidence, edge_density, color_std = heuristic_classify(
-            image
-        )
+        is_sketch, confidence, edge_density, color_std = heuristic_classify(image)
 
         detection_method = "heuristic"
 
@@ -200,8 +196,7 @@ class SketchDetector:
             import torch
         except ImportError:
             logger.warning(
-                "PyTorch not available — falling back to heuristic-only "
-                "detection"
+                "PyTorch not available — falling back to heuristic-only " "detection"
             )
             return 0.5
 
@@ -226,13 +221,11 @@ class SketchDetector:
         # FR-041: Convert to float32 tensor and normalise with ImageNet stats.
         tensor = resized.astype(np.float32) / 255.0
         for c in range(3):
-            tensor[:, :, c] = (
-                (tensor[:, :, c] - IMAGENET_MEAN[c]) / IMAGENET_STD[c]
-            )
+            tensor[:, :, c] = (tensor[:, :, c] - IMAGENET_MEAN[c]) / IMAGENET_STD[c]
 
         # Convert to (1, 3, 224, 224) tensor.
         tensor = np.transpose(tensor, (2, 0, 1))  # (3, H, W)
-        tensor = np.expand_dims(tensor, axis=0)    # (1, 3, H, W)
+        tensor = np.expand_dims(tensor, axis=0)  # (1, 3, H, W)
 
         input_tensor = torch.from_numpy(tensor).float()
 
@@ -273,9 +266,7 @@ class SketchDetector:
             import torch.nn as nn
             from torchvision.models import mobilenet_v3_small
         except ImportError:
-            logger.warning(
-                "torchvision not available — CNN classifier disabled"
-            )
+            logger.warning("torchvision not available — CNN classifier disabled")
             return None
 
         # CON-004: Resolve weight path within cache directory.
@@ -324,9 +315,7 @@ class SketchDetector:
 
                 state_dict = load_file(str(found_path))
             except ImportError:
-                logger.warning(
-                    "safetensors not available — trying torch.load"
-                )
+                logger.warning("safetensors not available — trying torch.load")
                 state_dict = torch.load(
                     str(found_path), weights_only=True, map_location="cpu"
                 )
@@ -391,9 +380,7 @@ class SketchDetector:
             return "digital"
 
         # Compute mean stroke intensity on binarised image.
-        _, binary = cv2.threshold(
-            gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU
-        )
+        _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
         stroke_pixels = binary > 0
         if np.any(stroke_pixels):
             mean_stroke_intensity = float(np.mean(gray[stroke_pixels]))

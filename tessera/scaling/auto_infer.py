@@ -91,23 +91,18 @@ def _load_defaults() -> Dict[str, Dict[str, Any]]:
 
         # SEC-003: Validate structure.
         if not isinstance(data, dict):
-            raise TypeError(
-                f"Expected dict at top level, got {type(data).__name__}"
-            )
+            raise TypeError(f"Expected dict at top level, got {type(data).__name__}")
 
         for key, value in data.items():
             if not isinstance(key, str):
                 raise TypeError(f"Expected str key, got {type(key).__name__}")
             if not isinstance(value, dict):
                 raise TypeError(
-                    f"Expected dict value for '{key}', "
-                    f"got {type(value).__name__}"
+                    f"Expected dict value for '{key}', " f"got {type(value).__name__}"
                 )
             for field in ("primary_axis", "min_mm", "max_mm"):
                 if field not in value:
-                    raise KeyError(
-                        f"Missing required field '{field}' in entry '{key}'"
-                    )
+                    raise KeyError(f"Missing required field '{field}' in entry '{key}'")
 
         logger.debug(
             "Loaded dimension defaults from %s (%d entries)",
@@ -169,8 +164,7 @@ class AutoDimensionInfer:
         label = _sanitize_label(object_class)
 
         logger.info(
-            "Auto-inference requested for object class '%s' "
-            "(sanitized: '%s')",
+            "Auto-inference requested for object class '%s' " "(sanitized: '%s')",
             object_class,
             label,
         )

@@ -134,7 +134,9 @@ class ErrorHandler:
         logger.debug(
             "Full traceback for %s:\n%s",
             error_code,
-            traceback.format_exception(type(exception), exception, exception.__traceback__),
+            traceback.format_exception(
+                type(exception), exception, exception.__traceback__
+            ),
         )
 
         # Log the user-facing error at ERROR level.
@@ -203,9 +205,7 @@ class ErrorHandler:
             entry = self._catalog.get("BF-E006", self._catalog["BF-E999"])
             return ErrorResult(
                 code="BF-E006",
-                user_message=self._format_message(
-                    entry, {"image_basename": basename}
-                ),
+                user_message=self._format_message(entry, {"image_basename": basename}),
                 severity=entry.severity,
                 resolution_steps=entry.resolution_steps,
                 logged=True,

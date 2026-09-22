@@ -21,7 +21,6 @@ Displays a GPU warning banner when no compatible GPU is detected.
 Implements: FR-003, FR-010, FR-016.
 """
 
-import bpy
 from bpy.types import Panel
 
 from ..preferences import get_cached_gpu_info

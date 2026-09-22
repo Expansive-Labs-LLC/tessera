@@ -47,7 +47,6 @@ from tessera.reconstruction.adapter import (
 from tessera.reconstruction.mesh_output import (
     AdapterCapabilities,
     ReconstructionResult,
-    StandardMesh,
 )
 from tessera.reconstruction.utils.mesh_conversion import normalize_to_standard_mesh
 from tessera.reconstruction.utils.vram_guard import VRAMGuard
@@ -125,9 +124,7 @@ class MultiViewAdapter(ReconstructionAdapter):
         """
         return self._backend.weights_available()
 
-    def _extract_poses(
-        self, inputs: list[VisionPipelineOutput]
-    ) -> list[CameraPose]:
+    def _extract_poses(self, inputs: list[VisionPipelineOutput]) -> list[CameraPose]:
         """Extract camera poses from enriched VisionPipelineOutput objects.
 
         Camera poses are attached as an optional ``camera_pose``
@@ -193,16 +190,10 @@ class MultiViewAdapter(ReconstructionAdapter):
         # Map loss to [0, 1] — lower loss = higher confidence
         loss_conf = max(0.0, 1.0 - min(final_loss, 1.0))
 
-        confidence = (
-            0.4 * reg_ratio
-            + 0.3 * min(inlier_ratio, 1.0)
-            + 0.3 * loss_conf
-        )
+        confidence = 0.4 * reg_ratio + 0.3 * min(inlier_ratio, 1.0) + 0.3 * loss_conf
         return float(np.clip(confidence, 0.0, 1.0))
 
-    def reconstruct(
-        self, inputs: list[VisionPipelineOutput]
-    ) -> ReconstructionResult:
+    def reconstruct(self, inputs: list[VisionPipelineOutput]) -> ReconstructionResult:
         """Run multi-view reconstruction from posed images.
 
         Extracts camera poses from enriched inputs, prepares masked
@@ -244,9 +235,7 @@ class MultiViewAdapter(ReconstructionAdapter):
 
             # Filter inputs to only those with poses
             posed_inputs = [
-                inp
-                for inp in inputs
-                if getattr(inp, "camera_pose", None) is not None
+                inp for inp in inputs if getattr(inp, "camera_pose", None) is not None
             ]
 
             # Prepare masked images (FR-018)
@@ -283,15 +272,13 @@ class MultiViewAdapter(ReconstructionAdapter):
                 )
 
             # Run NeuS2 (FR-018, FR-019, FR-020)
-            vertices, faces, final_loss, actual_steps = (
-                self._backend.train_and_extract(
-                    images=masked_images,
-                    masks=masks,
-                    depth_maps=depth_maps,
-                    camera_poses=camera_poses,
-                    marching_cubes_resolution=self._mc_resolution,
-                    max_optimization_steps=self._max_steps,
-                )
+            vertices, faces, final_loss, actual_steps = self._backend.train_and_extract(
+                images=masked_images,
+                masks=masks,
+                depth_maps=depth_maps,
+                camera_poses=camera_poses,
+                marching_cubes_resolution=self._mc_resolution,
+                max_optimization_steps=self._max_steps,
             )
 
             # FR-021: Normalise to StandardMesh (center + unit-cube scale)
@@ -361,9 +348,7 @@ class MultiViewAdapter(ReconstructionAdapter):
         finally:
             # FR-023, CON-004: Release all GPU tensors
             freed_mb = VRAMGuard.cleanup_gpu()
-            logger.debug(
-                "VRAM cleanup completed: memory_freed_mb=%.1f", freed_mb
-            )
+            logger.debug("VRAM cleanup completed: memory_freed_mb=%.1f", freed_mb)
 
     def capabilities(self) -> AdapterCapabilities:
         """Declare multi-view adapter capabilities.

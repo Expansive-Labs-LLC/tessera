@@ -25,11 +25,10 @@ Implements: FR-030, FR-031, FR-032, FR-033, FR-034, CON-005.
 
 from __future__ import annotations
 
-import copy
 import logging
 import time
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger("tessera.refinement")
 
@@ -54,9 +53,7 @@ class MeshSnapshot:
     description: str
     vertex_coords: list[tuple[float, float, float]]
     face_indices: list[tuple[int, ...]]
-    vertex_groups: dict[str, list[tuple[int, float]]] = field(
-        default_factory=dict
-    )
+    vertex_groups: dict[str, list[tuple[int, float]]] = field(default_factory=dict)
     timestamp: float = 0.0
 
 
@@ -138,8 +135,7 @@ class UndoManager:
             )
 
         logger.debug(
-            "Undo snapshot pushed: version=%d, description=%s, "
-            "stack_depth=%d",
+            "Undo snapshot pushed: version=%d, description=%s, " "stack_depth=%d",
             snapshot.version,
             description,
             len(self._undo_stack),
@@ -228,9 +224,7 @@ class UndoManager:
                 break
 
         if target_idx is None:
-            raise UndoError(
-                f"Version {version} not found in undo history"
-            )
+            raise UndoError(f"Version {version} not found in undo history")
 
         # Move everything after target_idx to redo stack.
         while len(self._undo_stack) > target_idx + 1:
@@ -264,9 +258,7 @@ class UndoManager:
             ],
         }
 
-    def _capture_snapshot(
-        self, obj: Any, description: str
-    ) -> MeshSnapshot:
+    def _capture_snapshot(self, obj: Any, description: str) -> MeshSnapshot:
         """Capture the current mesh state as a snapshot.
 
         Args:
@@ -279,14 +271,10 @@ class UndoManager:
         mesh = obj.data
 
         # Capture vertex coordinates.
-        vertex_coords = [
-            (v.co.x, v.co.y, v.co.z) for v in mesh.vertices
-        ]
+        vertex_coords = [(v.co.x, v.co.y, v.co.z) for v in mesh.vertices]
 
         # Capture face topology.
-        face_indices = [
-            tuple(p.vertices) for p in mesh.polygons
-        ]
+        face_indices = [tuple(p.vertices) for p in mesh.polygons]
 
         # Capture vertex groups.
         vertex_groups: dict[str, list[tuple[int, float]]] = {}
@@ -311,9 +299,7 @@ class UndoManager:
             timestamp=time.time(),
         )
 
-    def _apply_snapshot(
-        self, obj: Any, snapshot: MeshSnapshot
-    ) -> None:
+    def _apply_snapshot(self, obj: Any, snapshot: MeshSnapshot) -> None:
         """Apply a snapshot to restore mesh state.
 
         Uses ``bpy.types.Mesh`` API to rebuild vertex positions.
@@ -323,7 +309,6 @@ class UndoManager:
             obj: Blender mesh object.
             snapshot: The ``MeshSnapshot`` to restore.
         """
-        import bpy
 
         mesh = obj.data
         current_verts = len(mesh.vertices)
@@ -372,8 +357,7 @@ class UndoManager:
         mesh.update()
 
         logger.debug(
-            "Snapshot applied: version=%d, vertex_count=%d, "
-            "face_count=%d",
+            "Snapshot applied: version=%d, vertex_count=%d, " "face_count=%d",
             snapshot.version,
             target_verts,
             target_faces,

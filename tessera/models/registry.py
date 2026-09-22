@@ -217,9 +217,7 @@ class ModelRegistry:
             if entry is not None:
                 self._models[entry.model_id] = entry
 
-        logger.info(
-            "Model registry loaded: %d models from manifest", len(self._models)
-        )
+        logger.info("Model registry loaded: %d models from manifest", len(self._models))
 
     def list_models(self) -> list[ModelEntry]:
         """List all registered models.

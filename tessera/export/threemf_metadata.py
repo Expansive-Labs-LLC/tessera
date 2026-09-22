@@ -33,10 +33,9 @@ import shutil
 import tempfile
 import xml.etree.ElementTree as ET
 import zipfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Optional
-from xml.sax.saxutils import escape as xml_escape
+from typing import Optional
 
 logger = logging.getLogger("tessera.export")
 
@@ -263,9 +262,7 @@ class ThreeMFMetadataExporter:
                 with zipfile.ZipFile(tmp_path, "w", zipfile.ZIP_DEFLATED) as zf_out:
                     for item in zf_in.infolist():
                         if item.filename == self._MODEL_PATH:
-                            zf_out.writestr(
-                                item, xml_content.encode("utf-8")
-                            )
+                            zf_out.writestr(item, xml_content.encode("utf-8"))
                         else:
                             zf_out.writestr(item, zf_in.read(item.filename))
 
@@ -310,9 +307,7 @@ class ThreeMFMetadataExporter:
             text_value = str(value)
 
             # Find existing metadata element or create new one.
-            existing = root.find(
-                f".//{{{_3MF_NS}}}metadata[@name='{name}']"
-            )
+            existing = root.find(f".//{{{_3MF_NS}}}metadata[@name='{name}']")
             if existing is not None:
                 existing.text = text_value
             else:

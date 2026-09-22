@@ -25,7 +25,6 @@ Implements: FR-021, FR-022, FR-031, FR-035, FR-037, FR-038.
 
 from __future__ import annotations
 
-import bpy
 from bpy.types import Panel
 
 

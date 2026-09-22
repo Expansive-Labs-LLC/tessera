@@ -34,7 +34,6 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-
 # ---------------------------------------------------------------------------
 # Error Types (§10.4)
 # ---------------------------------------------------------------------------
@@ -46,8 +45,6 @@ class PoseEstimationError(Exception):
     Base exception for all pose estimation errors.
     """
 
-    pass
-
 
 class InsufficientOverlapError(PoseEstimationError):
     """Fewer than 3 cameras could be registered.
@@ -58,8 +55,6 @@ class InsufficientOverlapError(PoseEstimationError):
     Implements: FR-014.
     """
 
-    pass
-
 
 class InsufficientSeparationError(PoseEstimationError):
     """Camera angles are too similar for reliable triangulation.
@@ -69,8 +64,6 @@ class InsufficientSeparationError(PoseEstimationError):
 
     Implements: EC-001.
     """
-
-    pass
 
 
 # ---------------------------------------------------------------------------
@@ -116,9 +109,7 @@ class CameraPose:
                 f"translation must have shape (3,), got {self.translation.shape}"
             )
         if not 0.0 <= self.confidence <= 1.0:
-            raise ValueError(
-                f"confidence must be in [0.0, 1.0], got {self.confidence}"
-            )
+            raise ValueError(f"confidence must be in [0.0, 1.0], got {self.confidence}")
 
 
 @dataclass

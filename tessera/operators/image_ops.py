@@ -27,7 +27,6 @@ import os
 import sys
 from pathlib import Path
 
-import bpy
 from bpy.props import StringProperty
 from bpy.types import Operator
 
@@ -223,9 +222,7 @@ class TESSERA_OT_RemoveImage(Operator):
         props.images.remove(index)
 
         # Adjust active index
-        props.active_image_index = min(
-            max(0, index - 1), max(0, len(props.images) - 1)
-        )
+        props.active_image_index = min(max(0, index - 1), max(0, len(props.images) - 1))
         return {"FINISHED"}
 
 

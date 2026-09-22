@@ -39,9 +39,12 @@ Constants:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from tessera.reconstruction.mesh_output import StandardMesh
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -179,8 +182,8 @@ class PreprocessedSketch:
     Implements: FR-014.
     """
 
-    binary_image: np.ndarray       # (H, W) uint8, 0 or 255
-    thinned_image: np.ndarray      # (H, W) uint8, 0 or 255
+    binary_image: np.ndarray  # (H, W) uint8, 0 or 255
+    thinned_image: np.ndarray  # (H, W) uint8, 0 or 255
     was_perspective_corrected: bool
     original_size: tuple[int, int]  # (width, height)
 
@@ -200,7 +203,7 @@ class SynthesizedImage:
     Implements: FR-022.
     """
 
-    rendered_image: np.ndarray     # (512, 512, 3) uint8 RGB
+    rendered_image: np.ndarray  # (512, 512, 3) uint8 RGB
     prompt_used: str
     seed: int
     inference_time_s: float
@@ -224,7 +227,7 @@ class SketchPipelineResult:
     Implements: FR-032.
     """
 
-    mesh: "StandardMesh | None"    # None on failure
+    mesh: "StandardMesh | None"  # None on failure
     success: bool
     error_message: str = ""
     warnings: list[str] = field(default_factory=list)

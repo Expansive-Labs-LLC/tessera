@@ -586,7 +586,8 @@ class TestSecurityValidation:
         actual_hash = m._compute_sha256(str(weight_file))
         fake_expected = "a" * 64  # Deliberately wrong
 
-        # Mock: external dependency — model weight checksums (testing mismatch error path)
+        # Mock: external dependency — model weight checksums (testing mismatch error
+        # path)
         with patch(
             "tessera.reconstruction.adapters.trellis_adapter._EXPECTED_CHECKSUMS",
             {"trellis_pipeline.safetensors": fake_expected},

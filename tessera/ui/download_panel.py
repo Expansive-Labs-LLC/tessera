@@ -24,7 +24,6 @@ Implements: FR-005, FR-008, FR-009, FR-010, FR-011, FR-016, FR-018.
 
 import logging
 
-import bpy
 from bpy.types import Panel
 
 logger = logging.getLogger("tessera.models")
@@ -39,9 +38,9 @@ def _format_bytes(size_bytes: int) -> str:
     Returns:
         str: Formatted size (e.g., "1.3 GB", "512 MB").
     """
-    if size_bytes >= 1024 ** 3:
+    if size_bytes >= 1024**3:
         return f"{size_bytes / (1024 ** 3):.1f} GB"
-    elif size_bytes >= 1024 ** 2:
+    elif size_bytes >= 1024**2:
         return f"{size_bytes / (1024 ** 2):.0f} MB"
     elif size_bytes >= 1024:
         return f"{size_bytes / 1024:.0f} KB"
@@ -146,9 +145,7 @@ class TESSERA_PT_DownloadProgress(Panel):
 
             # Size and speed info
             row = col.row(align=True)
-            row.label(
-                text=f"{_format_bytes(bytes_dl)} / {_format_bytes(total)}"
-            )
+            row.label(text=f"{_format_bytes(bytes_dl)} / {_format_bytes(total)}")
             if speed > 0:
                 row.label(text=f"{_format_bytes(int(speed))}/s")
 

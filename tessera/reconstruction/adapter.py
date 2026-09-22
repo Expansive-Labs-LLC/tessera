@@ -31,18 +31,22 @@ from __future__ import annotations
 import importlib.util as _importlib_util
 import os as _os
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-# Load VisionResult directly from the types.py file to avoid
-# triggering tessera.vision.__init__ which eagerly imports the
-# full pipeline and its heavy dependencies (PIL, etc.).
-_types_path = _os.path.join(
-    _os.path.dirname(_os.path.dirname(__file__)), "vision", "types.py"
-)
-_spec = _importlib_util.spec_from_file_location("tessera.vision.types", _types_path)
-_vision_types = _importlib_util.module_from_spec(_spec)
-_spec.loader.exec_module(_vision_types)
-VisionPipelineOutput = _vision_types.VisionResult  # noqa: F401
-del _vision_types, _spec, _types_path, _importlib_util, _os
+if TYPE_CHECKING:
+    from tessera.vision.types import VisionResult as VisionPipelineOutput
+else:
+    # Load VisionResult directly from the types.py file to avoid
+    # triggering tessera.vision.__init__ which eagerly imports the
+    # full pipeline and its heavy dependencies (PIL, etc.).
+    _types_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(__file__)), "vision", "types.py"
+    )
+    _spec = _importlib_util.spec_from_file_location("tessera.vision.types", _types_path)
+    _vision_types = _importlib_util.module_from_spec(_spec)
+    _spec.loader.exec_module(_vision_types)
+    VisionPipelineOutput = _vision_types.VisionResult  # noqa: F401
+    del _vision_types, _spec, _types_path, _importlib_util, _os
 
 from .mesh_output import AdapterCapabilities, ReconstructionResult  # noqa: E402
 
