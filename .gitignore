@@ -72,3 +72,4 @@ weights/
 # Contributors need these directories to follow the Task → Spec → Implement
 # workflow (CSO decision, TASK-TS-0012).
 # =============================================================================
+.venv-engine/
