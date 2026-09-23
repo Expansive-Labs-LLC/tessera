@@ -1,5 +1,12 @@
 # Changelog
 
+# [1.4.0](https://github.com/Expansive-Labs-LLC/tessera/compare/1.3.0...1.4.0) (2026-09-23)
+
+
+### Features
+
+* **packaging:** build and sign the linux x64 engine installer ([7ed6d18](https://github.com/Expansive-Labs-LLC/tessera/commit/7ed6d18cc410b2be444104817d483a0d87a1337d))
+
 # [1.3.0](https://github.com/Expansive-Labs-LLC/tessera/compare/1.2.1...1.3.0) (2026-09-22)
 
 
