@@ -204,3 +204,20 @@ class TestToolchainProvisioning:
         text = BUILD.read_text()
         assert ".cuda-toolchain/bin/nvcc" in text
         assert "provision_toolchain.sh" in text
+
+
+class TestArtifactBudget:
+    """NFR-012: a real build measures 3.7 GiB before TRELLIS is in it."""
+
+    def test_size_budget_is_stated_in_the_spec(self):
+        spec = (
+            Path(__file__).resolve().parent.parent
+            / "specs/tessera/feature-spec/active"
+            / "SPEC-TS-0023-local-inference-engine.md"
+        )
+        text = spec.read_text(encoding="utf-8")
+        assert "NFR-012" in text and "6 GiB" in text
+
+    def test_build_reports_the_size_it_produced(self):
+        """So a build that blows the budget is visible in its own output."""
+        assert "du -h" in BUILD.read_text()
