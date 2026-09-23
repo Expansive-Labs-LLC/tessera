@@ -1,0 +1,22 @@
+# Engine-side dependencies (SPEC-TS-0023 FR-030).
+#
+# PyTorch is NOT listed here: it is installed separately from the cu128 index
+# because pinning it here would resolve against PyPI and pull a build with no
+# sm_120 support, which fails at kernel launch rather than at install.
+#
+# Everything below compiles against the CUDA toolkit on the build machine.
+# TORCH_CUDA_ARCH_LIST governs which architectures the kernels serve.
+
+safetensors>=0.4.0
+numpy>=1.26,<3
+pillow>=10.0
+
+# TRELLIS and its compiled extensions. Pinned to a commit rather than a tag:
+# the repository has no releases, and a moving default branch would change
+# what an installer contains without changing its version.
+# trellis @ git+https://github.com/microsoft/TRELLIS@<commit>
+#
+# Extension set, each built from source (no wheels for sm_120):
+#   diff-gaussian-rasterization, nvdiffrast, spconv, flash-attn
+# These are added once the build spike confirms which of them compile against
+# CUDA >= 12.8 for sm_120 — see ADR-0001-premise-verification.md.
