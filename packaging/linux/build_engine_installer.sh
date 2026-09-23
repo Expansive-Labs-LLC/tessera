@@ -38,6 +38,19 @@ CUDA_ARCH_LIST="${CUDA_ARCH_LIST:-8.6;8.9;12.0}"
 TORCH_INDEX="${TORCH_INDEX:-https://download.pytorch.org/whl/cu128}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 
+# Prefer the project-local toolchain from provision_toolchain.sh. The distro
+# toolkit is frequently too old for current architectures — this workstation
+# ships 12.0, which cannot target sm_120 at all — so falling through to
+# whatever nvcc happens to be on PATH produces a confusing failure rather
+# than a clear one.
+if [[ -z "${CUDA_HOME:-}" && -x "$REPO_ROOT/.cuda-toolchain/bin/nvcc" ]]; then
+    CUDA_HOME="$REPO_ROOT/.cuda-toolchain"
+fi
+if [[ -n "${CUDA_HOME:-}" ]]; then
+    export CUDA_HOME
+    export PATH="$CUDA_HOME/bin:$PATH"
+fi
+
 echo "=== Tessera engine installer ${VERSION} (linux-x64) ==="
 echo "Target architectures: ${CUDA_ARCH_LIST}"
 
@@ -46,7 +59,8 @@ echo "Target architectures: ${CUDA_ARCH_LIST}"
 # to launch on the GPU it was built for.
 if ! command -v nvcc >/dev/null 2>&1; then
     echo "ERROR: nvcc not found. TRELLIS's extensions build from source and" >&2
-    echo "       need a CUDA toolkit. See ADR-0001-premise-verification.md." >&2
+    echo "       need a CUDA toolkit." >&2
+    echo "       Run: packaging/linux/provision_toolchain.sh" >&2
     exit 2
 fi
 for arch in ${CUDA_ARCH_LIST//;/ }; do
@@ -69,7 +83,13 @@ mkdir -p "$PAYLOAD"
 echo "Installing PyTorch (published cu128 wheel, no build)..."
 "$PAYLOAD/venv/bin/pip" install --quiet torch --index-url "$TORCH_INDEX"
 
+# ninja is a venv console script, and torch's extension builder shells out to
+# it by name. Importing torch is not enough — without the venv's bin on PATH
+# the build dies reporting that ninja is missing, having just installed it.
+"$PAYLOAD/venv/bin/pip" install --quiet ninja
+
 echo "Building TRELLIS extensions from source for ${CUDA_ARCH_LIST}..."
+PATH="$PAYLOAD/venv/bin:$PATH" \
 TORCH_CUDA_ARCH_LIST="$CUDA_ARCH_LIST" \
     "$PAYLOAD/venv/bin/pip" install --quiet -r "$REPO_ROOT/packaging/linux/requirements-engine.txt"
 

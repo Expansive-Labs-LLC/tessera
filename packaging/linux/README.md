@@ -32,6 +32,36 @@ path to install for.
 PyTorch itself needs no build — it is installed from the published `cu128`
 index, which has carried native `sm_120` support since 2.7.0.
 
+### Getting a toolkit without root
+
+```bash
+packaging/linux/provision_toolchain.sh
+```
+
+Installs `nvcc` into `.cuda-toolchain/` beside the engine venv, pinned to
+whatever CUDA version PyTorch was built against. About 400 MB, no root,
+removable with `rm -rf`. The build script picks it up automatically.
+
+Two routes that do **not** work, recorded so nobody spends an afternoon on
+them again:
+
+- **pip.** NVIDIA's `nvidia-cuda-nvcc-cu12` wheel ships only `ptxas` — at
+  12.8.93 and 12.9.86 alike. No `nvcc` driver, no `cicc`. It exists for JIT
+  through nvrtc, not for compiling an extension offline.
+- **The distro package.** Needs root, installs system-wide, and on Ubuntu is
+  frequently a version behind what current GPUs require. This workstation
+  shipped 12.0, whose `nvcc` rejects `sm_120` outright.
+
+Pin the toolkit to torch's CUDA version rather than the newest available. A
+toolkit ahead of torch can compile extensions that then fail to load against
+torch's runtime, and that failure appears at import rather than at build.
+
+> **`ninja` must be on `PATH`, not merely installed.** Torch's extension
+> builder shells out to it by name. It is a venv console script, so running
+> `.venv/bin/python` directly is not enough — the venv's `bin` has to be on
+> `PATH`. The error names ninja rather than `PATH`, which sends you the wrong
+> way. Both scripts here handle it.
+
 ## Building
 
 ```bash

@@ -71,7 +71,11 @@ class TestBuildRefusesAnUnusableToolchain:
 
     def test_build_refuses_when_no_toolkit_is_present(self, tmp_path):
         """TRELLIS's extensions build from source; without nvcc there is no
-        artifact to make, and saying so beats failing inside pip."""
+        artifact to make, and saying so beats failing inside pip.
+
+        CUDA_HOME is pointed at an empty directory so the project-local
+        toolchain, if one has been provisioned, does not satisfy the check.
+        """
         empty_bin = tmp_path / "bin"
         empty_bin.mkdir()
         for needed in ("bash", "mktemp", "rm", "date", "dirname", "cd"):
@@ -82,10 +86,15 @@ class TestBuildRefusesAnUnusableToolchain:
             ["bash", str(BUILD), "0.0.0-test", str(tmp_path)],
             capture_output=True,
             text=True,
-            env={**os.environ, "PATH": str(empty_bin)},
+            env={
+                **os.environ,
+                "PATH": str(empty_bin),
+                "CUDA_HOME": str(tmp_path / "no-toolkit-here"),
+            },
         )
         assert result.returncode == 2
         assert "nvcc not found" in result.stderr
+        assert "provision_toolchain.sh" in result.stderr
 
 
 class TestInstallerContract:
@@ -156,3 +165,42 @@ class TestBuildRecordsWhatItCanRun:
         assert not re.search(
             r"^torch[=<>~]", reqs, re.M
         ), "torch pinned in requirements would resolve against PyPI"
+
+
+PROVISION = PACKAGING / "provision_toolchain.sh"
+
+
+class TestToolchainProvisioning:
+    """The build needs a toolkit newer than most distros ship."""
+
+    def test_provision_script_exists_and_parses(self):
+        assert PROVISION.exists()
+        assert os.access(PROVISION, os.X_OK)
+        assert subprocess.run(["bash", "-n", str(PROVISION)]).returncode == 0
+
+    def test_toolkit_version_follows_torch_not_the_newest(self):
+        """A toolkit ahead of torch compiles extensions that fail at import."""
+        text = PROVISION.read_text()
+        assert "torch.version.cuda" in text
+
+    def test_provisioning_is_user_local(self):
+        text = PROVISION.read_text()
+        assert "sudo" not in text
+        assert ".cuda-toolchain" in text
+
+    def test_provisioning_installs_ninja(self):
+        """Torch's extension builder shells out to it by name."""
+        assert "pip" in PROVISION.read_text()
+        assert "ninja" in PROVISION.read_text()
+
+    def test_build_puts_the_venv_bin_on_path_for_the_extension_build(self):
+        """Installing ninja is not enough — it has to be findable."""
+        text = BUILD.read_text()
+        assert 'PATH="$PAYLOAD/venv/bin:$PATH"' in text
+
+    def test_build_prefers_the_project_toolchain_over_the_system_one(self):
+        """The distro nvcc is frequently too old, and failing through to it
+        produces a confusing error rather than a clear one."""
+        text = BUILD.read_text()
+        assert ".cuda-toolchain/bin/nvcc" in text
+        assert "provision_toolchain.sh" in text
