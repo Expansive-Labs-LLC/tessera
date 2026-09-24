@@ -73,3 +73,4 @@ weights/
 # workflow (CSO decision, TASK-TS-0012).
 # =============================================================================
 .venv-engine/
+.cuda-toolchain/
