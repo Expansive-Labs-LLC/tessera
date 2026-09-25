@@ -6,12 +6,19 @@
 
 Implemented by TASK-TS-0023 / SPEC-TS-0023.
 
-> **Two load-bearing claims were not verified before acceptance** and are
-> carried forward as explicit work rather than lost: the Extensions Platform
-> archive size limit, and whether prebuilt CUDA-extension wheels exist for the
-> target GPU generation. Both would change the verdict on Option 1 if wrong.
-> They are tracked as the first deliverable of TASK-TS-0023, ahead of any
-> engine code, so that a wrong premise is caught before it is built on.
+**Premises verified 2026-09-22** — see `ADR-0001-premise-verification.md`.
+This ADR was accepted with two load-bearing claims unconfirmed. Both were
+tested before engine code was written, and both hold:
+
+| Premise | Finding |
+|---|---|
+| Extensions Platform archive size limit | **200 MB.** The `cu128` PyTorch wheel alone exceeds it before TRELLIS, its compiled extensions, or any weight. Option 1 is not merely impractical but impossible. |
+| Prebuilt CUDA-extension wheels for the target GPU | **None.** PyTorch itself ships prebuilt `sm_120` wheels, but TRELLIS's extensions build from source against a toolkit matching the GPU architecture. The target is Blackwell (`sm_120`); CUDA 12.0 rejects it outright and ≥ 12.8 is required. |
+
+Neither contradicts this decision; both strengthen it. The second refines
+the implementation: the installer's build matrix is **per GPU architecture**,
+not only per platform (SPEC-TS-0023 FR-030), and a CUDA toolkit ≥ 12.8 is a
+build prerequisite (TASK-TS-0017 provisions one without root).
 
 ## Date
 
