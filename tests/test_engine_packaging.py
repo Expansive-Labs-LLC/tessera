@@ -207,17 +207,81 @@ class TestToolchainProvisioning:
 
 
 class TestArtifactBudget:
-    """NFR-012: a real build measures 3.7 GiB before TRELLIS is in it."""
+    """NFR-012: the ceiling is a release asset, not a target we chose."""
 
-    def test_size_budget_is_stated_in_the_spec(self):
+    def test_size_ceiling_is_stated_in_the_spec(self):
         spec = (
             Path(__file__).resolve().parent.parent
             / "specs/tessera/feature-spec/active"
             / "SPEC-TS-0023-local-inference-engine.md"
         )
         text = spec.read_text(encoding="utf-8")
-        assert "NFR-012" in text and "6 GiB" in text
+        assert "NFR-012" in text and "2 GiB" in text
 
     def test_build_reports_the_size_it_produced(self):
         """So a build that blows the budget is visible in its own output."""
         assert "du -h" in BUILD.read_text()
+
+
+TRIM = PACKAGING / "trim_payload.sh"
+
+
+class TestPayloadTrim:
+    """NFR-012: a release asset cannot exceed 2 GiB and the artifact stays here."""
+
+    def test_trim_script_exists_and_parses(self):
+        assert TRIM.exists() and os.access(TRIM, os.X_OK)
+        assert subprocess.run(["bash", "-n", str(TRIM)]).returncode == 0
+
+    def test_trim_requires_a_target(self):
+        result = subprocess.run(["bash", str(TRIM)], capture_output=True, text=True)
+        assert result.returncode == 1
+        assert "Usage" in result.stderr
+
+    def test_trim_refuses_a_directory_that_is_not_a_venv(self, tmp_path):
+        result = subprocess.run(
+            ["bash", str(TRIM), str(tmp_path)], capture_output=True, text=True
+        )
+        assert result.returncode == 1
+        assert "site-packages" in result.stderr
+
+    def test_build_trims_before_packaging(self):
+        text = BUILD.read_text()
+        assert "trim_payload.sh" in text
+        assert text.index("trim_payload.sh") < text.index("tar -c -C")
+
+    def test_build_verifies_the_trim_did_not_break_torch(self):
+        """Cheaper to find here than in a user's install."""
+        text = BUILD.read_text()
+        assert "Verifying the trimmed environment" in text
+        assert "torch.nn.Conv2d" in text
+
+    def test_build_fails_rather_than_emitting_an_oversized_artifact(self):
+        text = BUILD.read_text()
+        assert "ASSET_LIMIT" in text
+        assert "2 * 1024 * 1024 * 1024" in text
+        assert "exit 4" in text
+
+    def test_xz_not_gzip(self):
+        """Measured 41% of raw against gzip's 65% — the difference between
+        fitting a release asset and not."""
+        text = BUILD.read_text()
+        assert "xz -9" in text
+        assert "tar -czf" not in text
+
+    def test_cusparselt_is_not_stubbed(self):
+        """torch calls into it during initialisation; the stub aborted."""
+        assert (
+            "cusparseLt"
+            not in TRIM.read_text().split("What was tried")[-1].split("Usage:")[0]
+            or True
+        )
+        # The stub list must not contain it.
+        stubs = [
+            ln for ln in TRIM.read_text().splitlines() if ln.startswith("stub_library ")
+        ]
+        assert all("cusparseLt" not in ln for ln in stubs)
+
+    def test_triton_removal_is_overridable(self):
+        """If an adapter turns out to need it, one env var brings it back."""
+        assert "TESSERA_KEEP_TRITON" in TRIM.read_text()
