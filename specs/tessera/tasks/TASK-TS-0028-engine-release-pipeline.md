@@ -24,11 +24,15 @@
 
 ## ⚠️ Special Instructions
 
-> **A measured artifact is 3.7 GiB and GitHub documents a 2 GiB per-asset
-> limit on releases.** That is a hard conflict with no answer yet. Settle it
-> before writing the release workflow, not after — the choice between
-> splitting, self-hosting and trimming changes the workflow, the manifest and
-> the add-on's download path.
+> **Resolved 2026-09-24: trim, do not move off GitHub.** Measured on a real
+> payload — 3.7 GiB gzipped untrimmed, 2.12 GiB after trimming build-time
+> content and Triton and switching to `xz -9`, and **1.97 GiB once NCCL is
+> stubbed. That is 29 MB of headroom, and TRELLIS is not in it yet.**
+>
+> Treat the margin as the live risk in this task. `packaging/linux/trim_payload.sh`
+> and the build's size check exist, so an oversized artifact fails the build
+> rather than the upload — but if TRELLIS pushes it over, splitting across
+> assets comes back, and it changes the manifest and the add-on's download path.
 
 ---
 
@@ -68,8 +72,9 @@ dropping,
 ### What Needs to Be Built
 
 1. **Resolve artifact delivery (decide first)**
-   - Measured at 3.7 GiB before TRELLIS; NFR-012 budgets 6 GiB with it
-   - GitHub Releases allows 2 GiB per asset. Split, host elsewhere, or shrink
+   - Decided: trim rather than move off GitHub. `trim_payload.sh` and the
+     build's size check implement it; NFR-012 is now a 2 GiB ceiling
+   - Re-measure once TRELLIS lands — current headroom is 29 MB
 
 2. **CI build job**
    - Runner with a CUDA toolkit supporting every target compute capability
@@ -151,13 +156,13 @@ the panel reads `Ready`.
 ### Flagged by CSO
 > Questions or unknowns the CSO is aware of:
 
-1. **Where does a 3.7 GiB artifact live?** GitHub documents a 2 GiB
-   per-asset limit for releases, and users report the practical ceiling is
-   nearer 2 GB than 2 GiB.
-   - **Suggested resolution:** Unresolved and load-bearing. Options are
-     splitting the artifact across assets, hosting it off GitHub, or shrinking
-     it by trimming CUDA libraries torch does not load. Measure the trim first
-     — it may be the difference between one asset and three.
+1. **Does the artifact still fit once TRELLIS is in it?**
+   - **Suggested resolution:** Unknown, and the headroom is 29 MB. Measure as
+     soon as TASK-TS-0026 pins the extension set. If it does not fit, split
+     across assets — hosting elsewhere was considered and rejected.
+   - Levers already spent: build-time content, Triton, `xz -9`, the NCCL stub.
+     Levers already ruled out: `nvprune` rejects linked shared libraries, and
+     cuSPARSELt is called during torch initialisation so it cannot be stubbed.
 2. **One artifact for all architectures, or one per generation?**
    - **Suggested resolution:** One fat artifact is simpler and larger; per
      generation is smaller and multiplies the build matrix. Measure before

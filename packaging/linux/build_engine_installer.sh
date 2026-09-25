@@ -114,11 +114,42 @@ JSON
 cp "$REPO_ROOT/packaging/linux/install.sh" "$PAYLOAD/install.sh"
 chmod +x "$PAYLOAD/install.sh"
 
+# --- trim ------------------------------------------------------------------
+# An untrimmed payload does not fit a GitHub release asset. See the script for
+# what comes out and why, and for what was tried and rejected.
+bash "$REPO_ROOT/packaging/linux/trim_payload.sh" "$PAYLOAD/venv"
+
+# Prove the trim did not remove something the engine needs. Cheaper to find
+# here than in a user's install.
+echo "Verifying the trimmed environment..."
+PATH="$PAYLOAD/venv/bin:$PATH" "$PAYLOAD/venv/bin/python" - <<'SMOKE'
+import torch
+a = torch.randn(256, 256, device="cuda"); (a @ a.T).sum().item()
+c = torch.nn.Conv2d(3, 8, 3).to("cuda"); c(torch.randn(1, 3, 32, 32, device="cuda")).sum().item()
+torch.linalg.svd(torch.randn(4, 4, device="cuda"))
+torch.fft.fft(torch.randn(32, device="cuda"))
+torch.cuda.synchronize()
+print("  trimmed environment passes the op smoke test")
+SMOKE
+
 # --- package ---------------------------------------------------------------
+# xz over gzip: measured 41% of raw against gzip's 65% on this payload, which
+# is the difference between fitting a release asset and not. It costs build
+# time, not install time.
 mkdir -p "$OUT_DIR"
-TARBALL="$OUT_DIR/tessera-engine-${VERSION}-linux-x64.tar.gz"
-tar -czf "$TARBALL" -C "$STAGE" tessera-engine
+TARBALL="$OUT_DIR/tessera-engine-${VERSION}-linux-x64.tar.xz"
+tar -c -C "$STAGE" tessera-engine | xz -9 -T0 > "$TARBALL"
 sha256sum "$TARBALL" | awk '{print $1}' > "${TARBALL}.sha256"
+
+# A release asset has a hard ceiling; failing the build is better than
+# discovering it at upload.
+ASSET_LIMIT=$((2 * 1024 * 1024 * 1024))
+ACTUAL=$(stat -c%s "$TARBALL")
+if (( ACTUAL > ASSET_LIMIT )); then
+    echo "ERROR: artifact is $((ACTUAL/1048576)) MB, over the $((ASSET_LIMIT/1048576)) MB" >&2
+    echo "       release-asset ceiling. Trim further or split the artifact." >&2
+    exit 4
+fi
 
 # --- sign (FR-042) ---------------------------------------------------------
 # Detached OpenPGP signature. The add-on's own integrity gate is the pinned

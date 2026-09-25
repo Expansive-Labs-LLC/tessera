@@ -72,9 +72,9 @@ packaging/linux/build_engine_installer.sh 1.0.0
 Produces in `dist/`:
 
 ```
-tessera-engine-1.0.0-linux-x64.tar.gz
-tessera-engine-1.0.0-linux-x64.tar.gz.sha256
-tessera-engine-1.0.0-linux-x64.tar.gz.asc
+tessera-engine-1.0.0-linux-x64.tar.xz
+tessera-engine-1.0.0-linux-x64.tar.xz.sha256
+tessera-engine-1.0.0-linux-x64.tar.xz.asc
 ```
 
 `CUDA_ARCH_LIST` (default `8.6;8.9;12.0` — Ampere, Ada, Blackwell) is the
@@ -86,7 +86,7 @@ GPU it was not built for instead of failing inside a kernel launch.
 ## Installing
 
 ```bash
-tar -xzf tessera-engine-1.0.0-linux-x64.tar.gz
+tar -xf tessera-engine-1.0.0-linux-x64.tar.xz
 ./tessera-engine/install.sh
 ```
 
@@ -99,13 +99,35 @@ presence is what the add-on treats as *installed* — probing the port cannot
 answer that question, because nothing listening means stopped or absent, and
 those two want opposite advice.
 
+## Artifact size
+
+A release asset has a hard 2 GiB ceiling and the payload does not fit it
+untrimmed, so `trim_payload.sh` runs before packaging and the build **fails**
+rather than producing an oversized artifact. What comes out, and what was tried
+and rejected, is documented in that script. Measured on this payload:
+
+| | |
+|---|---|
+| Untrimmed, gzip | 3.7 GiB |
+| Trimmed, xz -9 | 2.12 GiB |
+| Trimmed + NCCL stubbed, xz -9 | under the ceiling, but not by much |
+
+The margin is thin and TRELLIS is not in these figures yet. Treat headroom as a
+thing to watch per release, not a solved problem — the build's own size check is
+what will tell you when it stops fitting.
+
+Two levers were investigated and ruled out. `nvprune` only accepts relocatable
+objects, so the prebuilt CUDA wheels cannot be pruned down to our architecture
+list. And cuSPARSELt cannot be stubbed — torch calls into it during
+initialisation, which the stub demonstrated by aborting immediately.
+
 ## Verifying a release
 
 ```bash
 gpg --recv-keys 368C203CD177EF8A0169842EC353C8F1A9FC2DA4
-gpg --verify tessera-engine-1.0.0-linux-x64.tar.gz.asc \
-             tessera-engine-1.0.0-linux-x64.tar.gz
-sha256sum -c tessera-engine-1.0.0-linux-x64.tar.gz.sha256
+gpg --verify tessera-engine-1.0.0-linux-x64.tar.xz.asc \
+             tessera-engine-1.0.0-linux-x64.tar.xz
+sha256sum -c tessera-engine-1.0.0-linux-x64.tar.xz.sha256
 ```
 
 Release signing key:
