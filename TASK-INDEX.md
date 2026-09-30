@@ -1,7 +1,7 @@
 # Tessera — Task Index
 
 > All tasks derived from [PRD-001_Tessera.md](PRD-001_Tessera.md).  
-> Each task follows the template at `.agent/templates/task-template.md` and will be expanded into a full Spec.
+> Each task follows the structure of the existing tasks in [`specs/tessera/tasks/`](specs/tessera/tasks/) and will be expanded into a full Spec.
 
 ---
 
